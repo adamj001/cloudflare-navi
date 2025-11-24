@@ -379,19 +379,27 @@ export default function App() {
   )}
 
  {/* 主内容卡片网格 - 终极安全写法 */}
+{/* 终极防炸版卡片渲染 - 复制粘贴即过 */}
 {(() => {
   const currentGroup = groups.find(g => g.id === selectedTab);
   if (!currentGroup || !currentGroup.sites || currentGroup.sites.length === 0) {
-    return <Box sx={{ textAlign: 'center', py: 8, color: '#888' }}>暂无站点</Box>;
+    return (
+      <Box sx={{ textAlign: 'center', py: 10, color: '#666', fontSize: '1.2rem' }}>
+        暂无站点
+      </Box>
+    );
   }
+
   return (
-    <Box sx={{ 
-      display: 'grid', 
-      gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
-      gap: 3.5,
-      pb: 10
-    }}>
-      {currentGroup.sites.map((site) => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+        gap: 3.5,
+        pb: 12,
+      }}
+    >
+      {currentGroup.sites.map(site => (
         <Paper
           key={site.id}
           component="a"
@@ -418,19 +426,34 @@ export default function App() {
             },
           }}
         >
-          <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
-            <img 
+          <Box
+            sx={{
+              width: 56,
+              height: 56,
+              mb: 1.5,
+              borderRadius: 3,
+              overflow: 'hidden',
+              bgcolor: 'rgba(255,255,255,0.1)',
+              p: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <img
               src={site.icon || `https://api.iowen.cn/favicon/${new URL(site.url).hostname}`}
               alt={site.name}
               style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={(e) => {
+              onError={e => {
                 e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${site.name[0]}</text></svg>`;
               }}
             />
           </Box>
+
           <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.5 }}>
             {site.name}
           </Typography>
+
           {site.description && site.description !== '暂无描述' && (
             <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '0.75rem' }}>
               {site.description}
