@@ -390,8 +390,11 @@ export default function App() {
       gap: 3.5,
       pb: 10  // 给底部留出空间
     }}>
-      {groups
-        .find(g => g.id === selectedTab)?.sites?.map(site => (
+      {groups.find(g
+      => g.id ===
+      selectedTab)?.
+      sites?.map(sit
+      e => (
           <Paper
             key={site.id}
             elevation={0}
