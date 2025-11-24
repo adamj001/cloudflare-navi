@@ -110,7 +110,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
-  +const currentGroup = groups.find(g => g.id === selectedTab); // 加这一行！
+  const currentGroup = groups.find(g => g.id === selectedTab); // 加这一行！
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [currentSortingGroupId, setCurrentSortingGroupId] = useState<number | null>(null);
 
