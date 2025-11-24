@@ -518,7 +518,7 @@ export default function App() {
 
         {/* GitHub 角标 */}
         <Box sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 10 }}>
-          <Paper component="a" href="https://github.com/zqq-nuli/Navihive" target="_blank" elevation={3} sx={{ p: 1.5, borderRadius: 10, bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}>
+          <Paper component="a" href="https://github.com/adamj001/cloudflare-navi" target="_blank" elevation={3} sx={{ p: 1.5, borderRadius: 10, bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}>
             <GitHubIcon />
           </Paper>
         </Box>
