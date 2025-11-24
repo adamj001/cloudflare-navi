@@ -316,84 +316,182 @@ export default function App() {
           />
         )}
 
-        <Container maxWidth="xl" sx={{ py: 3, position: 'relative', zIndex: 2 }}>
-          {/* 第一行: 名称 + 设置 */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h4" fontWeight="bold">{configs['site.name']}</Typography>
-            <Stack direction="row" spacing={1}>
-              {viewMode === 'edit' && (
-                <IconButton onClick={e => setMenuAnchorEl(e.currentTarget)}>
-                  <SettingsIcon />
-                </IconButton>
-              )}
-              <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
-            </Stack>
-          </Box>
+       // 在 return 之前的最后部分，替换整个 <Container>...</Container> 包裹的内容
+<Container maxWidth="xl" sx={{ py: 3, position: 'relative', zIndex: 2 }}>
+  {/* 第一行：站点名称 + 设置按钮 */}
+  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+    <Typography variant="h4" fontWeight="bold" sx={{ color: 'white' }}>
+      {configs['site.name'] || '导航站'}
+    </Typography>
+    <Stack direction="row" spacing={1}>
+      {viewMode === 'edit' && (
+        <IconButton onClick={e => setMenuAnchorEl(e.currentTarget)} color="inherit">
+          <SettingsIcon />
+        </IconButton>
+      )}
+      <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
+    </Stack>
+  </Box>
 
-          {/* 第二行: 主菜单 Tabs */}
-          <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4, backdropFilter: 'blur(12px)', bgcolor: 'rgba(18,18,18,0.5)', borderRadius: 2, p: 1 }}>
-            <Tabs
-              value={selectedTab || false}
-              onChange={(_, v) => setSelectedTab(v)}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-              sx={{ '.MuiTabs-indicator': { height: 3, borderRadius: 1 } }}
-            >
-              {groups.map(g => (
-                <Tab key={g.id} label={g.name} value={g.id} sx={{ color: 'white' }} />
-              ))}
-            </Tabs>
-          </AppBar>
+  {/* 第二行：主菜单 Tabs 居中 + 黑体粗体 */}
+  <Box sx={{ display: 'flex', justifyContent: 'center', mb: 4 }}>
+    <AppBar position="static" color="transparent" elevation={0} sx={{ 
+      width: 'fit-content', 
+      backdropFilter: 'blur(16px)', 
+      background: 'rgba(30,30,30,0.6)',
+      borderRadius: 4,
+      px: 2,
+      py: 1
+    }}>
+      <Tabs
+        value={selectedTab || false}
+        onChange={(_, v) => setSelectedTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{
+          '& .MuiTab-root': {
+            fontWeight: 800,           // 黑体粗体
+            fontFamily: '"Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif',
+            fontSize: '1.1rem',
+            minWidth: 80,
+            color: '#ffffff !important',
+          },
+          '& .MuiTabs-indicator': {
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: '#00ff9d',
+          },
+        }}
+      >
+        {groups.map(g => (
+          <Tab key={g.id} label={g.name} value={g.id} />
+        ))}
+      </Tabs>
+    </AppBar>
+  </Box>
 
-          {/* 搜索框 */}
-          {configs['site.searchBoxEnabled'] === 'true' && (viewMode === 'edit' || configs['site.searchBoxGuestEnabled'] === 'true') && (
-            <Box sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
-              <SearchBox groups={groups} sites={groups.flatMap(g => g.sites || [])} />
-            </Box>
-          )}
+  {/* 搜索框（保持原逻辑） */}
+  {configs['site.searchBoxEnabled'] === 'true' && (viewMode === 'edit' || configs['site.searchBoxGuestEnabled'] === 'true') && (
+    <Box sx={{ mb: 5, maxWidth: 600, mx: 'auto' }}>
+      <SearchBox groups={groups} sites={groups.flatMap(g => g.sites || [])} />
+    </Box>
+  )}
 
-          {/* 主内容：卡片网格 */}
-          {loading ? (
-            <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 400 }}>
-              <CircularProgress />
+  {/* 主内容：磨砂玻璃卡片网格 */}
+  {loading ? (
+    <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 400 }}>
+      <CircularProgress />
+    </Box>
+  ) : (
+    <Box sx={{ 
+      display: 'grid', 
+      gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
+      gap: 3.5,
+      pb: 10  // 给底部留出空间
+    }}>
+      {groups
+        .find(g => g.id === selectedTab)?.sites?.map(site => (
+          <Paper
+            key={site.id}
+            elevation={0}
+            component="a"
+            href={site.url}
+            target="_blank"
+            rel="noopener"
+            sx={{
+              p: 2.5,
+              borderRadius: 4,
+              bgcolor: 'rgba(255,255,255,0.06)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textDecoration: 'none',
+              color: 'inherit',
+              '&:hover': {
+                transform: 'translateY(-8px) scale(1.03)',
+                bgcolor: 'rgba(255,255,255,0.1)',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+              },
+            }}
+          >
+            <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
+              <img 
+                src={site.icon || `https://www.faviconextractor.com/favicon/${extractDomain(site.url)}?larger=true`} 
+                alt={site.name}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                onError={e => (e.currentTarget.src = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=100 height=100 fill=%22%23666%22/><text y=55 font-size=50 fill=%22%23fff%22 text-anchor=%22middle%22 x=50>${site.name[0]}</text></svg>')}
+              />
             </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 4 }}>
-              {groups
-                .filter(g => g.id === selectedTab)
-                .flatMap(group => group.sites || [])
-                .map(site => (
-                  <Paper
-                    key={site.id}
-                    elevation={0}
-                    sx={{
-                      p: 2,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      bgcolor: 'rgba(255,255,255,0.05)',
-                      backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 3,
-                      boxShadow: '0 4px 30px rgba(0,0,0,0.1)',
-                      transition: 'transform 0.3s',
-                      '&:hover': { transform: 'translateY(-5px)' },
-                    }}
-                    component="a"
-                    href={site.url}
-                    target="_blank"
-                  >
-                    <img src={site.icon} alt={site.name} style={{ width: 48, height: 48, marginBottom: 8 }} />
-                    <Typography variant="body2">{site.name}</Typography>
-                    {site.description && site.description !== '暂无描述' && (
-                      <Typography variant="caption" sx={{ mt: 1, color: 'text.secondary' }}>{site.description}</Typography>
-                    )}
-                  </Paper>
-                ))}
-            </Box>
-          )}
-        </Container>
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.5 }}>
+              {site.name}
+            </Typography>
+            {site.description && site.description !== '暂无描述' && (
+              <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '0.75rem' }}>
+                {site.description}
+              </Typography>
+            )}
+          </Paper>
+        )) || null}
+    </Box>
+  )}
+
+  {/* 1. 左下角：管理员登录按钮 */}
+  {!isAuthenticated && (
+    <Box sx={{ position: 'fixed', left: 24, bottom: 24, zIndex: 10 }}>
+      <Button
+        variant="contained"
+        startIcon={<LogoutIcon />}
+        onClick={() => setIsAuthRequired(true)}
+        sx={{
+          bgcolor: 'rgba(0,255,150,0.15)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(0,255,150,0.3)',
+          color: '#00ff9d',
+          fontWeight: 'bold',
+          px: 3,
+          py: 1.5,
+          borderRadius: 4,
+          '&:hover': {
+            bgcolor: 'rgba(0,255,150,0.25)',
+            transform: 'translateY(-2px)',
+          },
+        }}
+      >
+        管理员登录
+      </Button>
+    </Box>
+  )}
+
+  {/* 2. 右下角：GitHub 图标（改成你自己的仓库！） */}
+  <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
+    <IconButton
+      component="a"
+      href="https://github.com/你的用户名/你的仓库名"   {/* ← 改这里！ */}
+      target="_blank"
+      rel="noopener"
+      size="large"
+      sx={{
+        width: 64,
+        height: 64,
+        bgcolor: 'rgba(255,255,255,0.08)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+        '&:hover': {
+          bgcolor: 'rgba(255,255,255,0.15)',
+          transform: 'translateY(-4px) rotate(5deg)',
+        },
+      }}
+    >
+      <GitHubIcon sx={{ fontSize: 36, color: 'white' }} />
+    </IconButton>
+  </Box>
+</Container>
 
         {/* 菜单和对话框代码保持不变（省略以节省空间，你原来的就行） */}
       </Box>
