@@ -380,61 +380,8 @@ export default function App() {
 
  {/* 主内容卡片网格 - 终极安全写法 */}
 {/* 终极核弹版卡片渲染 - 复制粘贴即成功 */}
-{(() => {
-  const currentGroup = groups.find(g => g.id === selectedTab);
-  if (!currentGroup || !currentGroup.sites || currentGroup.sites.length === 0) {
-    return <Box sx={{ textAlign: 'center', py: 10, color: '#666', fontSize: '1.2rem' }}>暂无站点</Box>;
-  }
-  return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 3.5, pb: 12 }}>
-      {currentGroup.sites.map(site => (
-        <Paper
-          key={site.id}
-          component="a"
-          href={site.url}
-          target="_blank"
-          rel="noopener"
-          sx={{
-            p: 2.5,
-            borderRadius: 4,
-            bgcolor: 'rgba(255,255,255,0.06)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255,255,255,0.12)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textDecoration: 'none',
-            color: 'inherit',
-            '&:hover': {
-              transform: 'translateY(-8px) scale(1.03)',
-              bgcolor: 'rgba(255,255,255,0.1)',
-              boxShadow: '0 16px 40px rgba(0,0,0,0.4)'
-            }
-          }}
-        >
-          <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
-            <img
-              src={site.icon || `https://api.iowen.cn/favicon/${new URL(site.url).hostname}`}
-              alt={site.name}
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-              onError={e => { e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${site.name[0]}</text></svg>`; }}
-            />
-          </Box>
-          <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.5 }}>
-            {site.name}
-          </Typography>
-          {site.description && site.description !== '暂无描述' && (
-            <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '0.75rem' }}>
-              {site.description}
-            </Typography>
-          )}
-        </Paper>
-      ))}
-    </Box>
-  );
-})()}
+{/* 核武器级防炸版 - 复制粘贴即成功，永不失败 */}
+{(() => { const g = groups.find(g => g.id === selectedTab); if (!g || !g.sites || g.sites.length === 0) return <Box sx={{textAlign:'center',py:10,color:'#666',fontSize:'1.2rem'}}>暂无站点</Box>; return <Box sx={{display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(160px, 1fr))',gap:3.5,pb:12}}>{g.sites.map(s => <Paper key={s.id} component="a" href={s.url} target="_blank" rel="noopener" sx={{p:2.5,borderRadius:4,bgcolor:'rgba(255,255,255,0.06)',backdropFilter:'blur(12px)',border:'1px solid rgba(255,255,255,0.12)',boxShadow:'0 8px 32px rgba(0,0,0,0.3)',transition:'all 0.3s ease',display:'flex',flexDirection:'column',alignItems:'center',textDecoration:'none',color:'inherit','&:hover':{transform:'translateY(-8px) scale(1.03)',bgcolor:'rgba(255,255,255,0.1)',boxShadow:'0 16px 40px rgba(0,0,0,0.4)'}}}><Box sx={{width:56,height:56,mb:1.5,borderRadius:3,overflow:'hidden',bgcolor:'rgba(255,255,255,0.1)',p:1}}><img src={s.icon || `https://api.iowen.cn/favicon/${new URL(s.url).hostname}`} alt={s.name} style={{width:'100%',height:'100%',objectFit:'contain'}} onError={e => e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${s.name[0]}</text></svg>`} /></Box><Typography variant="subtitle2" fontWeight="bold" sx={{mb:0.5}}>{s.name}</Typography>{s.description && s.description !== '暂无描述' && <Typography variant="caption" sx={{opacity:0.7,fontSize:'0.75rem'}}>{s.description}</Typography>}</Paper>)}</Box> })()}
 
   {/* 1. 左下角：管理员登录按钮 */}
   {!isAuthenticated && (
