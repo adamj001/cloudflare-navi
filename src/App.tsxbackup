@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { NavigationClient } from './API/client';
+import { NavigationClientj } from './API/client';
 import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
