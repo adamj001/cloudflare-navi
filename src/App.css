@@ -1,30 +1,41 @@
-.duration-0 {
-  --tw-duration: 0ms;
-  transition-duration: 0ms;
-  transition-delay: 0ms;
+/* 深色调全局背景 */
+body {
+  background: linear-gradient(to bottom, #121212, #1e1e1e);
 }
 
-/* 优化拖拽体验 */
-[data-dnd-draggable-context='true'] {
-  transition: none !important;
+/* 卡片玻璃磨砂效果 */
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
 }
 
-[data-dragging='true'] {
-  transition: none !important;
-  transform: translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) !important;
-  z-index: 9999 !important;
-  -webkit-transform: translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) !important;
-  -moz-transform: translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) !important;
-  -ms-transform: translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) !important;
-  -o-transform: translate3d(var(--translate-x, 0), var(--translate-y, 0), 0) !important;
+.glass-card:hover {
+  transform: translateY(-5px);
 }
 
-[data-dnd-draggable] {
-  transform-origin: 0 0;
-  contain: layout;
+/* 隐藏暂无描述（已移到 JSX 判断） */
+
+/* 图标在上文字在下（已移到 JSX flex column） */
+
+/* 顶部菜单磨砂玻璃 */
+.top-bar {
+  background: rgba(18, 18, 18, 0.5);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
 }
 
-/* 背景图片相关样式 */
+/* 移动端适配 */
+@media (max-width: 600px) {
+  .glass-card {
+    min-width: 120px;
+  }
+}
+
+/* 其他原样式保留 */
 .with-background-image {
   position: relative;
 }
@@ -38,67 +49,6 @@
   z-index: 1;
 }
 
-.backdrop-blur {
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-
-/* 增加卡片在有背景图片时的可读性 */
-.dark .MuiPaper-root {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.light .MuiPaper-root {
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-/* 移动端适配样式 */
-@media (max-width: 600px) {
-  body {
-    overflow-x: hidden;
-  }
-
-  /* 改善触摸体验的样式 */
-  button,
-  [role='button'],
-  a {
-    padding: 6px 12px !important;
-    min-height: 36px;
-  }
-
-  /* 按钮图标大小调整 */
-  .MuiButton-startIcon > *:nth-of-type(1),
-  .MuiButton-endIcon > *:nth-of-type(1) {
-    font-size: 18px !important;
-  }
-
-  /* 图标按钮样式调整 */
-  .MuiIconButton-root {
-    padding: 6px !important;
-  }
-
-  /* 移动端更清晰的分割线 */
-  .MuiDivider-root {
-    margin: 8px 0 !important;
-  }
-
-  /* 确保移动端对话框不会过于接近屏幕边缘 */
-  .MuiDialog-paper {
-    margin: 12px !important;
-  }
-
-  /* 移动端菜单更宽 */
-  .MuiMenu-paper {
-    min-width: 200px !important;
-  }
-
-  /* 移动端表单元素更容易点击 */
-  .MuiInputBase-input {
-    padding: 10px 12px !important;
-  }
-}
-
-/* 暗黑模式增强 */
 .dark .MuiPaper-root {
   background-color: #1e1e1e;
 }
@@ -107,7 +57,6 @@
   background-color: #262626;
 }
 
-/* 增强可访问性 */
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
