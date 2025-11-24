@@ -6,6 +6,7 @@ import { GroupWithSites } from './types';
 import ThemeToggle from './components/ThemeToggle';
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
+import LoginIcon from '@mui/icons-material/Login';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
 import './App.css';
 
@@ -109,6 +110,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
+  +const currentGroup = groups.find(g => g.id === selectedTab); // 加这一行！
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [currentSortingGroupId, setCurrentSortingGroupId] = useState<number | null>(null);
 
@@ -664,7 +666,7 @@ function App() {
               gap: 3.5, 
               pb: 10 
             }}>
-              {currentGroup?.sites?.map(site => (
+             {currentGroup?.sites?.map((site: Site) => (
                 <Paper
                   key={site.id}
                   component="a"
