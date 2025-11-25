@@ -4,12 +4,12 @@ import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
 import ThemeToggle from './components/ThemeToggle';
-import GroupCard from './components/GroupCard';
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
-import { SearchResultItem } from './utils/search';
 import './App.css';
+
+// 下面这 7 行是之前一直漏的，必须单独 import（不能放进大括号里！）
 import AppBar from '@mui/material/AppBar';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -17,24 +17,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LoginIcon from '@mui/icons-material/Login';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useState } from 'react'; // 这行你应该已经有，如果没有也加上
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import SortableGroupItem from './components/SortableGroupItem';
+
+// 下面是大括号批量导入的 MUI 组件
 import {
   Container,
   Typography,
@@ -51,7 +35,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   IconButton,
   Menu,
@@ -60,14 +43,11 @@ import {
   ListItemIcon,
   ListItemText,
   Snackbar,
-  InputAdornment,
   Slider,
-  FormControlLabel,
-  Switch,
 } from '@mui/material';
+
+// 其余图标
 import SortIcon from '@mui/icons-material/Sort';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Cancel';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
