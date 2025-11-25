@@ -117,8 +117,14 @@ function App() {
     localStorage.setItem('theme', !darkMode ? 'dark' : 'light');
   };
 
+    const [selectedTab, setSelectedTab] = useState<number | null>(null);
   const [groups, setGroups] = useState<GroupWithSites[]>([]);
-  const currentGroup = groups.find(g => g.id === selectedTab);
+
+  // 强制解决 TS2448/TS2454 的终极写法（用 useMemo 包裹）
+  const currentGroup = useMemo(() => 
+    groups.find(g => g.id === selectedTab), 
+    [groups, selectedTab]
+  );
      const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
