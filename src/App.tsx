@@ -83,48 +83,23 @@ const DEFAULT_CONFIGS = {
 
 function App() {
   // 新增这两行！必须放在最前面！
-   const [selectedTab, setSelectedTab] = useState<number | null>(null);
-
-  // 自动选中第一个分组作为首页
-  useEffect(() => {
-    if (groups.length > 0 && selectedTab === null) {
-      const firstGroup = groups.find(g => g.name.toLowerCase() === 'home') || groups[0];
-      setSelectedTab(firstGroup.id);
-    }
-  }, [groups]);
- 
-
-  const [darkMode, setDarkMode] = useState(() => {
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-      return savedTheme === 'dark';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: darkMode ? 'dark' : 'light',
-        },
-      }),
-    [darkMode]
-  );
-
-  const toggleTheme = () => {
-    setDarkMode(!darkMode);
-    localStorage.setItem('theme', !darkMode ? 'dark' : 'light');
-  };
-
-    const [selectedTab, setSelectedTab] = useState<number | null>(null);
+     // —— 终极版：一次解决所有 TS2448 / TS2451 / TS2454 —— //
+  const [selectedTab, setSelectedTab] = useState<number | null>(null);
   const [groups, setGroups] = useState<GroupWithSites[]>([]);
 
-  // 强制解决 TS2448/TS2454 的终极写法（用 useMemo 包裹）
+  // 用 useMemo 彻底干掉 TS2448/TS2454
   const currentGroup = useMemo(() => 
-    groups.find(g => g.id === selectedTab), 
+    groups.find(g => g.id === selectedTab) || null,
     [groups, selectedTab]
   );
+
+  // 自动选中第一个分组作为默认首页
+  useEffect(() => {
+    if (groups.length > 0 && selectedTab === null) {
+      const home = groups.find(g => g.name.toLowerCase() === 'home') || groups[0];
+      setSelectedTab(home.id);
+    }
+  }, [groups]);
      const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
