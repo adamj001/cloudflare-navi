@@ -719,6 +719,9 @@ function App() {
                   created_at: g.created_at,
                   updated_at: g.updated_at,
                 }))}
+             </Tabs>
+            </AppBar>
+          </Box>
                 sites={groups.flatMap(g => g.sites || [])}
               />
             </Box>
