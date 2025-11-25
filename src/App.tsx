@@ -84,7 +84,7 @@ const DEFAULT_CONFIGS = {
 function App() {
   // 新增这两行！必须放在最前面！
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
-  const currentGroup = groups.find(g => g.id === selectedTab);
+ 
 
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
@@ -110,6 +110,7 @@ function App() {
   };
 
   const [groups, setGroups] = useState<GroupWithSites[]>([]);
+   const currentGroup = groups.find(g => g.id === selectedTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
