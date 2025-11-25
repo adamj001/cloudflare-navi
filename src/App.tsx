@@ -6,7 +6,6 @@ import { GroupWithSites } from './types';
 import ThemeToggle from './components/ThemeToggle';
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
-import LoginIcon from '@mui/icons-material/Login';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
 import './App.css';
 
@@ -56,6 +55,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import LoginIcon from '@mui/icons-material/Login';
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -110,7 +110,6 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
-  const currentGroup = groups.find(g => g.id === selectedTab); // 加这一行！
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [currentSortingGroupId, setCurrentSortingGroupId] = useState<number | null>(null);
 
@@ -666,7 +665,7 @@ function App() {
               gap: 3.5, 
               pb: 10 
             }}>
-             {currentGroup?.sites?.map((site: Site) => (
+              {currentGroup?.sites?.map(site => (
                 <Paper
                   key={site.id}
                   component="a"
@@ -742,7 +741,7 @@ function App() {
           <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
             <Paper
               component="a"
-              href="https://github.com/adamj001/cloudflare-navi"
+              href="https://github.com/你的用户名/你的仓库名"
               target="_blank"
               rel="noopener"
               elevation={2}
