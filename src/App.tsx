@@ -958,10 +958,10 @@ function App() {
             <Button variant="contained" onClick={handleCreateGroup}>创建</Button>
           </DialogActions>
         </Dialog>
-      </Container>
-    </Box>
-  </ThemeProvider>
+             </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
 
-export default App;       
+export default App;
