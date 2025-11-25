@@ -82,6 +82,10 @@ const DEFAULT_CONFIGS = {
 };
 
 function App() {
+  // 新增这两行！必须放在最前面！
+  const [selectedTab, setSelectedTab] = useState<number | null>(null);
+  const currentGroup = groups.find(g => g.id === selectedTab);
+
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
@@ -663,7 +667,7 @@ function App() {
               gap: 3.5, 
               pb: 10 
             }}>
-              {currentGroup?.sites?.map(site => (
+              {currentGroup?.sites?.map((site: Site) => (
                 <Paper
                   key={site.id}
                   component="a"
