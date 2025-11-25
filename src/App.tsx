@@ -83,7 +83,15 @@ const DEFAULT_CONFIGS = {
 
 function App() {
   // 新增这两行！必须放在最前面！
-  const [selectedTab, setSelectedTab] = useState<number | null>(null);
+   const [selectedTab, setSelectedTab] = useState<number | null>(null);
+
+  // 自动选中第一个分组作为首页
+  useEffect(() => {
+    if (groups.length > 0 && selectedTab === null) {
+      const firstGroup = groups.find(g => g.name.toLowerCase() === 'home') || groups[0];
+      setSelectedTab(firstGroup.id);
+    }
+  }, [groups]);
  
 
   const [darkMode, setDarkMode] = useState(() => {
@@ -548,7 +556,23 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
+        <Box                sx={{
+                  '& .MuiTab-root': { 
+                    fontWeight: 800, 
+                    fontFamily: '"Microsoft YaHei", sans-serif', 
+                    fontSize: '1.1rem', 
+                    minWidth: 80, 
+                    color: '#ffffff !important' 
+                  },
+                  '& .MuiTabs-indicator': { 
+                    height: 3, 
+                    borderRadius: 1, 
+                    backgroundColor: '#00ff9d' 
+                  },
+                  '& .MuiTabs-scroller': {
+                    overflowX: 'auto !important',  // ← 关键：手机支持左右滑动
+                  },
+                }}>
           <CircularProgress size={60} />
         </Box>
       </ThemeProvider>
@@ -659,6 +683,27 @@ function App() {
     value={g.id}
   />
 ))}
+                 </Tabs>
+              
+              {/* 管理员登录后显示排序按钮 */}
+              {isAuthenticated && (
+                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                  <Button
+                    variant="outlined"
+                    startIcon={<SortIcon />}
+                    onClick={() => {
+                      // 简单实现：重新按 order_num 排序（实际项目可以用 dnd-kit）
+                      const sorted = [...groups].sort((a, b) => a.order_num - b.order_num);
+                      setGroups(sorted);
+                      handleError('分组已按顺序排序');
+                    }}
+                    sx={{ borderColor: '#00ff9d', color: '#00ff9d' }}
+                  >
+                    排序分组
+                  </Button>
+                </Box>
+              )}             
+                       
               </Tabs>
             </AppBar>
           </Box>
