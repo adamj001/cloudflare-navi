@@ -636,7 +636,29 @@ function App() {
                   },
                 }}
               >
-                {groups.map(g => <Tab key={g.id} label={g.name} value={g.id} />)}
+               {groups.map(g => (
+  <Tab
+    key={g.id}
+    label={
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {g.name}
+        {isAuthenticated && (
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpenAddSite(g.id!);
+            }}
+            sx={{ color: '#00ff9d' }}
+          >
+            <AddIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Box>
+    }
+    value={g.id}
+  />
+))}
               </Tabs>
             </AppBar>
           </Box>
