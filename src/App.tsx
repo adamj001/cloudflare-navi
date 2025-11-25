@@ -4,11 +4,29 @@ import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
 import ThemeToggle from './components/ThemeToggle';
+import GroupCard from './components/GroupCard';
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
+import { SearchResultItem } from './utils/search';
 import './App.css';
-
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import SortableGroupItem from './components/SortableGroupItem';
 import {
   Container,
   Typography,
@@ -38,10 +56,6 @@ import {
   Slider,
   FormControlLabel,
   Switch,
-  AppBar,
-  Tabs,
-  Tab,
-  Toolbar,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -55,7 +69,6 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
-import LoginIcon from '@mui/icons-material/Login';
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -109,11 +122,10 @@ function App() {
   const [groups, setGroups] = useState<GroupWithSites[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTab, setSelectedTab] = useState<number | null>(null);
- const currentGroup = groups.find(g => g.id === selectedTab); // 必须加这行！
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [currentSortingGroupId, setCurrentSortingGroupId] = useState<number | null>(null);
- const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -665,7 +677,7 @@ function App() {
               gap: 3.5, 
               pb: 10 
             }}>
-              {currentGroup?.sites?.map((site: Site) => (   // 加了 : Site 类型
+              {currentGroup?.sites?.map(site => (
                 <Paper
                   key={site.id}
                   component="a"
@@ -685,110 +697,210 @@ function App() {
                     alignItems: 'center',
                     textDecoration: 'none',
                     color: 'inherit',
-                    '&:hover': {
+                                       '&:hover': {
                       transform: 'translateY(-8px) scale(1.03)',
                       bgcolor: 'rgba(255,255,255,0.1)',
                       boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
-                    },
-                  }}
-                >
-                  <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
-                    <img 
-                      src={site.icon || `https://api.iowen.cn/favicon/${extractDomain(site.url)}`} 
-                      alt={site.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      onError={e => {
-                        e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${site.name.charAt(0)}</text></svg>`;
-                      }}
-                    />
-                  </Box>
-                  <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {site.name}
-                  </Typography>
-                  {site.description && site.description !== '暂无描述' && (
-                    <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '0.75rem' }}>
-                      {site.description}
-                    </Typography>
-                  )}
-                </Paper>
-              ))}
-            </Box>
-          )}
-
-          {!isAuthenticated && (
-            <Box sx={{ position: 'fixed', left: 24, bottom: 24, zIndex: 10 }}>
-              <Button
-                variant="contained"
-                startIcon={<LoginIcon />}
-                onClick={() => setIsAuthRequired(true)}
-                sx={{
-                  bgcolor: 'rgba(0,255,150,0.15)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0,255,150,0.3)',
-                  color: '#00ff9d',
-                  fontWeight: 'bold',
-                  px: 3,
-                  py: 1.5,
-                  borderRadius: 4,
-                  '&:hover': { bgcolor: 'rgba(0,255,150,0.25)', transform: 'translateY(-2px)' },
+                  },
                 }}
               >
-                管理员登录
-              </Button>
-            </Box>
-          )}
+                <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
+                  <img 
+                    src={site.icon || `https://api.iowen.cn/favicon/${extractDomain(site.url)}`} 
+                    alt={site.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    onError={e => {
+                      e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${site.name.charAt(0)}</text></svg>`;
+                    }}
+                  />
+                </Box>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.5 }}>
+                  {site.name}
+                </Typography>
+                {site.description && site.description !== '暂无描述' && (
+                  <Typography variant="caption" sx={{ opacity: 0.7, fontSize: '0.75rem' }}>
+                    {site.description}
+                  </Typography>
+                )}
 
-          <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
-            <Paper
-              component="a"
-              href="https://github.com/adamj001/cloudflare-navi"
-              target="_blank"
-              rel="noopener"
-              elevation={2}
+                {/* 管理员模式下显示编辑/删除按钮 */}
+                {viewMode === 'edit' && (
+                  <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 0.5 }}>
+                    <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); /* TODO: 打开编辑弹窗 */ }}>
+                      <EditIcon fontSize="small" sx={{ color: 'rgba(255,255,255,0.6)' }} />
+                    </IconButton>
+                    <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSiteDelete(site.id!); }}>
+                      <DeleteIcon fontSize="small" sx={{ color: 'rgba(255,255,255,0.6)' }} />
+                    </IconButton>
+                  </Box>
+                )}
+              </Paper>
+            ))}
+          </Box>
+        )}
+
+        {/* 左下角管理员登录按钮 */}
+        {!isAuthenticated && (
+          <Box sx={{ position: 'fixed', left: 24, bottom: 24, zIndex: 10 }}>
+            <Button
+              variant="contained"
+              startIcon={<LoginIcon />}
+              onClick={() => setIsAuthRequired(true)}
               sx={{
-                p: 1.5,
-                borderRadius: 10,
-                bgcolor: 'rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'text.secondary',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  bgcolor: 'rgba(255,255,255,0.15)',
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4,
-                },
-                textDecoration: 'none',
+                bgcolor: 'rgba(0,255,150,0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(0,255,150,0.3)',
+                color: '#00ff9d',
+                fontWeight: 'bold',
+                px: 3,
+                py: 1.5,
+                borderRadius: 4,
+                '&:hover': { bgcolor: 'rgba(0,255,150,0.25)', transform: 'translateY(-2px)' },
               }}
             >
-              <GitHubIcon />
-            </Paper>
+              管理员登录
+            </Button>
           </Box>
-        </Container>
+        )}
 
+        {/* 右下角 GitHub 图标 */}
+        <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
+          <Paper
+            component="a"
+            href="https://github.com/你的用户名/你的仓库名"
+            target="_blank"
+            rel="noopener"
+            elevation={2}
+            sx={{
+              p: 1.5,
+              borderRadius: 10,
+              bgcolor: 'rgba(255,255,255,0.08)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'text.secondary',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.15)',
+                transform: 'translateY(-4px)',
+                boxShadow: 4,
+              },
+              textDecoration: 'none',
+            }}
+          >
+            <GitHubIcon />
+          </Paper>
+        </Box>
+
+        {/* 管理员右上角菜单 */}
+        {isAuthenticated && (
+          <>
+            <IconButton
+              onClick={handleMenuOpen}
+              sx={{ position: 'fixed', top: 16, right: 16, zIndex: 20, bgcolor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)' }}
+            >
+              <MenuIcon sx={{ color: 'white' }} />
+            </IconButton>
+
+            <Menu
+              anchorEl={menuAnchorEl}
+              open={openMenu}
+              onClose={handleMenuClose}
+              PaperProps={{ sx: { bgcolor: 'rgba(30,30,30,0.95)', backdropFilter: 'blur(16px)' } }}
+            >
+              <MenuItem onClick={() => { handleMenuClose(); handleOpenAddGroup(); }}>
+                <ListItemIcon><AddIcon sx={{ color: '#00ff9d' }} /></ListItemIcon>
+                <ListItemText>添加分组</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose(); handleExportData(); }}>
+                <ListItemIcon><FileDownloadIcon sx={{ color: '#00ff9d' }} /></ListItemIcon>
+                <ListItemText>导出备份</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => { handleMenuClose(); handleOpenImport(); }}>
+                <ListItemIcon><FileUploadIcon sx={{ color: '#00ff9d' }} /></ListItemIcon>
+                <ListItemText>导入备份</ListItemText>
+              </MenuItem>
+              <Divider sx={{ my: 1 }} />
+              <MenuItem onClick={() => { handleMenuClose(); handleLogout(); }}>
+                <ListItemIcon><LogoutIcon sx={{ color: '#ff6b6b' }} /></ListItemIcon>
+                <ListItemText>退出登录</ListItemText>
+              </MenuItem>
+            </Menu>
+          </>
+        )}
+
+        {/* 登录弹窗 */}
         <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}>
           <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
         </Dialog>
 
+        {/* 设置弹窗 */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
-            <Stack spacing={2}>
-              <TextField label="网站标题" value={tempConfigs['site.title']} onChange={handleConfigInputChange} name="site.title" fullWidth />
-              <TextField label="网站名称" value={tempConfigs['site.name']} onChange={handleConfigInputChange} name="site.name" fullWidth />
-              <TextField label="背景图片URL" value={tempConfigs['site.backgroundImage']} onChange={handleConfigInputChange} name="site.backgroundImage" fullWidth />
-              <Slider value={Number(tempConfigs['site.backgroundOpacity'])} onChange={(_, v) => setTempConfigs({...tempConfigs, 'site.backgroundOpacity': String(v)})} min={0} max={1} step={0.05} />
-              <TextField label="自定义CSS" value={tempConfigs['site.customCss']} onChange={handleConfigInputChange} name="site.customCss" multiline rows={6} fullWidth />
+            <Stack spacing={3} sx={{ mt: 2 }}>
+              <TextField label="网站标题" name="site.title" value={tempConfigs['site.title']} onChange={handleConfigInputChange} fullWidth />
+              <TextField label="网站名称" name="site.name" value={tempConfigs['site.name']} onChange={handleConfigInputChange} fullWidth />
+              <TextField label="背景图URL" name="site.backgroundImage" value={tempConfigs['site.backgroundImage']} onChange={handleConfigInputChange} fullWidth helperText="支持 https 直链" />
+              <Box>
+                <Typography gutterBottom>背景透明度</Typography>
+                <Slider
+                  value={Number(tempConfigs['site.backgroundOpacity'] || 0.15)}
+                  onChange={(_, v) => setTempConfigs({...tempConfigs, 'site.backgroundOpacity': String(v)})}
+                  min={0} max={1} step={0.05}
+                  valueLabelDisplay="auto"
+                />
+              </Box>
+              <TextField
+                label="自定义CSS"
+                name="site.customCss"
+                value={tempConfigs['site.customCss']}
+                onChange={handleConfigInputChange}
+                multiline
+                rows={8}
+                fullWidth
+                helperText="这里可以写任意 CSS，会注入全局"
+              />
             </Stack>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseConfig}>取消</Button>
-            <Button variant="contained" onClick={handleSaveConfig}>保存</Button>
+            <Button variant="contained" onClick={handleSaveConfig}>保存设置</Button>
           </DialogActions>
         </Dialog>
-      </Box>
-    </ThemeProvider>
+
+        {/* 导入弹窗 */}
+        <Dialog open={openImport} onClose={handleCloseImport}>
+          <DialogTitle>导入备份</DialogTitle>
+          <DialogContent>
+            <Button variant="contained" component="label">
+              选择JSON文件
+              <input type="file" hidden accept=".json" onChange={handleFileSelect} />
+            </Button>
+            {importFile && <Typography sx={{ mt: 2 }}>已选择：{importFile.name}</Typography>}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseImport}>取消</Button>
+            <Button variant="contained" onClick={handleImportData} disabled={!importFile || importLoading}>
+              {importLoading ? '导入中...' : '开始导入'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* 添加分组弹窗 */}
+        <Dialog open={openAddGroup} onClose={handleCloseAddGroup}>
+          <DialogTitle>添加新分组</DialogTitle>
+          <DialogContent>
+            <TextField autoFocus margin="dense" label="分组名称" name="name" value={newGroup.name} onChange={handleGroupInputChange} fullWidth />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseAddGroup}>取消</Button>
+            <Button variant="contained" onClick={handleCreateGroup}>创建</Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </Box>
+  </ThemeProvider>
   );
 }
 
-export default App;
+export default App;       
