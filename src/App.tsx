@@ -1,17 +1,14 @@
-// src/App.tsx —— 2025 年终极版顶部 Tabs 导航站（正式版）
 import { useState, useEffect, useMemo } from 'react';
 import { NavigationClient } from './API/client';
 import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
 import ThemeToggle from './components/ThemeToggle';
-import GroupCard from './components/GroupCard';
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
 import './App.css';
 
-// MUI
 import {
   Container,
   Typography,
@@ -58,12 +55,15 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 // import LogoutIcon from '@mui/icons-material/Logout'; // 💡 已删除导入
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
+import LoginIcon from '@mui/icons-material/Login';
 
-const isDev = import.meta.env.DEV;
+const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
-const api = isDev && !useRealApi
-  ? new MockNavigationClient()
-  : new NavigationClient(isDev ? 'http://localhost:8788/api' : '/api');
+
+const api =
+  isDevEnvironment && !useRealApi
+    ? new MockNavigationClient()
+    : new NavigationClient(isDevEnvironment ? 'http://localhost:8788/api' : '/api');
 
 enum SortMode {
   None,
@@ -71,7 +71,7 @@ enum SortMode {
   SiteSort,
 }
 
-const DEFAULT_CONFIGS: Record<string, string> = {
+const DEFAULT_CONFIGS = {
   'site.title': '导航站',
   'site.name': '导航站',
   'site.customCss': '',
@@ -82,133 +82,124 @@ const DEFAULT_CONFIGS: Record<string, string> = {
   'site.searchBoxGuestEnabled': 'true',
 };
 
-export default function App() {
-  // 主题
+function App() {
   const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme');
-    return saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      return savedTheme === 'dark';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
-  const theme = useMemo(() => createTheme({ palette: { mode: darkMode ? 'dark' : 'light' } }), [darkMode]);
+
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: darkMode ? 'dark' : 'light',
+        },
+      }),
+    [darkMode]
+  );
+
   const toggleTheme = () => {
-    setDarkMode(prev => {
-      localStorage.setItem('theme', prev ? 'light' : 'dark');
-      return !prev;
-    });
+    setDarkMode(!darkMode);
+    localStorage.setItem('theme', !darkMode ? 'dark' : 'light');
   };
 
-  // 数据 & 状态
   const [groups, setGroups] = useState<GroupWithSites[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
+  const currentGroup = groups.find(g => g.id === selectedTab);
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [currentSortingGroupId, setCurrentSortingGroupId] = useState<number | null>(null);
-
-  // 认证
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
-  const [loginLoading, setLoginLoading] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const viewMode: 'readonly' | 'edit' = isAuthenticated ? 'edit' : 'readonly';
+  const [loginLoading, setLoginLoading] = useState(false);
 
-  // 配置
-  const [configs, setConfigs] = useState(DEFAULT_CONFIGS);
-  const [tempConfigs, setTempConfigs] = useState(DEFAULT_CONFIGS);
+  type ViewMode = 'readonly' | 'edit';
+  const [viewMode, setViewMode] = useState<ViewMode>('readonly');
+
+  const [configs, setConfigs] = useState<Record<string, string>>(DEFAULT_CONFIGS);
   const [openConfig, setOpenConfig] = useState(false);
+  const [tempConfigs, setTempConfigs] = useState<Record<string, string>>(DEFAULT_CONFIGS);
 
-  // 对话框
   const [openAddGroup, setOpenAddGroup] = useState(false);
   const [openAddSite, setOpenAddSite] = useState(false);
-  const [newGroup, setNewGroup] = useState<Partial<Group>>({ name: '', is_public: 1 });
-  const [newSite, setNewSite] = useState<Partial<Site>>({ name: '', url: '', group_id: 0, is_public: 1 });
+  const [newGroup, setNewGroup] = useState<Partial<Group>>({
+    name: '',
+    order_num: 0,
+    is_public: 1,
+  });
+  const [newSite, setNewSite] = useState<Partial<Site>>({
+    name: '',
+    url: '',
+    icon: '',
+    description: '',
+    notes: '',
+    order_num: 0,
+    group_id: 0,
+    is_public: 1,
+  });
 
-  // 菜单 & 导入
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(menuAnchorEl);
+
   const [openImport, setOpenImport] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
   const [importLoading, setImportLoading] = useState(false);
 
-  // 提示
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const handleError = (msg: string) => {
-    setSnackbarMessage(msg);
-    setSnackbarOpen(true);
+  const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setMenuAnchorEl(event.currentTarget);
   };
 
-  // 初始化
-  useEffect(() => {
-    (async () => {
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+  };
+
+  const checkAuthStatus = async () => {
+    try {
       setIsAuthChecking(true);
-      try {
-        const auth = await api.checkAuthStatus();
-        setIsAuthenticated(!!auth);
-        await Promise.all([fetchData(), fetchConfigs()]);
-      } catch {
-        await Promise.all([fetchData(), fetchConfigs()]);
-      } finally {
-        setIsAuthChecking(false);
+      const result = await api.checkAuthStatus();
+      if (result) {
+        setIsAuthenticated(true);
+        setViewMode('edit');
+      } else {
+        setIsAuthenticated(false);
+        setViewMode('readonly');
       }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (groups.length > 0 && selectedTab === null) {
-      setSelectedTab(groups[0].id);
-    }
-  }, [groups]);
-
-  useEffect(() => {
-    document.title = configs['site.title'] || '导航站';
-  }, [configs]);
-
-  useEffect(() => {
-    const style = document.getElementById('custom-style') || document.createElement('style');
-    style.id = 'custom-style';
-    style.textContent = sanitizeCSS(configs['site.customCss'] || '');
-    document.head.appendChild(style);
-    return () => style.remove();
-  }, [configs]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const fetchedGroups = await api.getGroupsWithSites();
-      setGroups(fetchedGroups);
-      // 确保在数据更新后，如果当前选中项被删除，则切换到第一个分组
-      if (selectedTab !== null && !fetchedGroups.some(g => g.id === selectedTab)) {
-         setSelectedTab(fetchedGroups.length > 0 ? fetchedGroups[0].id : null);
-      } else if (selectedTab === null && fetchedGroups.length > 0) {
-         setSelectedTab(fetchedGroups[0].id);
-      }
+      await Promise.all([fetchData(), fetchConfigs()]);
+    } catch (error) {
+      console.error('认证检查失败:', error);
+      setViewMode('readonly');
+      await Promise.all([fetchData(), fetchConfigs()]);
     } finally {
-      setLoading(false);
+      setIsAuthChecking(false);
     }
-  };
-
-  const fetchConfigs = async () => {
-    try {
-      const data = await api.getConfigs();
-      const merged = { ...DEFAULT_CONFIGS, ...data };
-      setConfigs(merged);
-      setTempConfigs(merged);
-    } catch {}
   };
 
   const handleLogin = async (username: string, password: string) => {
-    setLoginLoading(true);
-    setLoginError(null);
     try {
-      const res = await api.login(username, password, true);
-      if (res?.success) {
+      setLoginLoading(true);
+      setLoginError(null);
+      const loginResponse = await api.login(username, password, true);
+      if (loginResponse?.success) {
         setIsAuthenticated(true);
         setIsAuthRequired(false);
+        setViewMode('edit');
         await fetchData();
+        await fetchConfigs();
       } else {
-        setLoginError('用户名或密码错误');
+        setLoginError(loginResponse?.message || '用户名或密码错误');
       }
-    } catch {
+    } catch (error) {
+      console.error('登录失败:', error);
       setLoginError('登录失败');
     } finally {
       setLoginLoading(false);
@@ -218,60 +209,340 @@ export default function App() {
   const handleLogout = async () => {
     await api.logout();
     setIsAuthenticated(false);
+    setViewMode('readonly');
     await fetchData();
     handleError('已退出登录');
-    setMenuAnchorEl(null);
   };
 
-  const handleSaveGroupOrder = async () => {
+  const fetchConfigs = async () => {
     try {
-      const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
-      await api.updateGroupOrder(orders);
-      await fetchData();
-      setSortMode(SortMode.None);
-      handleError('分组顺序已保存');
-    } catch {
-      handleError('保存失败');
+      const configsData = await api.getConfigs();
+      const mergedConfigs = { ...DEFAULT_CONFIGS, ...configsData };
+      setConfigs(mergedConfigs);
+      setTempConfigs(mergedConfigs);
+    } catch (error) {
+      console.error('加载配置失败:', error);
     }
+  };
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  useEffect(() => {
+    document.title = configs['site.title'] || '导航站';
+  }, [configs]);
+
+  useEffect(() => {
+    const customCss = configs['site.customCss'];
+    let styleElement = document.getElementById('custom-style');
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'custom-style';
+      document.head.appendChild(styleElement);
+    }
+    const sanitized = sanitizeCSS(customCss || '');
+    styleElement.textContent = sanitized;
+    return () => {
+      const el = document.getElementById('custom-style');
+      if (el) el.remove();
+    };
+  }, [configs]);
+
+  const handleError = (errorMessage: string) => {
+    setSnackbarMessage(errorMessage);
+    setSnackbarOpen(true);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const groupsWithSites = await api.getGroupsWithSites();
+      setGroups(groupsWithSites);
+      // 确保选中第一个 Tab
+      if (groupsWithSites.length > 0 && selectedTab === null) {
+        setSelectedTab(groupsWithSites[0].id);
+      }
+    } catch (error) {
+      console.error('加载数据失败:', error);
+      handleError('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSiteUpdate = async (updatedSite: Site) => {
+    try {
+      if (updatedSite.id) {
+        await api.updateSite(updatedSite.id, updatedSite);
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('更新站点失败:', error);
+      handleError('更新站点失败: ' + (error as Error).message);
+    }
+  };
+
+  const handleSiteDelete = async (siteId: number) => {
+    try {
+      await api.deleteSite(siteId);
+      await fetchData();
+    } catch (error) {
+      console.error('删除站点失败:', error);
+      handleError('删除站点失败: ' + (error as Error).message);
+    }
+  };
+
+  const handleGroupUpdate = async (updatedGroup: Group) => {
+    try {
+      if (updatedGroup.id) {
+        await api.updateGroup(updatedGroup.id, updatedGroup);
+        await fetchData();
+      }
+    } catch (error) {
+      console.error('更新分组失败:', error);
+      handleError('更新分组失败: ' + (error as Error).message);
+    }
+  };
+
+  const handleGroupDelete = async (groupId: number) => {
+    try {
+      await api.deleteGroup(groupId);
+      await fetchData();
+    } catch (error) {
+      console.error('删除分组失败:', error);
+      handleError('删除分组失败: ' + (error as Error).message);
+    }
+  };
+
+  const handleSaveSiteOrder = async (groupId: number, sites: Site[]) => {
+    try {
+      const siteOrders = sites.map((site, index) => ({ id: site.id as number, order_num: index }));
+      const result = await api.updateSiteOrder(siteOrders);
+      if (result) {
+        await fetchData();
+      } else {
+        throw new Error('站点排序更新失败');
+      }
+      setSortMode(SortMode.None);
+      setCurrentSortingGroupId(null);
+    } catch (error) {
+      console.error('更新站点排序失败:', error);
+      handleError('更新站点排序失败: ' + (error as Error).message);
+    }
+  };
+
+  const startSiteSort = (groupId: number) => {
+    setSortMode(SortMode.SiteSort);
+    setCurrentSortingGroupId(groupId);
+  };
+
+  const cancelSort = () => {
+    setSortMode(SortMode.None);
+    setCurrentSortingGroupId(null);
+  };
+
+  const handleOpenAddGroup = () => {
+    setNewGroup({ name: '', order_num: groups.length, is_public: 1 });
+    setOpenAddGroup(true);
+  };
+
+  const handleCloseAddGroup = () => {
+    setOpenAddGroup(false);
+  };
+
+  const handleGroupInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewGroup({
+      ...newGroup,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleCreateGroup = async () => {
-    if (!newGroup.name?.trim()) return handleError('分组名称不能为空');
-    await api.createGroup({ ...newGroup, order_num: groups.length } as Group);
-    setOpenAddGroup(false);
-    await fetchData();
+    try {
+      if (!newGroup.name) {
+        handleError('分组名称不能为空');
+        return;
+      }
+      await api.createGroup(newGroup as Group);
+      await fetchData();
+      handleCloseAddGroup();
+    } catch (error) {
+      console.error('创建分组失败:', error);
+      handleError('创建分组失败: ' + (error as Error).message);
+    }
+  };
+
+  const handleOpenAddSite = (groupId: number) => {
+    const group = groups.find((g) => g.id === groupId);
+    const maxOrderNum = group?.sites.length ? Math.max(...group.sites.map((s) => s.order_num)) + 1 : 0;
+    setNewSite({
+      name: '',
+      url: '',
+      icon: '',
+      description: '',
+      notes: '',
+      group_id: groupId,
+      order_num: maxOrderNum,
+      is_public: 1,
+    });
+    setOpenAddSite(true);
+  };
+
+  const handleCloseAddSite = () => {
+    setOpenAddSite(false);
+  };
+
+  const handleSiteInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewSite({
+      ...newSite,
+      [e.target.name]: e.target.value,
+    });
   };
 
   const handleCreateSite = async () => {
-    if (!newSite.name?.trim() || !newSite.url?.trim()) return handleError('名称和URL不能为空');
-    await api.createSite(newSite as Site);
-    setOpenAddSite(false);
-    await fetchData();
+    try {
+      if (!newSite.name || !newSite.url) {
+        handleError('站点名称和URL不能为空');
+        return;
+      }
+      await api.createSite(newSite as Site);
+      await fetchData();
+      handleCloseAddSite();
+    } catch (error) {
+      console.error('创建站点失败:', error);
+      handleError('创建站点失败: ' + (error as Error).message);
+    }
   };
 
-  const handleSaveConfig = async () => {
-    for (const [k, v] of Object.entries(tempConfigs)) {
-      if (configs[k] !== v) await api.setConfig(k, v);
-    }
-    setConfigs(tempConfigs);
+  const handleOpenConfig = () => {
+    setTempConfigs({ ...configs });
+    setOpenConfig(true);
+  };
+
+  const handleCloseConfig = () => {
     setOpenConfig(false);
   };
 
-  const handleExportData = () => {
-    const data = {
-      groups: groups.map(g => ({ id: g.id, name: g.name, order_num: g.order_num })),
-      sites: groups.flatMap(g => g.sites || []),
-      configs,
-      version: '1.0',
-      exportDate: new Date().toISOString(),
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `导航站备份_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleConfigInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTempConfigs({
+      ...tempConfigs,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSaveConfig = async () => {
+    try {
+      for (const [key, value] of Object.entries(tempConfigs)) {
+        if (configs[key] !== value) {
+          await api.setConfig(key, value);
+        }
+      }
+      setConfigs({ ...tempConfigs });
+      handleCloseConfig();
+    } catch (error) {
+      console.error('保存配置失败:', error);
+      handleError('保存配置失败: ' + (error as Error).message);
+    }
+  };
+
+  const handleExportData = async () => {
+    try {
+      const allSites: Site[] = [];
+      groups.forEach((group) => {
+        if (group.sites && group.sites.length > 0) {
+          allSites.push(...group.sites);
+        }
+      });
+      const exportData = {
+        groups: groups.map((group) => ({
+          id: group.id,
+          name: group.name,
+          order_num: group.order_num,
+        })),
+        sites: allSites,
+        configs: configs,
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+      };
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+      const exportFileName = `导航站备份_${new Date().toISOString().slice(0, 10)}.json`;
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileName);
+      linkElement.click();
+    } catch (error) {
+      console.error('导出数据失败:', error);
+      handleError('导出数据失败');
+    }
+  };
+
+  const handleOpenImport = () => {
+    setImportFile(null);
+    setImportError(null);
+    setOpenImport(true);
+    handleMenuClose();
+  };
+
+  const handleCloseImport = () => {
+    setOpenImport(false);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const selectedFile = e.target.files[0];
+      if (selectedFile) {
+        setImportFile(selectedFile);
+        setImportError(null);
+      }
+    }
+  };
+
+  const handleImportData = async () => {
+    if (!importFile) {
+      handleError('请选择要导入的文件');
+      return;
+    }
+    try {
+      setImportLoading(true);
+      setImportError(null);
+      const fileReader = new FileReader();
+      fileReader.readAsText(importFile, 'UTF-8');
+      fileReader.onload = async (e) => {
+        try {
+          if (!e.target?.result) {
+            throw new Error('读取文件失败');
+          }
+          const importData = JSON.parse(e.target.result as string);
+          const result = await api.importData(importData);
+          if (!result.success) {
+            throw new Error(result.error || '导入失败');
+          }
+          await fetchData();
+          await fetchConfigs();
+          handleCloseImport();
+          handleError('导入成功！');
+        } catch (error) {
+          console.error('解析导入数据失败:', error);
+          handleError('解析导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+        } finally {
+          setImportLoading(false);
+        }
+      };
+      fileReader.onerror = () => {
+        handleError('读取文件失败');
+        setImportLoading(false);
+      };
+    } catch (error) {
+      console.error('导入数据失败:', error);
+      handleError('导入数据失败: ' + (error as Error).message);
+    }
   };
 
   if (isAuthChecking) {
@@ -289,280 +560,273 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
 
-      {/* 全局错误提示 */}
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={() => setSnackbarOpen(false)}>
-        <Alert severity="error" onClose={() => setSnackbarOpen(false)}>{snackbarMessage}</Alert>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity="error" variant="filled" sx={{ width: '100%' }}>
+          {snackbarMessage}
+        </Alert>
       </Snackbar>
 
-      {/* 登录弹窗 */}
-      <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}>
-        <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
-      </Dialog>
-
-      <Box sx={{ minHeight: '100vh', position: 'relative', overflow: 'hidden' }}>
-        {/* 背景图 */}
+      <Box sx={{ minHeight: '100vh', bgcolor: '#121212', color: 'text.primary', position: 'relative', overflow: 'hidden' }}>
         {configs['site.backgroundImage'] && isSecureUrl(configs['site.backgroundImage']) && (
-          <Box
-            sx={{
-              position: 'absolute',
-              inset: 0,
-              background: `url(${configs['site.backgroundImage']}) center/cover no-repeat`,
-              '&::before': {
-                content: '""',
+          <>
+            <Box
+              sx={{
                 position: 'absolute',
-                inset: 0,
-                // 根据主题设置背景蒙版颜色和透明度
-                bgcolor: darkMode ? 'rgba(0,0,0,0.85)' : 'rgba(255,255,255,0.85)',
-                opacity: 1 - Number(configs['site.backgroundOpacity'] || 0.15),
-              },
-            }}
-          />
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundImage: `url(${configs['site.backgroundImage']})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                zIndex: 0,
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  // 调整背景蒙版透明度
+                  backgroundColor: darkMode ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.3)',
+                  zIndex: 1,
+                },
+              }}
+            />
+          </>
         )}
 
-        {/* 顶部导航栏 (AppBar) */}
-        <AppBar 
-          position="sticky" 
-          elevation={0} 
-          sx={{ 
-            // 应用半透明和毛玻璃效果
-            backdropFilter: 'blur(12px)', 
-            bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-            // 确保在内容之上
-            zIndex: 100, 
-            py: 0
-          }}
-        >
-          {/* 第一行：标题和管理按钮 */}
-          <Toolbar sx={{ justifyContent: 'space-between', px: { xs: 2, sm: 3, md: 4 } }}>
-            <Typography variant="h4" fontWeight="bold">{configs['site.name']}</Typography>
-
-            <Stack direction="row" spacing={1} alignItems="center">
-              {sortMode !== SortMode.None ? (
-                <>
-                  <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSaveGroupOrder}>
-                    保存
-                  </Button>
-                  <Button variant="outlined" size="small" startIcon={<CancelIcon />} onClick={() => setSortMode(SortMode.None)}>
-                    取消
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {viewMode === 'edit' && (
-                    <>
-                      <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={() => setOpenAddGroup(true)}>
-                        新分组
-                      </Button>
-                      <IconButton onClick={e => setMenuAnchorEl(e.currentTarget)}>
-                        <MenuIcon />
-                      </IconButton>
-                    </>
-                  )}
-                  {viewMode === 'readonly' && (
-                    <Button variant="contained" size="small" onClick={() => setIsAuthRequired(true)}>
-                      登录管理
-                    </Button>
-                  )}
-                </>
-              )}
-              <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
-            </Stack>
-          </Toolbar>
+        {/* 顶部固定栏：标题和管理按钮 */}
+        <AppBar position="sticky" color="transparent" elevation={0} sx={{ 
+            backdropFilter: 'blur(16px)', 
+            // 基础 AppBar 使用半透明背景
+            background: (t) => t.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+            zIndex: 100,
+            pt: 1,
+          }}>
+          <Container maxWidth="xl" sx={{ py: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h4" fontWeight="bold" sx={{ color: 'text.primary' }}>
+                  {configs['site.name']}
+                </Typography>
+                <Stack direction="row" spacing={1}>
+                  {isAuthenticated && <IconButton onClick={handleOpenConfig} color="inherit"><SettingsIcon /></IconButton>}
+                  <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
+                </Stack>
+              </Box>
+          </Container>
           
-          {/* 第二行：主菜单 Tabs (已居中) */}
-          {groups.length > 0 && sortMode === SortMode.None && (
-            <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0, md: 0 } }}>
-                <Tabs
-                  value={selectedTab || false}
-                  onChange={(_, v) => setSelectedTab(v as number)}
-                  variant="scrollable"
-                  scrollButtons="auto"
-                  allowScrollButtonsMobile
-                  // 💡 关键修改：使 Tabs 居中
-                  centered 
-                  sx={{ 
-                    '.MuiTabs-indicator': { height: 3, borderRadius: 1 },
-                    px: { xs: 1, sm: 2, md: 3 } 
-                  }}
-                >
-                  {groups.map(g => (
-                    <Tab 
-                      key={g.id} 
-                      label={g.name} 
-                      value={g.id} 
-                      sx={{ bgcolor: 'transparent' }}
-                    />
-                  ))}
-                </Tabs>
-            </Container>
-          )}
-
+          {/* 菜单 Tabs (独立一行，居中，圆角，玻璃效果) */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 1, my: 1, mx: 'auto', width: 'fit-content' }}>
+            <Paper 
+              elevation={4} 
+              sx={{ 
+                // 确保 Tab 容器有玻璃效果和圆角
+                backdropFilter: 'blur(16px)', 
+                background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                borderRadius: 4, 
+                px: 1, 
+                py: 0.5,
+              }}
+            >
+              <Tabs 
+                value={selectedTab || false} 
+                onChange={(_, v) => setSelectedTab(v as number)} 
+                variant="scrollable" 
+                scrollButtons="auto" 
+                allowScrollButtonsMobile 
+                // 💡 关键修改：Tabs 居中
+                centered 
+                sx={{
+                  // 移除多余的边距，Tabs 组件已经放在居中的 Box 里
+                  '& .MuiTab-root': { 
+                    fontWeight: 800, 
+                    // 自动适应暗色/亮色模式的文本颜色
+                    color: (t) => t.palette.mode === 'dark' ? '#ffffff' : t.palette.text.primary, 
+                    fontSize: '1.0rem', 
+                    minWidth: 80, 
+                  },
+                  '& .MuiTabs-indicator': { 
+                    height: 3, 
+                    borderRadius: 1, 
+                    // 霓虹色指示器
+                    backgroundColor: '#00ff9d' 
+                  },
+                }}
+              >
+                {groups.map(g => <Tab key={g.id} label={g.name} value={g.id} />)}
+              </Tabs>
+            </Paper>
+          </Box>
         </AppBar>
 
-        <Container maxWidth="xl" sx={{ py: 3, pt: { xs: 3, sm: 3, md: 3 }, position: 'relative', zIndex: 2 }}>
+        {/* 主要内容区域 */}
+        <Container maxWidth="xl" sx={{ py: 3, position: 'relative', zIndex: 2 }}>
+          
           {/* 搜索框 */}
           {configs['site.searchBoxEnabled'] === 'true' && (viewMode === 'edit' || configs['site.searchBoxGuestEnabled'] === 'true') && (
-            <Box sx={{ mb: 4, maxWidth: 600, mx: 'auto', mt: 2 }}>
-              <SearchBox groups={groups} sites={groups.flatMap(g => g.sites || [])} />
+            <Box sx={{ mb: 4, maxWidth: 600, mx: 'auto' }}>
+              <SearchBox
+                groups={groups.map(g => ({
+                  id: g.id,
+                  name: g.name,
+                  order_num: g.order_num,
+                  is_public: g.is_public,
+                  created_at: g.created_at,
+                  updated_at: g.updated_at,
+                }))}
+                sites={groups.flatMap(g => g.sites || [])}
+              />
             </Box>
           )}
 
-          {/* 主内容 */}
           {loading ? (
-            <Box sx={{ display: 'grid', placeItems: 'center', minHeight: 400 }}>
-              <CircularProgress />
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
+              <CircularProgress size={60} thickness={4} />
             </Box>
           ) : (
-            groups
-              // 只筛选当前选中的 Tab 对应的分组
-              .filter(g => g.id === selectedTab)
-              .map(group => (
-                <Box key={group.id} id={`group-${group.id}`}>
-                  {/* 💡 隐藏 Group 标题已通过 GroupCard 组件内部修改实现 */}
-                  <GroupCard
-                    group={group}
-                    sortMode={sortMode === SortMode.SiteSort && currentSortingGroupId === group.id ? 'SiteSort' : 'None'}
-                    currentSortingGroupId={currentSortingGroupId}
-                    viewMode={viewMode}
-                    onUpdate={async (site) => { if (site.id) await api.updateSite(site.id, site); await fetchData(); }}
-                    onDelete={async (id) => { await api.deleteSite(id); await fetchData(); }}
-                    onSaveSiteOrder={async (gid, sites) => {
-                      const orders = sites.map((s, i) => ({ id: s.id!, order_num: i }));
-                      await api.updateSiteOrder(orders);
-                      await fetchData();
-                      setSortMode(SortMode.None);
-                    }}
-                    onStartSiteSort={() => {
-                      setSortMode(SortMode.SiteSort);
-                      setCurrentSortingGroupId(group.id!);
-                    }}
-                    onAddSite={(gid) => {
-                      setNewSite({ ...newSite, group_id: gid, order_num: (group.sites?.length || 0) + 1 });
-                      setOpenAddSite(true);
-                    }}
-                    onUpdateGroup={async (g) => { if (g.id) await api.updateGroup(g.id, g); await fetchData(); }}
-                    onDeleteGroup={async (id) => { await api.deleteGroup(id); await fetchData(); }}
-                    configs={configs}
-                  />
-                </Box>
-              ))
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', 
+              gap: 3.5, 
+              pb: 10 
+            }}>
+              {/* 💡 渲染当前选中分组下的站点卡片 */}
+              {currentGroup?.sites?.map((site: Site) => (
+                <Paper
+                  key={site.id}
+                  component="a"
+                  href={site.url}
+                  target="_blank"
+                  rel="noopener"
+                  sx={{
+                    p: 2.5,
+                    borderRadius: 4,
+                    // 调整卡片背景使其更透明
+                    bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                    transition: 'all 0.3s ease',
+                    
+                    // 💡 关键修改：图标上置，名称居中
+                    display: 'flex',
+                    flexDirection: 'column', 
+                    alignItems: 'center', // 站点卡片内容居中
+                    textAlign: 'center', // 文本居中
+                    
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    '&:hover': {
+                      transform: 'translateY(-8px) scale(1.03)',
+                      bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                      boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+                    },
+                  }}
+                >
+                  {/* 网站图标 */}
+                  <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
+                    <img 
+                      src={site.icon || `https://api.iowen.cn/favicon/${extractDomain(site.url)}`} 
+                      alt={site.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onError={e => {
+                        e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${site.name.charAt(0)}</text></svg>`;
+                      }}
+                    />
+                  </Box>
+                  
+                  {/* 网站名称 */}
+                  <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ color: 'text.primary', maxWidth: '100%' }}>
+                    {site.name}
+                  </Typography>
+                  
+                  {/* 网站描述 - 💡 关键修改：隐藏 "暂无描述" 或空描述 */}
+                  {site.description && site.description !== '暂无描述' && (
+                    <Typography variant="caption" noWrap sx={{ opacity: 0.7, fontSize: '0.75rem', color: 'text.secondary', maxWidth: '100%' }}>
+                      {site.description}
+                    </Typography>
+                  )}
+                </Paper>
+              ))}
+            </Box>
           )}
+
+          {!isAuthenticated && (
+            <Box sx={{ position: 'fixed', left: 24, bottom: 24, zIndex: 10 }}>
+              <Button
+                variant="contained"
+                startIcon={<LoginIcon />}
+                onClick={() => setIsAuthRequired(true)}
+                sx={{
+                  bgcolor: 'rgba(0,255,150,0.15)',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(0,255,150,0.3)',
+                  color: '#00ff9d',
+                  fontWeight: 'bold',
+                  px: 3,
+                  py: 1.5,
+                  borderRadius: 4,
+                  '&:hover': { bgcolor: 'rgba(0,255,150,0.25)', transform: 'translateY(-2px)' },
+                }}
+              >
+                管理员登录
+              </Button>
+            </Box>
+          )}
+
+          <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
+            <Paper
+              component="a"
+              href="https://github.com/adamj001/cloudflare-navi"
+              target="_blank"
+              rel="noopener"
+              elevation={2}
+              sx={{
+                p: 1.5,
+                borderRadius: 10,
+                bgcolor: 'rgba(255,255,255,0.08)',
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'text.secondary',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(255,255,255,0.15)',
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4,
+                },
+                textDecoration: 'none',
+              }}
+            >
+              <GitHubIcon />
+            </Paper>
+          </Box>
         </Container>
 
-        {/* 右上角菜单 */}
-        <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={() => setMenuAnchorEl(null)}>
-          <MenuItem onClick={() => { setSortMode(SortMode.GroupSort); setMenuAnchorEl(null); }}>
-            <ListItemIcon><SortIcon /></ListItemIcon>编辑分组排序
-          </MenuItem>
-          <MenuItem onClick={() => { setOpenConfig(true); setMenuAnchorEl(null); }}>
-            <ListItemIcon><SettingsIcon /></ListItemIcon>网站设置
-          </MenuItem>
-          <Divider />
-          <MenuItem onClick={() => { handleExportData(); setMenuAnchorEl(null); }}>
-            <ListItemIcon><FileDownloadIcon /></ListItemIcon>导出数据
-          </MenuItem>
-          <MenuItem onClick={() => { setOpenImport(true); setMenuAnchorEl(null); }}>
-            <ListItemIcon><FileUploadIcon /></ListItemIcon>导入数据
-          </MenuItem>
-          {isAuthenticated && (
-            <>
-              <Divider />
-              {/* 💡 退出登录：图标已移除，但保留空的 ListItemIcon 保持对齐 */}
-              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                <ListItemIcon sx={{ color: 'error.main' }}></ListItemIcon>
-                <ListItemText>退出登录</ListItemText>
-              </MenuItem>
-            </>
-          )}
-        </Menu>
-
-        {/* 新增分组对话框 */}
-        <Dialog open={openAddGroup} onClose={() => setOpenAddGroup(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>新增分组 <IconButton onClick={() => setOpenAddGroup(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
-          <DialogContent>
-            <TextField autoFocus fullWidth label="分组名称" value={newGroup.name || ''} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} sx={{ mt: 2 }} />
-            <FormControlLabel control={<Switch checked={newGroup.is_public === 1} onChange={e => setNewGroup({ ...newGroup, is_public: e.target.checked ? 1 : 0 })} />} label="公开分组" />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenAddGroup(false)}>取消</Button>
-            <Button variant="contained" onClick={handleCreateGroup}>创建</Button>
-          </DialogActions>
+        <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}>
+          <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
         </Dialog>
 
-        {/* 新增站点对话框（保持你原来的完整逻辑） */}
-        <Dialog open={openAddSite} onClose={() => setOpenAddSite(false)} maxWidth="md" fullWidth>
-          <DialogTitle>新增站点 <IconButton onClick={() => setOpenAddSite(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
+        <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
+          <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              <TextField label="站点名称" value={newSite.name || ''} onChange={e => setNewSite({ ...newSite, name: e.target.value })} fullWidth />
-              <TextField label="站点URL" value={newSite.url || ''} onChange={e => setNewSite({ ...newSite, url: e.target.value })} fullWidth />
-              <TextField
-                label="图标URL（可留空自动获取）"
-                value={newSite.icon || ''}
-                onChange={e => setNewSite({ ...newSite, icon: e.target.value })}
-                fullWidth
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => {
-                        if (newSite.url) {
-                          const domain = extractDomain(newSite.url);
-                          if (domain) {
-                            const iconUrl = (configs['site.iconApi'] || 'https://www.faviconextractor.com/favicon/{domain}?larger=true').replace('{domain}', domain);
-                            setNewSite({ ...newSite, icon: iconUrl });
-                          }
-                        }
-                      }}>
-                        <AutoFixHighIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-              <TextField label="描述" value={newSite.description || ''} onChange={e => setNewSite({ ...newSite, description: e.target.value })} fullWidth />
-              <FormControlLabel control={<Switch checked={newSite.is_public === 1} onChange={e => setNewSite({ ...newSite, is_public: e.target.checked ? 1 : 0 })} />} label="公开站点" />
+            <Stack spacing={2}>
+              <TextField label="网站标题" value={tempConfigs['site.title']} onChange={handleConfigInputChange} name="site.title" fullWidth />
+              <TextField label="网站名称" value={tempConfigs['site.name']} onChange={handleConfigInputChange} name="site.name" fullWidth />
+              <TextField label="背景图片URL" value={tempConfigs['site.backgroundImage']} onChange={handleConfigInputChange} name="site.backgroundImage" fullWidth />
+              <Slider value={Number(tempConfigs['site.backgroundOpacity'])} onChange={(_, v) => setTempConfigs({...tempConfigs, 'site.backgroundOpacity': String(v)})} min={0} max={1} step={0.05} />
+              <TextField label="自定义CSS" value={tempConfigs['site.customCss']} onChange={handleConfigInputChange} name="site.customCss" multiline rows={6} fullWidth />
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenAddSite(false)}>取消</Button>
-            <Button variant="contained" onClick={handleCreateSite}>创建</Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* 网站设置对话框（保持完整） */}
-        <Dialog open={openConfig} onClose={() => setOpenConfig(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>网站设置 <IconButton onClick={() => setOpenConfig(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
-          <DialogContent>
-            <Stack spacing={2} sx={{ mt: 2 }}>
-              <TextField label="网站标题" name="site.title" value={tempConfigs['site.title']} onChange={e => setTempConfigs({ ...tempConfigs, [e.target.name]: e.target.value })} />
-              <TextField label="网站名称" name="site.name" value={tempConfigs['site.name']} onChange={e => setTempConfigs({ ...tempConfigs, [e.target.name]: e.target.value })} />
-              <TextField label="背景图片URL" name="site.backgroundImage" value={tempConfigs['site.backgroundImage']} onChange={e => setTempConfigs({ ...tempConfigs, [e.target.name]: e.target.value })} />
-              <Box>
-                <Typography>背景透明度: {Number(tempConfigs['site.backgroundOpacity']).toFixed(2)}</Typography>
-                <Slider
-                  value={Number(tempConfigs['site.backgroundOpacity'])}
-                  onChange={(_, v) => setTempConfigs({ ...tempConfigs, 'site.backgroundOpacity': String(v) })}
-                  step={0.01}
-                  min={0}
-                  max={1}
-                />
-              </Box>
-              <TextField label="自定义CSS" name="site.customCss" value={tempConfigs['site.customCss']} onChange={e => setTempConfigs({ ...tempConfigs, [e.target.name]: e.target.value })} multiline rows={6} />
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenConfig(false)}>取消</Button>
+            <Button onClick={handleCloseConfig}>取消</Button>
             <Button variant="contained" onClick={handleSaveConfig}>保存</Button>
           </DialogActions>
         </Dialog>
-
-        {/* GitHub 角标 */}
-        <Box sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 10 }}>
-          <Paper component="a" href="https://github.com/zqq-nuli/Navihive" target="_blank" elevation={3} sx={{ p: 1.5, borderRadius: 10, bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}>
-            <GitHubIcon />
-          </Paper>
-        </Box>
       </Box>
     </ThemeProvider>
   );
 }
+
+export default App;
