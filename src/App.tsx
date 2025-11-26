@@ -55,7 +55,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-// import LogoutIcon from '@mui.icons-material/Logout';
+// import LogoutIcon from '@mui/icons-material/Logout'; // 💡 已删除导入
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
@@ -369,7 +369,7 @@ export default function App() {
             </Stack>
           </Toolbar>
           
-          {/* 第二行：主菜单 Tabs */}
+          {/* 第二行：主菜单 Tabs (已居中) */}
           {groups.length > 0 && sortMode === SortMode.None && (
             <Container maxWidth="xl" sx={{ px: { xs: 0, sm: 0, md: 0 } }}>
                 <Tabs
@@ -378,10 +378,10 @@ export default function App() {
                   variant="scrollable"
                   scrollButtons="auto"
                   allowScrollButtonsMobile
-                  // 这里的 sx 调整了 Tab 栏的边距和指示器样式
+                  // 💡 关键修改：使 Tabs 居中
+                  centered 
                   sx={{ 
                     '.MuiTabs-indicator': { height: 3, borderRadius: 1 },
-                    // 使 Tabs 充满容器宽度，同时保留左右一定的 padding
                     px: { xs: 1, sm: 2, md: 3 } 
                   }}
                 >
@@ -390,7 +390,6 @@ export default function App() {
                       key={g.id} 
                       label={g.name} 
                       value={g.id} 
-                      // 确保 Tab 本身没有背景色，继承 AppBar 的半透明背景
                       sx={{ bgcolor: 'transparent' }}
                     />
                   ))}
@@ -419,6 +418,7 @@ export default function App() {
               .filter(g => g.id === selectedTab)
               .map(group => (
                 <Box key={group.id} id={`group-${group.id}`}>
+                  {/* 💡 隐藏 Group 标题已通过 GroupCard 组件内部修改实现 */}
                   <GroupCard
                     group={group}
                     sortMode={sortMode === SortMode.SiteSort && currentSortingGroupId === group.id ? 'SiteSort' : 'None'}
@@ -467,12 +467,11 @@ export default function App() {
           {isAuthenticated && (
             <>
               <Divider />
-              // 推荐修改
-<MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-    <ListItemIcon sx={{ color: 'error.main' }}></ListItemIcon> 
-    <ListItemText>退出登录</ListItemText>
-</MenuItem>
-
+              {/* 💡 退出登录：图标已移除，但保留空的 ListItemIcon 保持对齐 */}
+              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                <ListItemIcon sx={{ color: 'error.main' }}></ListItemIcon>
+                <ListItemText>退出登录</ListItemText>
+              </MenuItem>
             </>
           )}
         </Menu>
