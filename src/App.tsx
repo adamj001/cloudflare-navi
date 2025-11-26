@@ -1,5 +1,4 @@
 // src/App.tsx —— 2025 年终极版顶部 Tabs 导航站（正式版）
-
 import { useState, useEffect, useMemo } from 'react';
 import { NavigationClient } from './API/client';
 import { MockNavigationClient } from './API/mock';
@@ -56,7 +55,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import LogoutIcon from '@mui.icons-material/Logout';
+// import LogoutIcon from '@mui.icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
@@ -468,9 +467,12 @@ export default function App() {
           {isAuthenticated && (
             <>
               <Divider />
-              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-                <ListItemIcon sx={{ color: 'error.main' }}><LogoutIcon /></ListItemIcon>退出登录
-              </MenuItem>
+              // 推荐修改
+<MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+    <ListItemIcon sx={{ color: 'error.main' }}></ListItemIcon> 
+    <ListItemText>退出登录</ListItemText>
+</MenuItem>
+
             </>
           )}
         </Menu>
