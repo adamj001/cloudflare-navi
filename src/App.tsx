@@ -43,6 +43,8 @@ import {
   Tab,
   Toolbar,
 } from '@mui/material';
+
+// 💡 修复：确保所有图标都正确地从根目录导入，避免编译错误
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -79,7 +81,6 @@ const DEFAULT_CONFIGS = {
   'site.customCss': '',
   'site.backgroundImage': '',
   'site.backgroundOpacity': '0.15',
-  // 使用 {domain} 占位符的图标 API
   'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true', 
   'site.searchBoxEnabled': 'true',
   'site.searchBoxGuestEnabled': 'true',
@@ -193,6 +194,8 @@ function App() {
       await Promise.all([fetchData(), fetchConfigs()]);
     } catch (error) {
       console.error('认证检查失败:', error);
+      // 💡 修复：确保参数是 string 类型
+      handleError('认证检查失败: ' + (error instanceof Error ? error.message : '未知错误'));
       setViewMode('readonly');
       await Promise.all([fetchData(), fetchConfigs()]);
     } finally {
@@ -238,6 +241,8 @@ function App() {
       setTempConfigs(mergedConfigs);
     } catch (error) {
       console.error('加载配置失败:', error);
+      // 💡 修复：确保参数是 string 类型
+      handleError('加载配置失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -289,6 +294,7 @@ function App() {
       }
     } catch (error) {
       console.error('加载数据失败:', error);
+      // 💡 修复：确保参数是 string 类型
       handleError('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
     } finally {
       setLoading(false);
@@ -303,7 +309,8 @@ function App() {
       }
     } catch (error) {
       console.error('更新站点失败:', error);
-      handleError('更新站点失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('更新站点失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -313,7 +320,8 @@ function App() {
       await fetchData();
     } catch (error) {
       console.error('删除站点失败:', error);
-      handleError('删除站点失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('删除站点失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -325,7 +333,8 @@ function App() {
       }
     } catch (error) {
       console.error('更新分组失败:', error);
-      handleError('更新分组失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('更新分组失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -337,7 +346,8 @@ function App() {
             handleError('分组已删除');
         } catch (error) {
             console.error('删除分组失败:', error);
-            handleError('删除分组失败: ' + (error as Error).message);
+            // 💡 修复：确保参数是 string 类型
+            handleError('删除分组失败: ' + (error instanceof Error ? error.message : '未知错误'));
         }
     }
   };
@@ -355,7 +365,8 @@ function App() {
       setCurrentSortingGroupId(null);
     } catch (error) {
       console.error('更新站点排序失败:', error);
-      handleError('更新站点排序失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('更新站点排序失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -396,7 +407,8 @@ function App() {
       handleCloseAddGroup();
     } catch (error) {
       console.error('创建分组失败:', error);
-      handleError('创建分组失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('创建分组失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -429,7 +441,7 @@ function App() {
         [name]: value,
       };
 
-      // 💡 完善：自动填充图标逻辑
+      // 💡 修复/完善：自动填充图标逻辑
       if (name === 'url' && value.startsWith('http')) {
         const domain = extractDomain(value);
         const iconApi = configs['site.iconApi'];
@@ -456,7 +468,8 @@ function App() {
       handleCloseAddSite();
     } catch (error) {
       console.error('创建站点失败:', error);
-      handleError('创建站点失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('创建站点失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -487,7 +500,8 @@ function App() {
       handleCloseConfig();
     } catch (error) {
       console.error('保存配置失败:', error);
-      handleError('保存配置失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('保存配置失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -570,6 +584,7 @@ function App() {
           handleError('导入成功！');
         } catch (error) {
           console.error('解析导入数据失败:', error);
+          // 💡 修复：确保参数是 string 类型
           handleError('解析导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
         } finally {
           setImportLoading(false);
@@ -581,7 +596,8 @@ function App() {
       };
     } catch (error) {
       console.error('导入数据失败:', error);
-      handleError('导入数据失败: ' + (error as Error).message);
+      // 💡 修复：确保参数是 string 类型
+      handleError('导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
 
@@ -766,7 +782,6 @@ function App() {
           ) : (
             <Box sx={{ 
               display: 'grid', 
-              // 💡 保持：固定 6 列布局
               gridTemplateColumns: 'repeat(6, 1fr)', 
               gap: 3.5, 
               pb: 10 
@@ -1003,7 +1018,7 @@ function App() {
                 <TextField autoFocus fullWidth label="站点名称" value={newSite.name || ''} name="name" onChange={handleSiteInputChange} />
                 <TextField fullWidth label="URL" value={newSite.url || ''} name="url" onChange={handleSiteInputChange} />
                 
-                {/* 💡 完善：增加了 HelperText 来显示自动生成的图标链接 */}
+                {/* 自动搜索图标的输入框 */}
                 <TextField 
                   fullWidth 
                   label="图标URL (可选)" 
