@@ -44,7 +44,7 @@ import {
   Toolbar,
 } from '@mui/material';
 
-// 💡 修复：确保所有图标都正确地从根目录导入，避免编译错误
+// 💡 修复 TS2307: 确保所有图标都正确地从根目录导入
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -194,7 +194,7 @@ function App() {
       await Promise.all([fetchData(), fetchConfigs()]);
     } catch (error) {
       console.error('认证检查失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('认证检查失败: ' + (error instanceof Error ? error.message : '未知错误'));
       setViewMode('readonly');
       await Promise.all([fetchData(), fetchConfigs()]);
@@ -241,7 +241,7 @@ function App() {
       setTempConfigs(mergedConfigs);
     } catch (error) {
       console.error('加载配置失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('加载配置失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -294,7 +294,7 @@ function App() {
       }
     } catch (error) {
       console.error('加载数据失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
     } finally {
       setLoading(false);
@@ -309,7 +309,7 @@ function App() {
       }
     } catch (error) {
       console.error('更新站点失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('更新站点失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -320,7 +320,7 @@ function App() {
       await fetchData();
     } catch (error) {
       console.error('删除站点失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('删除站点失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -333,7 +333,7 @@ function App() {
       }
     } catch (error) {
       console.error('更新分组失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('更新分组失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -346,7 +346,7 @@ function App() {
             handleError('分组已删除');
         } catch (error) {
             console.error('删除分组失败:', error);
-            // 💡 修复：确保参数是 string 类型
+            // 💡 修复 TS2769: 确保参数是 string 类型
             handleError('删除分组失败: ' + (error instanceof Error ? error.message : '未知错误'));
         }
     }
@@ -365,7 +365,7 @@ function App() {
       setCurrentSortingGroupId(null);
     } catch (error) {
       console.error('更新站点排序失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('更新站点排序失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -407,7 +407,7 @@ function App() {
       handleCloseAddGroup();
     } catch (error) {
       console.error('创建分组失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('创建分组失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -441,7 +441,7 @@ function App() {
         [name]: value,
       };
 
-      // 💡 修复/完善：自动填充图标逻辑
+      // 自动填充图标逻辑
       if (name === 'url' && value.startsWith('http')) {
         const domain = extractDomain(value);
         const iconApi = configs['site.iconApi'];
@@ -468,7 +468,7 @@ function App() {
       handleCloseAddSite();
     } catch (error) {
       console.error('创建站点失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('创建站点失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -500,7 +500,7 @@ function App() {
       handleCloseConfig();
     } catch (error) {
       console.error('保存配置失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('保存配置失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -584,7 +584,7 @@ function App() {
           handleError('导入成功！');
         } catch (error) {
           console.error('解析导入数据失败:', error);
-          // 💡 修复：确保参数是 string 类型
+          // 💡 修复 TS2769: 确保参数是 string 类型
           handleError('解析导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
         } finally {
           setImportLoading(false);
@@ -596,7 +596,7 @@ function App() {
       };
     } catch (error) {
       console.error('导入数据失败:', error);
-      // 💡 修复：确保参数是 string 类型
+      // 💡 修复 TS2769: 确保参数是 string 类型
       handleError('导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
     }
   };
@@ -864,8 +864,8 @@ function App() {
                     {site.name}
                   </Typography>
                   
-                  {/* 网站描述 */}
-                  {site.description && site.description !== '暂无描述' && (
+                  {/* 💡 修复：如果 description 为空字符串或 null，则不显示任何内容 */}
+                  {site.description && (
                     <Typography variant="caption" noWrap sx={{ opacity: 0.7, fontSize: '0.75rem', color: 'text.secondary', maxWidth: '100%' }}>
                       {site.description}
                     </Typography>
@@ -880,7 +880,7 @@ function App() {
             anchorEl={menuAnchorEl} 
             open={openMenu} 
             onClose={handleMenuClose}
-            // 💡 修复：确保菜单在小屏幕上有最大高度和可滚动性
+            // 修复：确保菜单在小屏幕上有最大高度和可滚动性
             PaperProps={{
               style: {
                 maxHeight: '80vh', 
