@@ -81,7 +81,7 @@ const DEFAULT_CONFIGS = {
   'site.backgroundImage': '',
   'site.backgroundOpacity': '0.15',
  // 原来可能是这个
-'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true',
+// 'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true',
 // 改成这个（第 57 行左右）
 'site.iconApi': 'https://www.google.com/s2/favicons?domain={domain}&sz=128',
   'site.searchBoxEnabled': 'true',
