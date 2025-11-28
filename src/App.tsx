@@ -875,9 +875,21 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
                       src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=128`}
                       alt={site.name}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                      onError={e => {
-                        e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23333"/><text y="60" font-size="48" fill="%23fff" text-anchor="middle" x="50" font-weight="bold">${site.name.charAt(0).toUpperCase()}</text></svg>`;
-                      }}
+                     onError={(e) => {
+  const target = e.currentTarget;
+  const firstLetter = site.name.charAt(0).toUpperCase();
+  // 生成一个超好看的大写字母兜底图（磨砂玻璃风）
+  target.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:%23404040;stop-opacity:1" />
+        <stop offset="100%" style="stop-color:%23282828;stop-opacity:1" />
+      </linearGradient>
+    </defs>
+    <rect width="100" height="100" fill="url(%23grad)" rx="16"/>
+    <text x="50" y="58" font-family="Arial,Helvetica,sans-serif" font-size="48" font-weight="bold" fill="%23ffffff" text-anchor="middle" dominant-baseline="middle">${firstLetter}</text>
+  </svg>`;
+}}
                     />
                   </Box>
 
