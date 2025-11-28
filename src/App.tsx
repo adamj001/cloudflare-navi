@@ -788,102 +788,98 @@ function App() {
               pb: 10 
             }}>
               {/* 渲染当前选中分组下的站点卡片，并应用了垂直居中布局和隐藏描述 */}
-              {currentGroup?.sites?.map((site: Site) => (
+                            {currentGroup?.sites?.map((site: Site) => (
                 <Paper
                   key={site.id}
-                  // 💡 修改：这里 component="a" 保持跳转，但内部的删除按钮会阻止跳转
-                  component="a"
-                  href={site.url}
-                  target="_blank"
-                  rel="noopener"
+                  component={isAuthenticated ? 'div' : 'a'}
+                  href={!isAuthenticated ? site.url : undefined}
+                  target={!isAuthenticated ? '_blank' : undefined}
+                  rel={!isAuthenticated ? 'noopener' : undefined}
+                  onClick={() => {
+                    if (isAuthenticated) {
+                      setEditingSite(site);
+                      setEditSiteOpen(true);
+                    }
+                  }}
                   sx={{
                     p: 2.5,
                     borderRadius: 4,
-                    bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                    bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255,255,255,0.12)',
                     boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                     transition: 'all 0.3s ease',
-                    
                     display: 'flex',
-                    flexDirection: 'column', 
-                    alignItems: 'center', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     textAlign: 'center',
-                    position: 'relative', // 💡 新增：使内部删除按钮能定位
-                    
+                    position: 'relative',
+                    cursor: isAuthenticated ? 'pointer' : 'default',
                     textDecoration: 'none',
                     color: 'inherit',
                     '&:hover': {
                       transform: 'translateY(-8px) scale(1.03)',
-                      bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
-                      boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+                      bgcolor: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)',
+                      ...(isAuthenticated && { border: '2px solid #00ff9d' }),
                     },
                   }}
                 >
-                 {/* 管理员专属：删除 + 编辑双图标 */}
-{isAuthenticated && (
-  <Box sx={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0.5, zIndex: 10 }}>
-    {/* 编辑小笔 */}
-    <IconButton
-      size="small"
-      onClick={(e) => {
-        e.stopPropagation();        // 阻止触发卡片点击
-        setEditingSite(site);
-        setEditSiteOpen(true);
-      }}
-      sx={{
-        bgcolor: 'rgba(0,255,157,0.15)',
-        color: '#00ff9d',
-        '&:hover': { bgcolor: 'rgba(0,255,157,0.3)' },
-      }}
-    >
-      <EditIcon fontSize="small" />
-    </IconButton>
-
-    {/* 删除垃圾桶 */}
-    <IconButton
-      size="small"
-      onClick={(e) => {
-        e.stopPropagation();
-        if (window.confirm(`确定删除 "${site.name}" 吗？`)) {
-          handleSiteDelete(site.id!);
-        }
-      }}
-      sx={{
-        bgcolor: 'rgba(255,0,0,0.15)',
-        color: '#ff4444',
-        '&:hover': { bgcolor: 'rgba(255,0,0,0.3)' },
-      }}
-    >
-      <DeleteIcon fontSize="small" />
-    </IconButton>
-  </Box>
-)}
+                  {/* 管理员专属：编辑笔 + 删除垃圾桶 */}
+                  {isAuthenticated && (
+                    <Box sx={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0.5, zIndex: 10 }}>
+                      {/* 编辑小笔 */}
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingSite(site);
+                          setEditSiteOpen(true);
+                        }}
+                        sx={{
+                          bgcolor: 'rgba(0,255,157,0.15)',
+                          color: '#00ff9d',
+                          '&:hover': { bgcolor: 'rgba(0,255,157,0.3)' },
+                        }}
                       >
-                          <CloseIcon fontSize="small" />
+                        <EditIcon fontSize="small" />
                       </IconButton>
+
+                      {/* 删除垃圾桶 */}
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`确定删除 "${site.name}" 吗？`)) {
+                            handleSiteDelete(site.id!);
+                          }
+                        }}
+                        sx={{
+                          bgcolor: 'rgba(255,0,0,0.15)',
+                          color: '#ff4444',
+                          '&:hover': { bgcolor: 'rgba(255,0,0,0.3)' },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   )}
-                  
-                  {/* 网站图标 */}
+
+                  {/* 图标 */}
                   <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
-                    <img 
-                      src={site.icon || `https://api.iowen.cn/favicon/${extractDomain(site.url)}`} 
+                    <img
+                      src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=128`}
                       alt={site.name}
                       style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                     //  onError={e => {
-                     //   e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23666"/><text y="55" font-size="50" fill="%23fff" text-anchor="middle" x="50">${site.name.charAt(0)}</text></svg>`;
-                    onError={e => {
-e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23333"/><text y="60" font-size="48" fill="%23fff" text-anchor="middle" x="50" font-weight="bold">${site.name.charAt(0).toUpperCase()}</text></svg>`;
-}}
+                      onError={e => {
+                        e.currentTarget.src = `data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23333"/><text y="60" font-size="48" fill="%23fff" text-anchor="middle" x="50" font-weight="bold">${site.name.charAt(0).toUpperCase()}</text></svg>`;
+                      }}
                     />
                   </Box>
-                  
-                  {/* 网站名称 */}
-                  <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ color: 'text.primary', maxWidth: '100%' }}>
+
+                  <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: '100%' }}>
                     {site.name}
                   </Typography>
-                  
-                  {/* 网站描述 - 只有非空且不为 '暂无描述' 时才显示 */}
+
                   {site.description && site.description !== '暂无描述' && (
                     <Typography variant="caption" noWrap sx={{ opacity: 0.7, fontSize: '0.75rem', color: 'text.secondary', maxWidth: '100%' }}>
                       {site.description}
