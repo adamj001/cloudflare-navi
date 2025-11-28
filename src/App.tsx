@@ -124,7 +124,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
-const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   type ViewMode = 'readonly' | 'edit';
   const [viewMode, setViewMode] = useState<ViewMode>('readonly');
