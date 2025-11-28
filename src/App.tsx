@@ -124,7 +124,13 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+const [isAuthenticated, setIsAuthenticated] = useState(false);
+// ... 其他 state ...
 
+// ← 在这里加这两行 ↓
+const [editSiteOpen, setEditSiteOpen] = useState(false);
+const [editingSite, setEditingSite] = useState<Site | null>(null);
+// ↑ 加完就行
   type ViewMode = 'readonly' | 'edit';
   const [viewMode, setViewMode] = useState<ViewMode>('readonly');
 
