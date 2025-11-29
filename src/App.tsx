@@ -876,29 +876,31 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
   alt={site.name}
   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
 onError={(e) => {
-  const name = site.name || '?'
-  const letter = name.trim().charAt(0).toUpperCase() || '?'
-  const bgColor = darkMode ? '#1e1e1e' : '#f5f5f5'
-  const textColor = darkMode ? '#ffffff' : '#000000'
-
-  e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-      <rect width="100" height="100" rx="20" fill="${bgColor}"/>
-      <text 
-        x="50" y="50" 
-        font-family="Arial,Helvetica,sans-serif" 
-        font-size="52" 
-        font-weight="bold" 
-        fill="${textColor}" 
-        text-anchor="middle" 
-        dominant-baseline="central">
-        ${letter}
-      </text>
-    </svg>
-  `)}`
+    // 1. 获取站点名称的首字母并大写
+    const name = site.name || '?';
+    const letter = name.trim().charAt(0).toUpperCase() || '?';
+    
+    // 2. 根据当前主题设置颜色
+    // 注意：这里的 theme.palette 假设在 App 组件作用域内是可访问的。
+    const bgColor = theme.palette.mode === 'dark' ? '#333333' : '#e0e0e0'; 
+    const textColor = theme.palette.mode === 'dark' ? '#ffffff' : '#424242'; 
+    
+    // 3. 生成 SVG Data URL
+    e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+            <rect width="100" height="100" fill="${bgColor}"/>
+            <text x="50" y="55" font-family="Arial,Helvetica,sans-serif" font-size="50" font-weight="bold" fill="${textColor}" text-anchor="middle" dominant-baseline="central">
+                ${letter}
+            </text>
+        </svg>
+    `)}`;
+    
+    // 💡 修复 TS2551: 强制转换为 HTMLImageElement 访问 DOM 属性，防止无限循环
+    (e.currentTarget as HTMLImageElement).onerror = null;
 }}
-/>
-                  </Box>
+
+  />
+</Box>
 
                   <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: '100%' }}>
                     {site.name}
