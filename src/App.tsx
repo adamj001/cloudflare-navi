@@ -83,7 +83,7 @@ const DEFAULT_CONFIGS = {
  // 原来可能是这个
 // 'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true',
 // 改成这个（第 57 行左右）
-'site.iconApi': 'https://icon.horse/icon/{domain}&sz=128',
+'site.iconApi': 'https://www.google.com/s2/favicons?domain={domain}&sz=128',
   'site.searchBoxEnabled': 'true',
   'site.searchBoxGuestEnabled': 'true',
 };
@@ -441,7 +441,7 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
         const domain = extractDomain(value);
         if (domain) {
           // 优先用你配置的 iconApi，不行就用 Google（永远不会挂）
-          const template = configs['site.iconApi'] || 'https://icon.horse/icon/{domain}&sz=128';
+          const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=128';
           updated.icon = template.replace('{domain}', domain);
         }
       } catch (err) {
@@ -872,35 +872,33 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
                   {/* 图标 */}
                   <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
                     <img
-  src={site.icon || `https://icon.horse/icon/${extractDomain(site.url)}&sz=128`}
+  src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=128`}
   alt={site.name}
   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
 onError={(e) => {
-    // 1. 获取站点名称的首字母并大写
-    const name = site.name || '?';
-    const letter = name.trim().charAt(0).toUpperCase() || '?';
-    
-    // 2. 根据当前主题设置颜色
-    // 注意：这里的 theme.palette 假设在 App 组件作用域内是可访问的。
-    const bgColor = theme.palette.mode === 'dark' ? '#333333' : '#e0e0e0'; 
-    const textColor = theme.palette.mode === 'dark' ? '#ffffff' : '#424242'; 
-    
-    // 3. 生成 SVG Data URL
-    e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-            <rect width="100" height="100" fill="${bgColor}"/>
-            <text x="50" y="55" font-family="Arial,Helvetica,sans-serif" font-size="50" font-weight="bold" fill="${textColor}" text-anchor="middle" dominant-baseline="central">
-                ${letter}
-            </text>
-        </svg>
-    `)}`;
-    
-    // 💡 修复 TS2551: 强制转换为 HTMLImageElement 访问 DOM 属性，防止无限循环
-    (e.currentTarget as HTMLImageElement).onerror = null;
-}}
+  const name = site.name || '?'
+  const letter = name.trim().charAt(0).toUpperCase() || '?'
+  const bgColor = darkMode ? '#1e1e1e' : '#f5f5f5'
+  const textColor = darkMode ? '#ffffff' : '#000000'
 
-  />
-</Box>
+  e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+      <rect width="100" height="100" rx="20" fill="${bgColor}"/>
+      <text 
+        x="50" y="50" 
+        font-family="Arial,Helvetica,sans-serif" 
+        font-size="52" 
+        font-weight="bold" 
+        fill="${textColor}" 
+        text-anchor="middle" 
+        dominant-baseline="central">
+        ${letter}
+      </text>
+    </svg>
+  `)}`
+}}
+/>
+                  </Box>
 
                   <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: '100%' }}>
                     {site.name}
@@ -1064,7 +1062,7 @@ onError={(e) => {
               if (domain) {
                 setNewSite(prev => ({
                   ...prev,
-                  icon: `https://icon.horse/icon/${domain}&sz=256`
+                  icon: `https://www.google.com/s2/favicons?domain=${domain}&sz=256`
                 }));
               }
             }
@@ -1114,7 +1112,7 @@ onError={(e) => {
             setEditingSite(prev => {
               if (!prev) return prev;
               const domain = extractDomain(url);
-              const icon = domain ? `https://icon.horse/icon/${domain}&sz=256` : prev.icon;
+              const icon = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=256` : prev.icon;
               return { ...prev, url, icon };
             });
           }}
@@ -1133,7 +1131,7 @@ onError={(e) => {
                   onClick={() => {
                     const domain = extractDomain(editingSite.url);
                     if (domain) {
-                      setEditingSite({ ...editingSite, icon: `https://icon.horse/icon/${domain}&sz=256` });
+                      setEditingSite({ ...editingSite, icon: `https://www.google.com/s2/favicons?domain=${domain}&sz=256` });
                     }
                   }}
                 >
