@@ -83,7 +83,7 @@ const DEFAULT_CONFIGS = {
  // 原来可能是这个
 // 'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true',
 // 改成这个（第 57 行左右）
-'site.iconApi': 'https://www.google.com/s2/favicons?domain={domain}&sz=128',
+'site.iconApi': `https://icon.horse/icon/${extractDomain(site.url || newSite.url)}`,
   'site.searchBoxEnabled': 'true',
   'site.searchBoxGuestEnabled': 'true',
 };
@@ -441,7 +441,7 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
         const domain = extractDomain(value);
         if (domain) {
           // 优先用你配置的 iconApi，不行就用 Google（永远不会挂）
-          const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=128';
+          const template = configs['site.iconApi'] || `https://icon.horse/icon/${extractDomain(site.url || newSite.url)}`;
           updated.icon = template.replace('{domain}', domain);
         }
       } catch (err) {
@@ -872,7 +872,7 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
                   {/* 图标 */}
                   <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
                     <img
-  src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=128`}
+  src={site.icon || `https://icon.horse/icon/${extractDomain(site.url || newSite.url)}`}
   alt={site.name}
   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
 onError={(e) => {
@@ -1064,7 +1064,7 @@ onError={(e) => {
               if (domain) {
                 setNewSite(prev => ({
                   ...prev,
-                  icon: `https://www.google.com/s2/favicons?domain=${domain}&sz=256`
+                  icon: `https://icon.horse/icon/${extractDomain(site.url || newSite.url)}`
                 }));
               }
             }
@@ -1114,7 +1114,7 @@ onError={(e) => {
             setEditingSite(prev => {
               if (!prev) return prev;
               const domain = extractDomain(url);
-              const icon = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=256` : prev.icon;
+              const icon = domain ? `https://icon.horse/icon/${extractDomain(site.url || newSite.url)}` : prev.icon;
               return { ...prev, url, icon };
             });
           }}
@@ -1133,7 +1133,7 @@ onError={(e) => {
                   onClick={() => {
                     const domain = extractDomain(editingSite.url);
                     if (domain) {
-                      setEditingSite({ ...editingSite, icon: `https://www.google.com/s2/favicons?domain=${domain}&sz=256` });
+                      setEditingSite({ ...editingSite, icon: `https://icon.horse/icon/${extractDomain(site.url || newSite.url)}` });
                     }
                   }}
                 >
