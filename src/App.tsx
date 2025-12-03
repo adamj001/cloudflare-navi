@@ -80,10 +80,8 @@ const DEFAULT_CONFIGS = {
   'site.customCss': '',
   'site.backgroundImage': '',
   'site.backgroundOpacity': '0.15',
- // 原来可能是这个
-// 'site.iconApi': 'https://www.faviconextractor.com/favicon/{domain}?larger=true',
-// 改成这个（第 57 行左右）
-'site.iconApi': 'https://www.google.com/s2/favicons?domain={domain}&sz=128',
+  // 使用 Google Favicon API 作为默认值，因为它比较稳定
+  'site.iconApi': 'https://www.google.com/s2/favicons?domain={domain}&sz=128',
   'site.searchBoxEnabled': 'true',
   'site.searchBoxGuestEnabled': 'true',
 };
@@ -126,14 +124,14 @@ function App() {
   const [loginLoading, setLoginLoading] = useState(false);
 
   type ViewMode = 'readonly' | 'edit';
-  const [viewMode, setViewMode] = useState<ViewMode>('readonly');
+  const [viewMode, setViewMode] = useState<ViewMode>(['readonly']);
 
   const [configs, setConfigs] = useState<Record<string, string>>(DEFAULT_CONFIGS);
   const [openConfig, setOpenConfig] = useState(false);
   const [tempConfigs, setTempConfigs] = useState<Record<string, string>>(DEFAULT_CONFIGS);
 
   const [openAddGroup, setOpenAddGroup] = useState(false);
-  const [openAddSite, setOpenAddSite] = useState(false); // 💡 新增：新增站点对话框状态
+  const [openAddSite, setOpenAddSite] = useState(false); 
   const [newGroup, setNewGroup] = useState<Partial<Group>>({
     name: '',
     order_num: 0,
@@ -160,12 +158,10 @@ function App() {
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-// ... 其他 state ...
 
-// ← 在这里加这两行 ↓
-const [editSiteOpen, setEditSiteOpen] = useState(false);
-const [editingSite, setEditingSite] = useState<Site | null>(null);
-// ↑ 加完就行
+  const [editSiteOpen, setEditSiteOpen] = useState(false);
+  const [editingSite, setEditingSite] = useState<Site | null>(null);
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setMenuAnchorEl(event.currentTarget);
   };
@@ -435,7 +431,7 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
   setNewSite(prev => {
     let updated = { ...prev, [name]: value };
 
-    // 只要用户输入 URL，就自动生成 favicon
+    // 只要用户输入 URL，就自动生成 favicon URL 作为默认值
     if (name === 'url' && value.trim()) {
       try {
         const domain = extractDomain(value);
@@ -869,35 +865,43 @@ const [editingSite, setEditingSite] = useState<Site | null>(null);
                     </Box>
                   )}
 
-                  {/* 图标 */}
+                  {/* 图标 - 优先使用 site.icon，如果失败且非链接，则显示手动输入的文本或站名首字母 */}
                   <Box sx={{ width: 56, height: 56, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1 }}>
                     <img
-  src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=128`}
-  alt={site.name}
-  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-onError={(e) => {
-  const name = site.name || '?'
-  const letter = name.trim().charAt(0).toUpperCase() || '?'
-  const bgColor = darkMode ? '#1e1e1e' : '#f5f5f5'
-  const textColor = darkMode ? '#ffffff' : '#000000'
+                      // 始终尝试使用 site.icon 作为 src
+                      src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=128`}
+                      alt={site.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      onError={(e) => {
+                        // 1. 检查 site.icon 是否是用户手动输入的文本，而不是一个完整的链接
+                        // 如果 site.icon 存在且不是一个以 http 开头的完整链接，我们认为它是一个用户希望显示的字符。
+                        const isTextIcon = site.icon && site.icon.length > 0 && !site.icon.startsWith('http');
+                        
+                        // 确定要显示的字符：用户输入的文本首字符 > 站点名称首字符 > ?
+                        const displayChar = isTextIcon 
+                                           ? site.icon.trim().charAt(0).toUpperCase() 
+                                           : (site.name?.trim().charAt(0).toUpperCase() || '?');
 
-  e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`
-    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-      <rect width="100" height="100" rx="20" fill="${bgColor}"/>
-      <text 
-        x="50" y="50" 
-        font-family="Arial,Helvetica,sans-serif" 
-        font-size="52" 
-        font-weight="bold" 
-        fill="${textColor}" 
-        text-anchor="middle" 
-        dominant-baseline="central">
-        ${letter}
-      </text>
-    </svg>
-  `)}`
-}}
-/>
+                        const bgColor = darkMode ? '#1e1e1e' : '#f5f5f5'
+                        const textColor = darkMode ? '#ffffff' : '#000000'
+
+                        e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`
+                          <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+                            <rect width="100" height="100" rx="20" fill="${bgColor}"/>
+                            <text 
+                              x="50" y="50" 
+                              font-family="Arial,Helvetica,sans-serif" 
+                              font-size="52" 
+                              font-weight="bold" 
+                              fill="${textColor}" 
+                              text-anchor="middle" 
+                              dominant-baseline="central">
+                              ${displayChar}
+                            </text>
+                          </svg>
+                        `)}`
+                      }}
+                    />
                   </Box>
 
                   <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: '100%' }}>
@@ -1045,35 +1049,44 @@ onError={(e) => {
             <Stack spacing={2} sx={{ mt: 1 }}>
                 <TextField autoFocus fullWidth label="站点名称" value={newSite.name || ''} name="name" onChange={handleSiteInputChange} />
                 <TextField fullWidth label="URL" value={newSite.url || ''} name="url" onChange={handleSiteInputChange} />
-               <TextField
-  fullWidth
-  label="图标URL（自动获取）"
-  value={newSite.icon || ''}
-  InputProps={{
-    readOnly: true,
-    endAdornment: newSite.icon ? (
-      <InputAdornment position="end">
-        <IconButton
-          size="small"
-          edge="end"
-          onClick={() => {
-            if (newSite.url) {
-              const domain = extractDomain(newSite.url);
-              if (domain) {
-                setNewSite(prev => ({
-                  ...prev,
-                  icon: `https://www.google.com/s2/favicons?domain=${domain}&sz=256`
-                }));
-              }
-            }
-          }}
-        >
-          <AutoFixHighIcon fontSize="small" />
-        </IconButton>
-      </InputAdornment>
-    ) : null,
-  }}
-/>
+                <TextField
+                  fullWidth
+                  label="图标URL（可手动输入或自动获取缩写）"
+                  value={newSite.icon || ''}
+                  name="icon" // <-- 添加 name 以便 handleSiteInputChange 捕获
+                  onChange={handleSiteInputChange} // <-- 允许手动输入
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        {/* 点击按钮自动获取图标 */}
+                        <IconButton
+                          size="small"
+                          edge="end"
+                          onClick={() => {
+                            if (newSite.url) {
+                              const domain = extractDomain(newSite.url);
+                              if (domain) {
+                                // 强制从 URL 自动获取图标
+                                const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=128';
+                                setNewSite(prev => ({
+                                  ...prev,
+                                  icon: template.replace('{domain}', domain)
+                                }));
+                              } else {
+                                 handleError('无法从 URL 提取域名');
+                              }
+                            } else {
+                               handleError('请先输入有效的 URL');
+                            }
+                          }}
+                          aria-label="自动获取图标"
+                        >
+                          <AutoFixHighIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
                 <TextField fullWidth label="描述 (可选)" value={newSite.description || ''} name="description" onChange={handleSiteInputChange} />
                 <FormControlLabel control={<Switch checked={newSite.is_public === 1} onChange={e => setNewSite({ ...newSite, is_public: e.target.checked ? 1 : 0 })} />} label="公开站点" />
             </Stack>
@@ -1083,91 +1096,103 @@ onError={(e) => {
             <Button variant="contained" onClick={handleCreateSite}>创建</Button>
           </DialogActions>
         </Dialog>
+        
         {/* ==================== 编辑站点弹窗 ==================== */}
-<Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
-  <DialogTitle>
-    编辑站点
-    <IconButton onClick={() => setEditSiteOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}>
-      <CloseIcon />
-    </IconButton>
-  </DialogTitle>
+        <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>
+            编辑站点
+            <IconButton onClick={() => setEditSiteOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
 
-  {editingSite && (
-    <DialogContent>
-      <Stack spacing={2} sx={{ mt: 1 }}>
-        <TextField
-          autoFocus
-          fullWidth
-          label="站点名称"
-          value={editingSite.name || ''}
-          onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
-        />
+          {editingSite && (
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 1 }}>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label="站点名称"
+                  value={editingSite.name || ''}
+                  onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })}
+                />
 
-        <TextField
-          fullWidth
-          label="URL（修改后会自动刷新图标）"
-          value={editingSite.url || ''}
-          onChange={(e) => {
-            const url = e.target.value;
-            setEditingSite(prev => {
-              if (!prev) return prev;
-              const domain = extractDomain(url);
-              const icon = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=256` : prev.icon;
-              return { ...prev, url, icon };
-            });
-          }}
-        />
-
-        <TextField
-          fullWidth
-          label="图标URL（可点右侧按钮刷新）"
-          value={editingSite.icon || ''}
-          InputProps={{
-            readOnly: true,
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    const domain = extractDomain(editingSite.url);
-                    if (domain) {
-                      setEditingSite({ ...editingSite, icon: `https://www.google.com/s2/favicons?domain=${domain}&sz=256` });
-                    }
+                <TextField
+                  fullWidth
+                  label="URL（修改后会自动更新图标默认值）"
+                  value={editingSite.url || ''}
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    setEditingSite(prev => {
+                      if (!prev) return prev;
+                      const domain = extractDomain(url);
+                      // 自动生成新的默认图标 URL
+                      const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=128';
+                      const icon = domain ? template.replace('{domain}', domain) : prev.icon;
+                      return { ...prev, url, icon };
+                    });
                   }}
-                >
-                  <AutoFixHighIcon />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
+                />
 
-        <TextField
-          fullWidth
-          label="描述（可选）"
-          value={editingSite.description || ''}
-          onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
-        />
-      </Stack>
-    </DialogContent>
-  )}
+                <TextField
+                  fullWidth
+                  label="图标URL（可手动输入或自动获取缩写）"
+                  value={editingSite.icon || ''}
+                  onChange={(e) => setEditingSite({ ...editingSite, icon: e.target.value })} // <-- 允许手动输入
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            if (!editingSite.url) {
+                               handleError('请先输入有效的 URL');
+                               return;
+                            }
+                            const domain = extractDomain(editingSite.url);
+                            if (domain) {
+                              // 强制从 URL 自动获取图标
+                              const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=128';
+                              setEditingSite({ ...editingSite, icon: template.replace('{domain}', domain) });
+                            } else {
+                               handleError('无法从 URL 提取域名');
+                            }
+                          }}
+                          aria-label="自动获取图标"
+                        >
+                          <AutoFixHighIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
 
-  <DialogActions>
-    <Button onClick={() => setEditSiteOpen(false)}>取消</Button>
-    <Button
-      variant="contained"
-      onClick={async () => {
-        if (editingSite?.id) {
-          await api.updateSite(editingSite.id, editingSite);
-          await fetchData();
-          setEditSiteOpen(false);
-        }
-      }}
-    >
-      保存修改
-    </Button>
-  </DialogActions>
-</Dialog>
+                <TextField
+                  fullWidth
+                  label="描述（可选）"
+                  value={editingSite.description || ''}
+                  onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
+                />
+              </Stack>
+            </DialogContent>
+          )}
+
+          <DialogActions>
+            <Button onClick={() => setEditSiteOpen(false)}>取消</Button>
+            <Button
+              variant="contained"
+              onClick={async () => {
+                if (editingSite?.id) {
+                  await api.updateSite(editingSite.id, editingSite);
+                  await fetchData();
+                  setEditSiteOpen(false);
+                }
+              }}
+            >
+              保存修改
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* 网站设置对话框 */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
