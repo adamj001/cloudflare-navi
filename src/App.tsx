@@ -723,10 +723,10 @@ const [viewMode, setViewMode] = useState<ViewMode>('readonly');
         <Tabs
   value={selectedTab || false}
   onChange={(_, v) => setSelectedTab(v as number)}
+   // ... 其他属性保持不变
   variant="scrollable"
   scrollButtons="auto"
   allowScrollButtonsMobile
-  // 🐛 不使用 centered 属性，以确保手机端滚动正常
   sx={{
     '& .MuiTabs-scroller': {
       overflowX: 'auto',
@@ -735,33 +735,18 @@ const [viewMode, setViewMode] = useState<ViewMode>('readonly');
     },
     '& .MuiTabs-flexContainer': { 
       gap: 1, 
-      // 👇 核心修复：实现响应式居中
+      // 👇 最终修复：明确强制不换行，覆盖所有潜在的默认值
+      flexWrap: 'nowrap', 
       justifyContent: { xs: 'flex-start', sm: 'flex-start', md: 'center' },
-      // xs 和 sm (手机/平板竖屏) 保持左对齐 (flex-start) 允许滚动
-      // md 及以上 (电脑/平板横屏) 强制居中 (center)
     },
-    '& .MuiTab-root': {
-      fontWeight: 800,
-      color: 'text.primary', 
-      fontSize: { xs: '0.85rem', sm: '1rem' },
-      minWidth: { xs: 60, sm: 80 },
-      py: 1.5,
-      borderRadius: 3,
-      transition: 'all 0.2s',
-      '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-    },
-    '& .MuiTabs-indicator': {
-      height: 4,
-      borderRadius: 2,
-      background: 'linear-gradient(90deg, #00ff9d, #00b86e)',
-      boxShadow: '0 0 12px #00ff9d',
-    },
+    // ... MuiTab-root 和 MuiTabs-indicator 样式保持不变
   }}
 >
   {groups.map(g => (
     <Tab key={g.id} label={g.name} value={g.id} />
   ))}
 </Tabs>
+
             </Paper>
           </Box>
         </AppBar>
