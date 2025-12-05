@@ -1,22 +1,22 @@
-/* app.css */
-/* 1. 默认主题 (亮色模式) - 修复亮色模式下背景不全的问题 /
+/* app.css - 最终修正版 */
+/* ---------------------------------------------------------------------- /
+/ 1. 默认主题 (亮色模式) - 修复亮色模式下背景不全和组件颜色问题 /
+/ ---------------------------------------------------------------------- */
 body {
-/ 确保占据整个视口高度 */
 min-height: 100vh;
 margin: 0;
 padding: 0;
-/* 默认背景 (亮色模式) /
+/* 默认背景 (亮色模式) */
 background-color: #f0f0f0;
-color: #333333; / 默认文字颜色 */
+color: #333333;
 transition: background-color 0.3s ease;
-/* 🚨 最终修复滑动问题：强制允许横向滚动，覆盖所有潜在的全局限制 */
+/* 强制允许横向滚动 */
 overflow-x: visible !important;
 }
-/* 2. 深色模式主题：通过给 body 添加 .dark-mode 类来切换 /
-body.dark-mode {
-/ 应用你原有的深色渐变 /
-background: linear-gradient(to bottom, #121212, #1e1e1e);
-color: #ffffff; / 深色模式文字颜色 */
+/* 强制 MUI 容器在亮色模式下是白色 */
+.MuiPaper-root, .MuiCard-root {
+background-color: #ffffff !important;
+transition: background-color 0.3s ease;
 }
 /* 卡片玻璃磨砂效果 */
 .glass-card {
@@ -30,6 +30,20 @@ transition: transform 0.3s ease;
 .glass-card:hover {
 transform: translateY(-5px);
 }
+/* ---------------------------------------------------------------------- /
+/ 2. 深色模式主题：通过给 body 添加 .dark-mode 类来切换 /
+/ ---------------------------------------------------------------------- */
+body.dark-mode {
+background: linear-gradient(to bottom, #121212, #1e1e1e);
+color: #ffffff;
+}
+/* 确保深色模式下 MUI 组件背景也变化 */
+body.dark-mode .MuiPaper-root {
+background-color: #1e1e1e !important;
+}
+body.dark-mode .MuiCard-root {
+background-color: #262626 !important;
+}
 /* 顶部菜单磨砂玻璃 */
 .top-bar {
 background: rgba(18, 18, 18, 0.5);
@@ -42,30 +56,11 @@ border-radius: 8px;
 min-width: 120px;
 }
 }
-/ 添加动画效果 /
+/ 添加动画效果 */
 @keyframes pulse {
 0% { opacity: 0.6; transform: scale(0.8); }
 50% { opacity: 1; transform: scale(1.2); }
 100% { opacity: 0.6; transform: scale(0.8); }
-}
-/ 其他原样式保留 */
-.with-background-image {
-position: relative;
-}
-.background-overlay {
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-z-index: 1;
-}
-/* 确保深色模式下 MUI 组件背景也变化 */
-.dark-mode .MuiPaper-root {
-background-color: #1e1e1e !important;
-}
-.dark-mode .MuiCard-root {
-background-color: #262626 !important;
 }
 @media (prefers-reduced-motion: reduce) {
 • {
