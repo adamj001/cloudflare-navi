@@ -720,13 +720,13 @@ const [viewMode, setViewMode] = useState<ViewMode>('readonly');
                 py: 0.5,
               }}
             >
-         <Tabs
+        <Tabs
   value={selectedTab || false}
   onChange={(_, v) => setSelectedTab(v as number)}
   variant="scrollable"
   scrollButtons="auto"
   allowScrollButtonsMobile
-  centered
+  // 🐛 不使用 centered 属性，以确保手机端滚动正常
   sx={{
     '& .MuiTabs-scroller': {
       overflowX: 'auto',
@@ -734,12 +734,14 @@ const [viewMode, setViewMode] = useState<ViewMode>('readonly');
       '&::-webkit-scrollbar': { display: 'none' },
     },
     '& .MuiTabs-flexContainer': { 
-      // 🐛 修复 1：移除 flexWrap: 'wrap'，允许滚动
-      gap: 1 
+      gap: 1, 
+      // 👇 核心修复：实现响应式居中
+      justifyContent: { xs: 'flex-start', sm: 'flex-start', md: 'center' },
+      // xs 和 sm (手机/平板竖屏) 保持左对齐 (flex-start) 允许滚动
+      // md 及以上 (电脑/平板横屏) 强制居中 (center)
     },
     '& .MuiTab-root': {
       fontWeight: 800,
-      // 🐛 修复 2：使用主题文字颜色，确保亮色模式下可见
       color: 'text.primary', 
       fontSize: { xs: '0.85rem', sm: '1rem' },
       minWidth: { xs: 60, sm: 80 },
@@ -759,8 +761,7 @@ const [viewMode, setViewMode] = useState<ViewMode>('readonly');
   {groups.map(g => (
     <Tab key={g.id} label={g.name} value={g.id} />
   ))}
-</Tabs> 
-
+</Tabs>
             </Paper>
           </Box>
         </AppBar>
