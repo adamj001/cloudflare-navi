@@ -4,6 +4,8 @@ import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
 import ThemeToggle from './components/ThemeToggle';
+import LoginIcon from '@mui/icons-material/Login'; // 登录图标
+import LogoutIcon from '@mui/icons-material/Logout'; // 退出图标
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
@@ -749,7 +751,7 @@ function App() {
                           } 
                       }}
                     >
-                      <LockOpenIcon />
+                      <LogoutIcon />  {/* 替换为退出图标 */}
                     </IconButton>
                   ) : (
                     // 未认证状态: 显示登录按钮 (LockIcon)
@@ -775,7 +777,7 @@ function App() {
                           } 
                       }}
                     >
-                      <LockIcon />
+                       <LoginIcon />  {/* 替换为登录图标 */}
                     </IconButton>
                   )}
                   {/* 主题切换 */}
