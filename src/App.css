@@ -1,5 +1,4 @@
-
-/* app.css - 最终清洁版 */
+/* app.css - 最终清洁版 (解决了滑动问题和主题冲突) */
 /* ---------------------------------------------------------------------- /
 / 1. 默认主题 (亮色模式) & 全局设置 /
 / ---------------------------------------------------------------------- */
@@ -7,18 +6,18 @@ body {
 min-height: 100vh;
 margin: 0;
 padding: 0;
-/* 默认背景 (亮色模式) - 确保在没有 .dark-mode 时是白色/浅色 */
+/* 默认背景 (亮色模式) */
 background-color: #f0f0f0;
 color: #333333;
 transition: background-color 0.3s ease;
 /* 解决滑动问题：强制允许横向滚动 */
 overflow-x: visible !important;
 }
-/* 移除所有对 .MuiPaper-root 和 .MuiCard-root 的亮色模式全局硬编码 /
+/* 🚨 关键：此处不再设置全局的 .MuiPaper-root 和 .MuiCard-root 背景色！ /
 / 这些组件现在将完全依赖 App.tsx 中的 <ThemeProvider> 及其 palette.background 设置 */
-/* 卡片玻璃磨砂效果 (不含背景色，只设置滤镜和边框) /
+/* 卡片玻璃磨砂效果 /
 .glass-card {
-/ 背景色将由主题的 palette.background.paper 自动设置 */
+/ 背景色由 App.tsx 中的 bgcolor: '...' 控制 */
 backdrop-filter: blur(10px);
 border: 1px solid rgba(255, 255, 255, 0.1);
 border-radius: 12px;
@@ -35,14 +34,14 @@ body.dark-mode {
 background: linear-gradient(to bottom, #121212, #1e1e1e);
 color: #ffffff;
 }
-/* 确保深色模式下 MUI 组件背景也变化 (这里保留 !important 是为了覆盖 glass-card 的 backdrop-filter 导致的潜在问题) */
+/* 确保深色模式下 MUI 组件背景也变化 (仅在有 .dark-mode 类时生效) */
 body.dark-mode .MuiPaper-root {
 background-color: #1e1e1e !important;
 }
 body.dark-mode .MuiCard-root {
 background-color: #262626 !important;
 }
-/* 顶部菜单磨砂玻璃 */
+/* 顶部菜单磨砂玻璃 (保留，但 App.tsx 中已使用 sx 覆盖) */
 .top-bar {
 background: rgba(18, 18, 18, 0.5);
 backdrop-filter: blur(12px);
