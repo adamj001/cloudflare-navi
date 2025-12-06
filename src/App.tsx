@@ -683,6 +683,50 @@ function App() {
                 
                 {/* 管理按钮区域 */}
                 <Stack direction="row" spacing={1} alignItems="center">
+                  
+                  {/* === 1. 简化的管理员登录/登出按钮 === */}
+                  {isAuthenticated ? (
+                    // 认证状态: 显示退出按钮
+                    <Button 
+                      variant="contained" 
+                      color="error" // 使用红色表示退出
+                      size="small" 
+                      startIcon={<LoginIcon sx={{ transform: 'rotate(180deg)' }} />} // 旋转图标表示退出
+                      onClick={handleLogout}
+                      sx={{ 
+                          transition: 'all 0.3s', 
+                          // 立体效果：悬停时轻微阴影
+                          boxShadow: (t) => t.shadows[6],
+                          '&:hover': { 
+                            boxShadow: '0 0 10px rgba(255,0,0,0.5)', 
+                            transform: 'scale(1.05)',
+                          } 
+                      }}
+                    >
+                      退出登录
+                    </Button>
+                  ) : (
+                    // 未认证状态: 显示登录按钮
+                    <Button 
+                      variant="contained" 
+                      size="small" 
+                      startIcon={<LoginIcon />} 
+                      onClick={() => setIsAuthRequired(true)} // 打开登录对话框
+                      sx={{ 
+                          transition: 'all 0.3s', 
+                          // 立体效果：悬停时轻微阴影
+                          boxShadow: (t) => t.shadows[6],
+                          '&:hover': { 
+                            boxShadow: '0 0 10px #00ff9d50', 
+                            transform: 'scale(1.05)',
+                          } 
+                      }}
+                    >
+                      管理员登录
+                    </Button>
+                  )}
+                  {/* ================================== */}
+                  
                   {isAuthenticated && sortMode === SortMode.None && (
                     <>
                       {/* 💡 新增：新增站点按钮 */}
@@ -719,13 +763,6 @@ function App() {
                     </>
                   )}
                   
-                  {/* 非登录状态下的登录按钮 */}
-                  {!isAuthenticated && (
-                     <Button variant="contained" startIcon={<LoginIcon />} onClick={() => setIsAuthRequired(true)}>
-                        管理员登录
-                    </Button>
-                  )}
-                  
                   {/* 主题切换 */}
                   <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
                 </Stack>
@@ -749,20 +786,19 @@ function App() {
     <Paper 
       elevation={4} 
       sx={{ 
-            // 🐛 修复滑动问题 2 (防御性宽度): 确保 Paper 容器在手机上填满宽度
-                width: { xs: '100%', md: 'auto' }, 
-        backdropFilter: 'blur(16px)', 
-        // 关键：确保 Paper 背景也跟随主题切换
-        background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
-        borderRadius: 4, 
-        px: 1, 
-        py: 0.5,
+            // 修复滑动问题 2 (防御性宽度): 确保 Paper 容器在手机上填满宽度
+            width: { xs: '100%', md: 'auto' }, 
+            backdropFilter: 'blur(16px)', 
+            // 关键：确保 Paper 背景也跟随主题切换
+            background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+            borderRadius: 4, 
+            px: 1, 
+            py: 0.5,
       }}
     >
             <Tabs
   value={selectedTab || false}
   onChange={(_, v) => setSelectedTab(v as number)}
-   // ... 其他属性保持不变
   variant="scrollable"
   scrollButtons="auto"
   allowScrollButtonsMobile
@@ -859,8 +895,14 @@ function App() {
                     bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
                     backdropFilter: 'blur(12px)',
                     border: '1px solid rgba(255,255,255,0.12)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
-                    transition: 'all 0.3s ease',
+                    
+                    // === 2. 增强立体效果 ===
+                    // 初始强阴影 (MUI Elevation 16 + 玻璃效果阴影)
+                    boxShadow: (t) => t.shadows[16] + ', 0 8px 32px rgba(0,0,0,0.3)',
+                    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+                    transform: 'translateY(0)', // 确保起始状态
+                    // ======================
+                    
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -870,7 +912,10 @@ function App() {
                     textDecoration: 'none',
                     color: 'inherit',
                     '&:hover': {
-                      transform: 'translateY(-8px) scale(1.03)',
+                      // 更强的抬升和放大
+                      transform: 'translateY(-10px) scale(1.05)', 
+                      // 悬停阴影：使用最高等级阴影 + 主色调炫光
+                      boxShadow: (t) => t.shadows[24] + `, 0 0 40px ${t.palette.primary.main}50`, 
                       bgcolor: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)',
                       ...(isAuthenticated && { border: '2px solid #00ff9d' }),
                     },
@@ -1011,13 +1056,8 @@ function App() {
               <ListItemText>导入数据</ListItemText>
             </MenuItem>
             
-            <Divider />
+            {/* 💡 移除：退出登录按钮已移到主导航栏 */}
             
-            {/* 退出登录 */}
-            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
-              <ListItemIcon sx={{ color: 'error.main' }}></ListItemIcon>
-              <ListItemText>退出登录</ListItemText>
-            </MenuItem>
           </Menu>
 
           <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
