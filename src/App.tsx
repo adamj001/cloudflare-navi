@@ -687,7 +687,45 @@ function App() {
                 {/* 管理按钮区域 */}
                 <Stack direction="row" spacing={1} alignItems="center">
                   
-                  {/* === 1. 简化的管理员登录/登出按钮 (图标化) === */}
+                 
+                  {/* ================================== */}
+                  
+                  {isAuthenticated && sortMode === SortMode.None && (
+                    <>
+                      {/* 💡 新增：新增站点按钮 */}
+                      <Button 
+                        variant="contained" 
+                        size="small" 
+                        startIcon={<AddIcon />} 
+                        onClick={() => selectedTab && handleOpenAddSite(selectedTab as number)}
+                        disabled={!selectedTab}
+                      >
+                        新增站点
+                      </Button>
+                      
+                      {/* 新增分组按钮 */}
+                      <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenAddGroup}>
+                        新增分组
+                      </Button>
+                      
+                      {/* 主菜单按钮 */}
+                      <IconButton onClick={handleMenuOpen} color="inherit">
+                        <MenuIcon />
+                      </IconButton>
+                    </>
+                  )}
+                  {isAuthenticated && sortMode !== SortMode.None && (
+                    <>
+                      {/* 排序按钮 */}
+                      <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSaveGroupOrder}>
+                          保存排序
+                      </Button>
+                      <Button variant="outlined" size="small" startIcon={<CancelIcon />} onClick={cancelSort}>
+                          取消
+                      </Button>
+                    </>
+                  )}
+                   {/* === 1. 简化的管理员登录/登出按钮 (图标化) === */}
                   {isAuthenticated ? (
                     // 认证状态: 显示退出按钮 (LockOpenIcon)
                     <IconButton 
@@ -740,44 +778,6 @@ function App() {
                       <LockIcon />
                     </IconButton>
                   )}
-                  {/* ================================== */}
-                  
-                  {isAuthenticated && sortMode === SortMode.None && (
-                    <>
-                      {/* 💡 新增：新增站点按钮 */}
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        startIcon={<AddIcon />} 
-                        onClick={() => selectedTab && handleOpenAddSite(selectedTab as number)}
-                        disabled={!selectedTab}
-                      >
-                        新增站点
-                      </Button>
-                      
-                      {/* 新增分组按钮 */}
-                      <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenAddGroup}>
-                        新增分组
-                      </Button>
-                      
-                      {/* 主菜单按钮 */}
-                      <IconButton onClick={handleMenuOpen} color="inherit">
-                        <MenuIcon />
-                      </IconButton>
-                    </>
-                  )}
-                  {isAuthenticated && sortMode !== SortMode.None && (
-                    <>
-                      {/* 排序按钮 */}
-                      <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSaveGroupOrder}>
-                          保存排序
-                      </Button>
-                      <Button variant="outlined" size="small" startIcon={<CancelIcon />} onClick={cancelSort}>
-                          取消
-                      </Button>
-                    </>
-                  )}
-                  
                   {/* 主题切换 */}
                   <ThemeToggle darkMode={darkMode} onToggle={toggleTheme} />
                 </Stack>
@@ -1325,4 +1325,3 @@ function App() {
 }
 
 export default App;
-
