@@ -723,6 +723,10 @@ function App() {
                           boxShadow: (t) => t.shadows[6],
                           bgcolor: 'primary.main', // 主色调背景
                           color: 'black', // 保证对比度
+                        width: 40,  // 新增：自定义宽度缩小背景
+                        height: 40, // 新增：自定义高度缩小背景
+      padding: 0, // 可选：减少内边距，避免图标外多余空间
+
                           '&:hover': { 
                             boxShadow: (t) => `0 0 10px ${t.palette.primary.main}80`, 
                             transform: 'scale(1.1)',
