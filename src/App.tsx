@@ -695,21 +695,7 @@ function App() {
                   {isAuthenticated && sortMode === SortMode.None && (
                     <>
                       {/* 💡 新增：新增站点按钮 */}
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        startIcon={<AddIcon />} 
-                        onClick={() => selectedTab && handleOpenAddSite(selectedTab as number)}
-                        disabled={!selectedTab}
-                      >
-                        新增站点
-                      </Button>
-                      
-                      {/* 新增分组按钮 */}
-                      <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenAddGroup}>
-                        新增分组
-                      </Button>
-                      
+                                          
                       {/* 主菜单按钮 */}
                       <IconButton onClick={handleMenuOpen} color="inherit">
                         <MenuIcon />
