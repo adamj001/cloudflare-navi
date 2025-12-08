@@ -67,7 +67,6 @@ import {
   AppBar,
   Tabs,
   Tab,
-  // Toolbar, // 未使用，注释掉
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -82,7 +81,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete'; 
-import ViewModuleIcon from '@mui/icons-material/ViewModule'; // 用于站点排序菜单图标
+import ViewModuleIcon from '@mui/icons-material/ViewModule';
 
 
 const isDevEnvironment = import.meta.env.DEV;
@@ -121,7 +120,6 @@ function SortableTab(props: any) {
     cursor: 'grab'
   };
   return (
-    // 将 dnd-kit 的属性应用到 Tab 上
     <Tab {...props} ref={setNodeRef} style={style} {...attributes} {...listeners} 
       icon={<DragIndicatorIcon sx={{ fontSize: '1rem', opacity: 0.6, mr: 0.5 }} />}
       iconPosition="start"
@@ -151,7 +149,6 @@ const SortableSiteCard = ({ id, children, disabled }: { id: number, children: Re
     return (
       <Box ref={setNodeRef} style={style} {...attributes} {...listeners} sx={{ height: '100%' }}>
          {children}
-         {/* 在卡片右上角添加一个显眼的拖拽手柄 */}
          {!disabled && (
           <Box sx={{ 
             position: 'absolute', 
@@ -255,17 +252,23 @@ function App() {
   const [editSiteOpen, setEditSiteOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
 
-  // 💡 dnd-kit 新增：设置拖拽传感器，优化交互体验
+  // 💡 dnd-kit 新增：设置拖拽传感器
   const sensors = useSensors(
     useSensor(PointerSensor, {
         activationConstraint: {
-            distance: 8, // 鼠标移动 8px 后才认为是拖拽，防止误触点击
+            distance: 8, 
         }
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+  
+  // ▼▼▼▼▼▼▼▼▼▼ 核心修复：将 useMemo 移动到这里，必须在任何 return 之前！ ▼▼▼▼▼▼▼▼▼▼
+  // 准备用于 SortableContext 的 items id 数组
+  const groupIds = useMemo(() => groups.map(g => g.id!), [groups]);
+  const siteIds = useMemo(() => currentGroup?.sites.map(s => s.id!) || [], [currentGroup]);
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setMenuAnchorEl(event.currentTarget);
@@ -275,21 +278,17 @@ function App() {
     setMenuAnchorEl(null);
   };
   
-  // 💡 修改：处理通用的保存排序逻辑
   const handleSaveOrder = async () => {
       try {
           if (sortMode === SortMode.GroupSort) {
-              // 保存分组顺序
               const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
               await api.updateGroupOrder(orders);
               handleError('分组顺序已保存');
           } else if (sortMode === SortMode.SiteSort && currentGroup) {
-              // 保存站点顺序
               const siteOrders = currentGroup.sites.map((site, index) => ({ id: site.id as number, order_num: index }));
               await api.updateSiteOrder(siteOrders);
               handleError('站点顺序已保存');
           }
-          // 保存成功后刷新数据并退出排序模式
           await fetchData();
           setSortMode(SortMode.None);
       } catch (error) {
@@ -298,37 +297,28 @@ function App() {
       }
   };
 
-  // 💡 dnd-kit 新增：处理拖拽结束事件的核心逻辑
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    // 如果没有拖拽到有效目标上，或者目标就是自己，则不做处理
     if (!over || active.id === over.id) {
       return;
     }
 
     if (sortMode === SortMode.GroupSort) {
-        // --- 处理分组拖拽 ---
         setGroups((items) => {
             const oldIndex = items.findIndex(i => i.id === active.id);
             const newIndex = items.findIndex(i => i.id === over.id);
-            // 使用 dnd-kit 提供的 arrayMove 工具函数重新排列数组
             return arrayMove(items, oldIndex, newIndex);
         });
     } else if (sortMode === SortMode.SiteSort && currentGroup) {
-        // --- 处理站点拖拽 ---
         setGroups(prevGroups => {
-            // 1. 找到当前正在操作的分组索引
             const groupIndex = prevGroups.findIndex(g => g.id === currentGroup.id);
             if(groupIndex === -1) return prevGroups;
 
-            // 2. 获取该分组下的旧站点列表
             const currentSites = prevGroups[groupIndex].sites;
             const oldIndex = currentSites.findIndex(s => s.id === active.id);
             const newIndex = currentSites.findIndex(s => s.id === over.id);
             
-            // 3. 创建新的分组数组副本
             const newGroups = [...prevGroups];
-            // 4. 更新特定分组下的站点列表顺序
             newGroups[groupIndex] = {
                 ...newGroups[groupIndex],
                 sites: arrayMove(currentSites, oldIndex, newIndex)
@@ -337,7 +327,6 @@ function App() {
         });
     }
   };
-
 
   const checkAuthStatus = async () => {
     try {
@@ -386,7 +375,6 @@ function App() {
     await api.logout();
     setIsAuthenticated(false);
     setViewMode('readonly');
-    // 退出登录时如果处于排序模式，强制退出
     setSortMode(SortMode.None);
     await fetchData();
     handleError('已退出登录');
@@ -448,7 +436,6 @@ function App() {
     try {
       setLoading(true);
       const groupsWithSites = await api.getGroupsWithSites();
-      // 确保站点已排序 (虽然后端可能已排好，前端再确保一次)
       const sortedGroups = groupsWithSites.map(g => ({
         ...g,
         sites: g.sites.sort((a, b) => a.order_num - b.order_num)
@@ -470,7 +457,6 @@ function App() {
   };
 
   const handleSiteDelete = async (siteId: number) => {
-    // 由于此环境限制，暂时使用一个简单的函数来模拟确认，但保持逻辑不变
     if (confirm(`确定删除站点ID: ${siteId} 吗？`)) { 
         try {
           await api.deleteSite(siteId);
@@ -506,7 +492,6 @@ function App() {
 
   const cancelSort = async () => {
     setSortMode(SortMode.None);
-    // 取消排序时，重新拉取数据以恢复之前的顺序
     await fetchData();
   };
 
@@ -720,6 +705,7 @@ function App() {
     }
   };
 
+  // ▼▼▼▼▼▼▼▼▼▼ 这个 Early Return 必须在所有 Hooks 定义之后！ ▼▼▼▼▼▼▼▼▼▼
   if (isAuthChecking) {
     return (
       <ThemeProvider theme={theme}>
@@ -730,10 +716,7 @@ function App() {
       </ThemeProvider>
     );
   }
-
-  // 💡 dnd-kit 新增：准备用于 SortableContext 的 items id 数组
-  const groupIds = useMemo(() => groups.map(g => g.id!), [groups]);
-  const siteIds = useMemo(() => currentGroup?.sites.map(s => s.id!) || [], [currentGroup]);
+  // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
   return (
     <ThemeProvider theme={theme}>
@@ -788,17 +771,14 @@ function App() {
                     </>
                   )}
                   
-                  {/* 💡 修改：统一的保存/取消排序按钮显示逻辑 */}
                   {isAuthenticated && sortMode !== SortMode.None && (
                     <>
                       <Button 
                         variant="contained" 
                         size="small" 
                         startIcon={<SaveIcon />} 
-                        // 点击保存时，根据当前模式调用统一的保存接口
                         onClick={handleSaveOrder}
                         sx={{ 
-                          // 排序模式下给予明显的颜色提示
                           bgcolor: sortMode === SortMode.GroupSort ? 'warning.main' : 'info.main',
                           '&:hover': {
                              bgcolor: sortMode === SortMode.GroupSort ? 'warning.dark' : 'info.dark',
@@ -856,12 +836,10 @@ function App() {
             backdropFilter: 'blur(16px)', 
             background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
             borderRadius: 4, px: 1, py: 0.5,
-            // 💡 在分组排序模式下添加明显的边框提示
             border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none'
       }}
     >
     
-    {/* 💡 dnd-kit 新增：构建分组的拖拽上下文 */}
     <DndContext 
       sensors={sensors} 
       collisionDetection={closestCenter} 
@@ -879,18 +857,15 @@ function App() {
                   fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' },
                   minWidth: { xs: 60, sm: 80 }, py: 1.5, borderRadius: 3, transition: 'all 0.2s',
                   '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                  // 💡 排序模式下禁用 Tab 的默认点击波纹，避免冲突
                   pointerEvents: sortMode === SortMode.GroupSort ? 'none' : 'auto'
                 },
                 '& .MuiTabs-indicator': {
                   height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d',
-                  // 💡 排序模式下隐藏指示器
                   display: sortMode === SortMode.GroupSort ? 'none' : 'block'
                 },
               }}
             >
               {groups.map(g => (
-                // 💡 核心修改：根据模式判断是渲染普通 Tab 还是可拖拽的 SortableTab
                 sortMode === SortMode.GroupSort ? (
                   <SortableTab key={g.id} label={g.name} value={g.id} />
                 ) : (
@@ -898,7 +873,6 @@ function App() {
                 )
               ))}
 
-              {/* 添加分组按钮 (仅非排序模式显示) */}
               {isAuthenticated && sortMode === SortMode.None && (
                 <Tab
                   icon={<AddIcon />}
@@ -927,7 +901,6 @@ function App() {
             </Box>
           )}
           
-          {/* 💡 排序模式提示信息 */}
           {sortMode === SortMode.SiteSort && (
              <Alert severity="info" sx={{ mb: 3, mx: 'auto', maxWidth: 600, border: (t) => `1px solid ${t.palette.info.main}` }} icon={<DragIndicatorIcon />}>
                  正在排序模式：请拖动卡片调整顺序，完成后点击顶部“保存站点排序”。
@@ -939,7 +912,6 @@ function App() {
               <CircularProgress size={60} thickness={4} />
             </Box>
           ) : (
-            // 💡 dnd-kit 新增：构建站点的拖拽上下文
             <DndContext 
               sensors={sensors} 
               collisionDetection={closestCenter} 
@@ -951,14 +923,12 @@ function App() {
                     gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(140px, 1fr))', md: 'repeat(6, 1fr)' },
                     gap: 3.5, 
                     pb: 10,
-                    // 💡 在站点排序模式下添加明显的边框提示区域
                     border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
                     borderRadius: 4,
                     p: sortMode === SortMode.SiteSort ? 2 : 0,
                     transition: 'all 0.3s'
                   }}>
                     {currentGroup?.sites?.map((site: Site) => {
-                        // 提取卡片主体内容，方便复用
                         const CardContent = (
                             <Paper
                                 component={isAuthenticated && sortMode === SortMode.None ? 'div' : 'a'}
@@ -966,7 +936,6 @@ function App() {
                                 target={!isAuthenticated && sortMode === SortMode.None ? '_blank' : undefined}
                                 rel={!isAuthenticated && sortMode === SortMode.None ? 'noopener' : undefined}
                                 onClick={(e: React.MouseEvent) => {
-                                    // 💡 排序模式下阻止点击事件，防止误触发编辑
                                     if (sortMode !== SortMode.None) {
                                         e.preventDefault();
                                         return;
@@ -991,13 +960,11 @@ function App() {
                                     alignItems: 'center',
                                     textAlign: 'center',
                                     position: 'relative',
-                                    // 💡 排序模式下改变鼠标手势
                                     cursor: sortMode !== SortMode.None ? 'grab' : (isAuthenticated ? 'pointer' : 'default'),
                                     textDecoration: 'none',
                                     color: 'inherit',
-                                    height: '100%', // 确保高度撑满
+                                    height: '100%', 
                                     '&:hover': {
-                                      // 排序模式下禁用 hover 效果
                                       ...(sortMode === SortMode.None && {
                                           transform: 'translateY(-10px) scale(1.05)', 
                                           boxShadow: (t) => t.shadows[24] + `, 0 0 40px ${t.palette.primary.main}50`, 
@@ -1007,7 +974,6 @@ function App() {
                                     },
                                 }}
                                 >
-                                {/* 管理员专属：编辑笔 + 删除垃圾桶 (排序模式下隐藏) */}
                                 {isAuthenticated && sortMode === SortMode.None && (
                                     <Box sx={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0.5, zIndex: 10 }}>
                                     <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingSite(site); setEditSiteOpen(true); }} sx={{ bgcolor: 'rgba(0,255,157,0.15)', color: '#00ff9d', '&:hover': { bgcolor: 'rgba(0,255,157,0.3)' }, }}>
@@ -1019,12 +985,11 @@ function App() {
                                     </Box>
                                 )}
 
-                                {/* 图标 */}
                                 <Box sx={{ width: 100, height: 100, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1.5 }}>
                                     <img
                                     src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=256`}
                                     alt={site.name}
-                                    style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' /* 防止拖拽图片 */ }}
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
                                     onError={(e) => {
                                         const isTextIcon = site.icon && site.icon.length > 0 && !site.icon.startsWith('http');
                                         const displayChar = isTextIcon ? site.icon.trim().charAt(0).toUpperCase() : (site.name?.trim().charAt(0).toUpperCase() || '?');
@@ -1046,7 +1011,6 @@ function App() {
                             </Paper>
                         );
 
-                        // 💡 核心修改：根据模式判断是渲染普通卡片还是可拖拽的 SortableSiteCard
                         if (sortMode === SortMode.SiteSort) {
                             return (
                                 <SortableSiteCard key={site.id} id={site.id!}>
@@ -1057,7 +1021,6 @@ function App() {
                         return <Box key={site.id} sx={{ height: '100%' }}>{CardContent}</Box>;
                     })}
 
-                  {/* 添加站点按钮 (仅非排序模式显示) */}
                   {isAuthenticated && currentGroup && sortMode === SortMode.None && (
                       <Paper
                           sx={{
@@ -1078,14 +1041,12 @@ function App() {
             </DndContext>
           )}
 
-          {/* 管理菜单组件 */}
           <Menu anchorEl={menuAnchorEl} open={openMenu} onClose={handleMenuClose}>
             <MenuItem onClick={() => { setSortMode(SortMode.GroupSort); handleMenuClose(); }}>
               <ListItemIcon><SortIcon /></ListItemIcon>
               <ListItemText>编辑分组排序</ListItemText>
             </MenuItem>
 
-            {/* 💡 新增：编辑当前分组站点排序的菜单项 */}
             <MenuItem onClick={startSiteSort} disabled={!currentGroup || currentGroup.sites.length <= 1}>
               <ListItemIcon><ViewModuleIcon /></ListItemIcon>
               <ListItemText>编辑当前分组站点排序</ListItemText>
@@ -1125,7 +1086,6 @@ function App() {
             </MenuItem>
           </Menu>
 
-          {/* Github 悬浮按钮 (排序模式下隐藏) */}
           {sortMode === SortMode.None && (
           <Box sx={{ position: 'fixed', right: 24, bottom: 24, zIndex: 10 }}>
             <Paper component="a" href="https://github.com/adamj001/cloudflare-navi" target="_blank" rel="noopener" elevation={2}
@@ -1142,7 +1102,6 @@ function App() {
           )}
         </Container>
 
-        {/* 对话框组件 */}
         <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth>
            <DialogTitle>导入数据</DialogTitle>
           <DialogContent>
