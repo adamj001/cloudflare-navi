@@ -829,7 +829,7 @@ function App() {
         justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible',
     }}
 >
-    <Paper 
+        <Paper 
       elevation={4} 
       sx={{ 
             width: { xs: '100%', md: 'auto' }, 
@@ -840,51 +840,77 @@ function App() {
       }}
     >
     
+    {/* 💡 dnd-kit 分组拖拽上下文 */}
     <DndContext 
       sensors={sensors} 
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
-           <Tabs
-              value={selectedTab || false}
-              onChange={(_, v) => setSelectedTab(v as number)}
-              variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
-              sx={{
-                '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
-                '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start' },
-                '& .MuiTab-root': {
-                  fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' },
-                  minWidth: { xs: 60, sm: 80 }, py: 1.5, borderRadius: 3, transition: 'all 0.2s',
-                  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                  pointerEvents: sortMode === SortMode.GroupSort ? 'none' : 'auto'
-                },
-                '& .MuiTabs-indicator': {
-                  height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d',
-                  display: sortMode === SortMode.GroupSort ? 'none' : 'block'
-                },
-              }}
-            >
-              {groups.map(g => (
-                sortMode === SortMode.GroupSort ? (
-                  <SortableTab key={g.id} label={g.name} value={g.id} />
-                ) : (
-                  <Tab key={g.id} label={g.name} value={g.id} />
-                )
-              ))}
+           
+           {/* ▼▼▼▼▼▼ 核心修改：排序模式下使用普通 Box，非排序模式下使用 Tabs ▼▼▼▼▼▼ */}
+           {sortMode === SortMode.GroupSort ? (
+             // 1. 排序模式：使用普通的 Flex 容器，完全避开 MUI Tabs 的干扰
+             <Box 
+               sx={{ 
+                 display: 'flex', 
+                 gap: 1, 
+                 overflowX: 'auto', 
+                 py: 0.5,
+                 // 隐藏滚动条
+                 scrollbarWidth: 'none', 
+                 '&::-webkit-scrollbar': { display: 'none' } 
+               }}
+             >
+                {groups.map(g => (
+                  <SortableTab 
+                    key={g.id} 
+                    label={g.name} 
+                    value={g.id} 
+                    // 在这里给 SortableTab 传递额外的样式，因为它脱离了 Tabs 容器，需要手动撑开高度
+                    sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2, border: '1px solid transparent' }} 
+                  />
+                ))}
+             </Box>
+           ) : (
+             // 2. 正常模式：使用标准的 MUI Tabs 组件
+             <Tabs
+                value={selectedTab || false}
+                onChange={(_, v) => setSelectedTab(v as number)}
+                variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
+                sx={{
+                  '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
+                  '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start' },
+                  '& .MuiTab-root': {
+                    fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' },
+                    minWidth: { xs: 60, sm: 80 }, py: 1.5, borderRadius: 3, transition: 'all 0.2s',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                  },
+                  '& .MuiTabs-indicator': {
+                    height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d',
+                  },
+                }}
+              >
+                {groups.map(g => (
+                    <Tab key={g.id} label={g.name} value={g.id} />
+                ))}
 
-              {isAuthenticated && sortMode === SortMode.None && (
-                <Tab
-                  icon={<AddIcon />}
-                  onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }}
-                  sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }}
-                  aria-label="添加分组"
-                />
-              )}
-            </Tabs>
+                {/* 添加分组按钮 (仅非排序模式显示) */}
+                {isAuthenticated && (
+                  <Tab
+                    icon={<AddIcon />}
+                    onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }}
+                    sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }}
+                    aria-label="添加分组"
+                  />
+                )}
+              </Tabs>
+           )}
+           {/* ▲▲▲▲▲▲ 修改结束 ▲▲▲▲▲▲ */}
+
         </SortableContext>
     </DndContext>
-            </Paper>
+             </Paper>
         </Box>
         </AppBar>
 
