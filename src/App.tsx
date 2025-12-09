@@ -1015,6 +1015,7 @@ function App() {
                                     <img
                                     src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=256`}
                                     alt={site.name}
+                                     loading="lazy"  // 👈 加上这一行！神器
                                     style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
                                     onError={(e) => {
                                         const isTextIcon = site.icon && site.icon.length > 0 && !site.icon.startsWith('http');
