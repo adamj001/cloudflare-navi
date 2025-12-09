@@ -349,11 +349,14 @@ function App() {
     }
   };
 
-  const handleLogin = async (username: string, password: string) => {
+   const handleLogin = async (username: string, password: string) => {
     try {
       setLoginLoading(true);
       setLoginError(null);
-      const loginResponse = await api.login(username, password, true);
+      // 👇👇👇 核心修改在这里：把原来的 true 改成了 false
+      // true 代表“记住我”(LocalStorage)，false 代表“仅本次会话”(SessionStorage)
+      const loginResponse = await api.login(username, password, false); 
+      
       if (loginResponse?.success) {
         setIsAuthenticated(true);
         setIsAuthRequired(false);
@@ -1225,7 +1228,7 @@ function App() {
           </DialogActions>
         </Dialog>
         
-        <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
+               <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
             编辑站点
             <IconButton onClick={() => setEditSiteOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}>
@@ -1298,6 +1301,19 @@ function App() {
                   value={editingSite.description || ''}
                   onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
                 />
+
+                {/* 👇👇👇 新增的部分在这里 👇👇👇 */}
+                <FormControlLabel 
+                  control={
+                    <Switch 
+                      checked={editingSite.is_public === 1} 
+                      onChange={e => setEditingSite({ ...editingSite, is_public: e.target.checked ? 1 : 0 })} 
+                    />
+                  } 
+                  label="公开站点" 
+                />
+                {/* 👆👆👆 新增结束 👆👆👆 */}
+                
               </Stack>
             </DialogContent>
           )}
