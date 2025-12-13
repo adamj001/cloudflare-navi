@@ -108,6 +108,7 @@ const DEFAULT_CONFIGS = {
   'site.iconApi': 'https://www.google.com/s2/favicons?domain={domain}&sz=256',
   'site.searchBoxEnabled': 'true',
   'site.searchBoxGuestEnabled': 'true',
+   'site.desktopColumns': '6', // 👈 新增这一行，默认 6 列
 };
 
 // 💡 dnd-kit 新增：可拖拽的 Tab 组件包装器
@@ -1029,15 +1030,19 @@ function App() {
             >
               <SortableContext items={siteIds} strategy={rectSortingStrategy}>
                   <Box sx={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: { xs: 'repeat(auto-fill, minmax(140px, 1fr))', md: 'repeat(6, 1fr)' },
-                    gap: 3.5, 
-                    pb: 10,
-                    border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
-                    borderRadius: 4,
-                    p: sortMode === SortMode.SiteSort ? 2 : 0,
-                    transition: 'all 0.3s'
-                  }}>
+  display: 'grid', 
+  gridTemplateColumns: { 
+    xs: 'repeat(auto-fill, minmax(140px, 1fr))', // 手机端保持自动适应
+    // 👇👇👇 核心修改：读取配置中的列数，如果没有则默认为 6
+    md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)` 
+  },
+  gap: 3.5, 
+  pb: 10,
+  border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
+  borderRadius: 4,
+  p: sortMode === SortMode.SiteSort ? 2 : 0,
+  transition: 'all 0.3s'
+}}>
                     {currentGroup?.sites?.map((site: Site) => {
                         const CardContent = (
                             <Paper
@@ -1424,9 +1429,44 @@ function App() {
               <TextField label="网站名称" value={tempConfigs['site.name']} onChange={handleConfigInputChange} name="site.name" fullWidth />
               <TextField label="背景图片URL" value={tempConfigs['site.backgroundImage']} onChange={handleConfigInputChange} name="site.backgroundImage" fullWidth />
               <Slider value={Number(tempConfigs['site.backgroundOpacity'])} onChange={(_, v) => setTempConfigs({...tempConfigs, 'site.backgroundOpacity': String(v)})} min={0} max={1} step={0.05} />
-              <TextField label="自定义CSS" value={tempConfigs['site.customCss']} onChange={handleConfigInputChange} name="site.customCss" multiline rows={6} fullWidth />
-            </Stack>
-          </DialogContent>
+              <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
+  <DialogTitle>网站设置 ...（省略）</DialogTitle>
+  <DialogContent>
+    <Stack spacing={2}>
+      <TextField label="网站标题" value={tempConfigs['site.title']} onChange={handleConfigInputChange} name="site.title" fullWidth />
+      <TextField label="网站名称" value={tempConfigs['site.name']} onChange={handleConfigInputChange} name="site.name" fullWidth />
+      <TextField label="背景图片URL" value={tempConfigs['site.backgroundImage']} onChange={handleConfigInputChange} name="site.backgroundImage" fullWidth />
+   
+      {/* 原有的透明度设置 */}
+      <Box>
+        <Typography variant="caption" color="text.secondary">背景遮罩透明度</Typography>
+        <Slider 
+          value={Number(tempConfigs['site.backgroundOpacity'])} 
+          onChange={(_, v) => setTempConfigs({...tempConfigs, 'site.backgroundOpacity': String(v)})} 
+          min={0} max={1} step={0.05} 
+        />
+      </Box>
+
+      {/* 👇👇👇 新增：每行卡片数量设置 👇👇👇 */}
+      <Box>
+        <Typography variant="caption" color="text.secondary">
+          桌面端每行显示数量: {tempConfigs['site.desktopColumns'] || 6}
+        </Typography>
+        <Slider 
+          value={Number(tempConfigs['site.desktopColumns'] || 6)} 
+          onChange={(_, v) => setTempConfigs({...tempConfigs, 'site.desktopColumns': String(v)})} 
+          min={3}  // 最少3列
+          max={10} // 最多10列（你可以自己改这个上限）
+          step={1} 
+          marks
+          valueLabelDisplay="auto"
+        />
+      </Box>
+      {/* 👆👆👆 新增结束 👆👆👆 */}
+
+      <TextField label="自定义CSS" value={tempConfigs['site.customCss']} onChange={handleConfigInputChange} name="site.customCss" multiline rows={6} fullWidth />
+    </Stack>
+  </DialogContent>       
           <DialogActions>
             <Button onClick={handleCloseConfig}>取消</Button>
             <Button variant="contained" onClick={handleSaveConfig}>保存</Button>
