@@ -790,7 +790,6 @@ function App() {
       transition: 'opacity 0.2s'
     }} 
   />
-</Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
         <Typography 
           variant="h5" 
