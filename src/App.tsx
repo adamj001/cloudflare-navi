@@ -762,18 +762,35 @@ function App() {
   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
     
     {/* 👇👇👇 1. Logo 区域修改：根据模式切换 SVG 文件 👇👇👇 */}
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <img 
-        // 核心逻辑：暗黑模式用 dark.svg，亮色模式用 light.svg
-        src={darkMode ? "/logo-dark.svg" : "/logo-light.svg"} 
-        alt="WebNav Hub Logo" 
-        style={{ 
-          height: '48px', 
-          width: 'auto',
-          transition: 'all 0.3s' // 添加一点过渡动画，切换时更丝滑
-        }} 
-      />
-
+    {/* 1. Logo 区域优化版：双图同显，CSS控制显隐 */}
+<Box sx={{ position: 'relative', height: '48px', width: 'auto', display: 'flex', alignItems: 'center' }}>
+       {/* 暗黑模式 Logo */}
+  <img 
+    src="/logo-dark.svg" 
+    alt="WebNav Hub Logo Dark" 
+    loading="eager" // 强制立即加载
+    style={{ 
+      height: '48px', 
+      width: 'auto',
+      // 核心逻辑：如果是暗黑模式就显示(block)，否则隐藏(none)
+      display: darkMode ? 'block' : 'none', 
+      transition: 'opacity 0.2s'
+    }} 
+  />
+    {/* 亮色模式 Logo */}
+  <img 
+    src="/logo-light.svg" 
+    alt="WebNav Hub Logo Light" 
+    loading="eager" // 强制立即加载
+    style={{ 
+      height: '48px', 
+      width: 'auto',
+      // 核心逻辑：如果是暗黑模式就隐藏(none)，否则显示(block)
+      display: darkMode ? 'none' : 'block',
+      transition: 'opacity 0.2s'
+    }} 
+  />
+</Box>
       <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
         <Typography 
           variant="h5" 
