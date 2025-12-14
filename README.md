@@ -9,6 +9,8 @@
 ![Material UI](https://img.shields.io/badge/Material_UI-7.0-0081cb)
 ![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-f38020)
 ![License](https://img.shields.io/badge/License-MIT-green)
+
+
 **WebNav Hub** 是一个基于 React + TypeScript + Vite 构建的轻量级、高性能个人导航仪表盘。它支持 PWA 安装，拥有丝滑的拖拽排序体验、漂亮的磨砂玻璃 UI 以及自动化的天气组件。
 
 ## ✨ 核心特性
@@ -71,7 +73,7 @@ pnpm run build
 • 如果使用真实后端 API，请在 Settings 中配置 VITE_USE_REAL_API=true。
 注意: 不需要并在部署命令中填写 npm install，Cloudflare 会自动根据 pnpm-lock.yaml 安装依赖。
 
-s设置D1数据库：
+设置D1数据库：
 - 创建分组表
 
 CREATE TABLE IF NOT EXISTS groups (
