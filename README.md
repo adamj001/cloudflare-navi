@@ -143,8 +143,6 @@ public/               # 静态资源 (Logo, PWA icons)
 MIT License
 
 
-0.0 Create D1 Database Named navigation, then goto control panel to run the following initializing code:
-
 -
 [![Deploy to Cloudflare Workers](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/adamj001/cloudflare-navi)
 
