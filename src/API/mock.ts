@@ -1,4 +1,12 @@
-import { Group, Site, LoginResponse, ExportData, ImportResult, GroupWithSites } from './http';
+import {
+  Group,
+  Site,
+  LoginResponse,
+  ExportData,
+  ImportResult,
+  GroupWithSites,
+  normalizeImportData,
+} from './http';
 
 // 模拟数据
 const mockGroups: Group[] = [
@@ -392,10 +400,11 @@ export class MockNavigationClient {
   }
 
   // 数据导入
-  async importData(data: ExportData): Promise<ImportResult> {
+  async importData(input: ExportData | unknown): Promise<ImportResult> {
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     try {
+      const data = normalizeImportData(input);
       // 统计信息
       const stats = {
         groups: {

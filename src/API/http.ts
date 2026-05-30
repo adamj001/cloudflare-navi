@@ -79,6 +79,217 @@ export interface ExportData {
   exportDate: string;
 }
 
+interface LegacyBackupMenu {
+  id?: number;
+  name?: string;
+  order_num?: number;
+  is_public?: number;
+  created_at?: string;
+  updated_at?: string;
+  cards?: LegacyBackupCard[];
+  sub_menus?: LegacyBackupSubMenu[];
+  subMenus?: LegacyBackupSubMenu[];
+}
+
+interface LegacyBackupSubMenu {
+  id?: number;
+  menu_id?: number;
+  name?: string;
+  title?: string;
+  order_num?: number;
+  order?: number;
+  is_public?: number;
+  cards?: LegacyBackupCard[];
+}
+
+interface LegacyBackupCard {
+  id?: number;
+  menu_id?: number;
+  sub_menu_id?: number | null;
+  title?: string;
+  name?: string;
+  url?: string;
+  logo_url?: string | null;
+  custom_logo_path?: string | null;
+  icon?: string | null;
+  desc?: string | null;
+  description?: string | null;
+  notes?: string | null;
+  order?: number;
+  order_num?: number;
+  is_public?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface LegacyBackupData {
+  version?: string;
+  date?: string;
+  menus?: LegacyBackupMenu[];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object';
+}
+
+function isCurrentExportData(data: unknown): data is ExportData {
+  return (
+    isRecord(data) &&
+    Array.isArray(data.groups) &&
+    Array.isArray(data.sites) &&
+    isRecord(data.configs)
+  );
+}
+
+function toInt(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
+function toPublicFlag(value: unknown): number {
+  return value === 0 ? 0 : 1;
+}
+
+function toText(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
+function pickIcon(card: LegacyBackupCard): string {
+  return toText(card.custom_logo_path || card.logo_url || card.icon);
+}
+
+function normalizeUrl(url: unknown): string {
+  const value = toText(url).trim();
+  if (!value) {
+    return '';
+  }
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
+}
+
+function convertLegacyBackup(data: LegacyBackupData): ExportData {
+  const groups: Group[] = [];
+  const sites: Site[] = [];
+  const menus = Array.isArray(data.menus) ? data.menus : [];
+  let syntheticGroupId = 1;
+
+  for (const [menuIndex, menu] of menus.entries()) {
+    const menuId = toInt(menu.id, syntheticGroupId++);
+    const menuName = toText(menu.name).trim();
+    if (!menuName) {
+      continue;
+    }
+
+    groups.push({
+      id: menuId,
+      name: menuName,
+      order_num: toInt(menu.order_num, menuIndex),
+      is_public: toPublicFlag(menu.is_public),
+      created_at: menu.created_at,
+      updated_at: menu.updated_at,
+    });
+
+    const addCards = (cards: LegacyBackupCard[] | undefined, groupId: number, groupName?: string) => {
+      if (!Array.isArray(cards)) {
+        return;
+      }
+
+      for (const [cardIndex, card] of cards.entries()) {
+        const name = toText(card.title || card.name).trim();
+        const url = normalizeUrl(card.url);
+
+        if (!name || !url) {
+          continue;
+        }
+
+        sites.push({
+          id: card.id,
+          group_id: groupId,
+          name,
+          url,
+          icon: pickIcon(card),
+          description: toText(card.desc || card.description),
+          notes: toText(card.notes || groupName),
+          order_num: toInt(card.order_num ?? card.order, cardIndex),
+          is_public: toPublicFlag(card.is_public ?? menu.is_public),
+          created_at: card.created_at,
+          updated_at: card.updated_at,
+        });
+      }
+    };
+
+    addCards(
+      Array.isArray(menu.cards)
+        ? menu.cards.filter((card) => card.sub_menu_id === null || card.sub_menu_id === undefined)
+        : undefined,
+      menuId
+    );
+
+    const subMenuMap = new Map<number | string, LegacyBackupSubMenu>();
+    const rawSubMenus = [
+      ...(Array.isArray(menu.sub_menus) ? menu.sub_menus : []),
+      ...(Array.isArray(menu.subMenus) ? menu.subMenus : []),
+    ];
+
+    for (const [rawIndex, subMenu] of rawSubMenus.entries()) {
+      const key = subMenu.id ?? `${toText(subMenu.name || subMenu.title)}-${rawIndex}`;
+      const existing = subMenuMap.get(key);
+      if (!existing || (!existing.cards?.length && subMenu.cards?.length)) {
+        subMenuMap.set(key, subMenu);
+      }
+    }
+
+    const subMenus = Array.from(subMenuMap.values());
+
+    for (const [subIndex, subMenu] of subMenus.entries()) {
+      const subName = toText(subMenu.name || subMenu.title).trim();
+      const subGroupId = toInt(subMenu.id, syntheticGroupId++);
+
+      if (subName) {
+        groups.push({
+          id: subGroupId,
+          name: `${menuName} / ${subName}`,
+          order_num: toInt(subMenu.order_num ?? subMenu.order, groups.length + subIndex),
+          is_public: toPublicFlag(subMenu.is_public ?? menu.is_public),
+        });
+      }
+
+      const nestedCards =
+        Array.isArray(subMenu.cards) && subMenu.cards.length > 0
+          ? subMenu.cards
+          : Array.isArray(menu.cards)
+            ? menu.cards.filter((card) => card.sub_menu_id === subMenu.id)
+            : [];
+
+      addCards(nestedCards, subName ? subGroupId : menuId, subName);
+    }
+  }
+
+  return {
+    groups,
+    sites,
+    configs: {},
+    version: data.version || 'legacy-2.0',
+    exportDate: data.date || new Date().toISOString(),
+  };
+}
+
+export function normalizeImportData(data: unknown): ExportData {
+  if (isCurrentExportData(data)) {
+    return {
+      groups: data.groups,
+      sites: data.sites,
+      configs: data.configs,
+      version: data.version,
+      exportDate: data.exportDate,
+    };
+  }
+
+  if (isRecord(data) && Array.isArray(data.menus)) {
+    return convertLegacyBackup(data as LegacyBackupData);
+  }
+
+  throw new Error('Unsupported import data format');
+}
+
 // 导入结果接口
 export interface ImportResult {
   success: boolean;
@@ -724,8 +935,9 @@ export class NavigationAPI {
   }
 
   // 导入所有数据
-  async importData(data: ExportData): Promise<ImportResult> {
+  async importData(input: ExportData | unknown): Promise<ImportResult> {
     try {
+      const data = normalizeImportData(input);
       // 创建新旧分组ID的映射
       const groupMap = new Map<number, number>();
 
@@ -766,6 +978,7 @@ export class NavigationAPI {
           const newGroup = await this.createGroup({
             name: group.name,
             order_num: group.order_num,
+            is_public: group.is_public ?? 1,
           });
 
           // 添加到映射

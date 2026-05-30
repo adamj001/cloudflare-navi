@@ -1,5 +1,6 @@
 import {
     NavigationAPI,
+    normalizeImportData,
     type LoginRequest,
     type ExportData,
     type Group,
@@ -974,7 +975,7 @@ export default {
 
                 // 数据导入路由
                 else if (path === "import" && method === "POST") {
-                    const data = await validateRequestBody(request);
+                    const data = normalizeImportData(await validateRequestBody(request));
 
                     // 深度验证导入数据
                     const validation = validateExportData(data);

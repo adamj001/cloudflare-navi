@@ -246,7 +246,7 @@ export class NavigationClient {
   }
 
   // 数据导入
-  async importData(data: ExportData): Promise<ImportResult> {
+  async importData(data: unknown): Promise<ImportResult> {
     const response = await this.request('import', {
       method: 'POST',
       body: JSON.stringify(data),
