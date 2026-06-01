@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { NavigationClient } from './API/client';
 import { MockNavigationClient } from './API/mock';
 import { Site, Group } from './API/http';
@@ -208,6 +208,13 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
   const currentGroup = groups.find(g => g.id === selectedTab);
+  const cardAreaSwipeRef = useRef({
+    startX: 0,
+    startY: 0,
+    pointerId: null as number | null,
+    didSwipe: false,
+  });
+  const suppressCardClickRef = useRef(false);
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [isAuthRequired, setIsAuthRequired] = useState(false);
@@ -325,6 +332,76 @@ function App() {
             };
             return newGroups;
         });
+    }
+  };
+
+  const switchAdjacentGroup = (direction: 'previous' | 'next') => {
+    if (sortMode !== SortMode.None || groups.length <= 1 || selectedTab === null) {
+      return;
+    }
+
+    const currentIndex = groups.findIndex((group) => group.id === selectedTab);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+    const nextGroup = groups[nextIndex];
+    if (nextGroup?.id) {
+      setSelectedTab(nextGroup.id);
+    }
+  };
+
+  const handleCardAreaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) {
+      return;
+    }
+
+    cardAreaSwipeRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      pointerId: event.pointerId,
+      didSwipe: false,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const swipe = cardAreaSwipeRef.current;
+    if (swipe.pointerId !== event.pointerId || swipe.didSwipe) {
+      return;
+    }
+
+    const deltaX = event.clientX - swipe.startX;
+    const deltaY = event.clientY - swipe.startY;
+    const isHorizontalSwipe = Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4;
+
+    if (isHorizontalSwipe) {
+      swipe.didSwipe = true;
+      suppressCardClickRef.current = true;
+      switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
+      window.setTimeout(() => {
+        suppressCardClickRef.current = false;
+      }, 0);
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
+  const handleCardAreaPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (cardAreaSwipeRef.current.pointerId === event.pointerId && event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    cardAreaSwipeRef.current.pointerId = null;
+  };
+
+  const handleCardAreaClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (suppressCardClickRef.current) {
+      event.preventDefault();
+      event.stopPropagation();
+      suppressCardClickRef.current = false;
     }
   };
 
@@ -1000,7 +1077,12 @@ function App() {
               onDragEnd={handleDragEnd}
             >
               <SortableContext items={siteIds} strategy={rectSortingStrategy}>
-                  <Box sx={{ 
+                  <Box
+                    onPointerDown={handleCardAreaPointerDown}
+                    onPointerUp={handleCardAreaPointerUp}
+                    onPointerCancel={handleCardAreaPointerCancel}
+                    onClickCapture={handleCardAreaClickCapture}
+                    sx={{ 
                     display: 'grid', 
                     gridTemplateColumns: { 
                         xs: 'repeat(auto-fill, minmax(140px, 1fr))', 
@@ -1011,7 +1093,8 @@ function App() {
                     border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
                     borderRadius: 4,
                     p: sortMode === SortMode.SiteSort ? 2 : 0,
-                    transition: 'all 0.3s'
+                    transition: 'all 0.3s',
+                    touchAction: sortMode === SortMode.None ? 'pan-y' : 'none',
                   }}>
                     {currentGroup?.sites?.map((site: Site) => {
                         const CardContent = (
