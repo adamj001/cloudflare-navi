@@ -1028,10 +1028,13 @@ interface GroupInput {
     name?: string;
     order_num?: number;
     is_public?: number;
+    sub_menus?: Array<{ id?: number; group_id?: number; name: string; order_num: number }>;
+    subMenus?: Array<{ id?: number; group_id?: number; name: string; order_num: number }>;
 }
 
 interface SiteInput {
     group_id?: number;
+    sub_menu_id?: number | null;
     name?: string;
     url?: string;
     icon?: string;
@@ -1097,6 +1100,26 @@ function validateGroup(data: GroupInput): {
         sanitizedData.is_public = 1; // 默认公开
     }
 
+    if (Array.isArray(data.sub_menus)) {
+        sanitizedData.sub_menus = data.sub_menus
+            .filter((subMenu) => subMenu && typeof subMenu.name === "string" && subMenu.name.trim())
+            .map((subMenu, index) => ({
+                id: subMenu.id,
+                group_id: subMenu.group_id || 0,
+                name: subMenu.name.trim().slice(0, 100),
+                order_num: typeof subMenu.order_num === "number" ? subMenu.order_num : index,
+            }));
+    } else if (Array.isArray(data.subMenus)) {
+        sanitizedData.sub_menus = data.subMenus
+            .filter((subMenu) => subMenu && typeof subMenu.name === "string" && subMenu.name.trim())
+            .map((subMenu, index) => ({
+                id: subMenu.id,
+                group_id: subMenu.group_id || 0,
+                name: subMenu.name.trim().slice(0, 100),
+                order_num: typeof subMenu.order_num === "number" ? subMenu.order_num : index,
+            }));
+    }
+
     return {
         valid: errors.length === 0,
         errors,
@@ -1117,6 +1140,11 @@ function validateSite(data: SiteInput): {
         errors.push("分组ID必须是数字且不能为空");
     } else {
         sanitizedData.group_id = data.group_id;
+    }
+
+    if (data.sub_menu_id !== undefined) {
+        sanitizedData.sub_menu_id =
+            typeof data.sub_menu_id === "number" ? data.sub_menu_id : null;
     }
 
     // 验证名称
