@@ -7,6 +7,7 @@ import { GroupWithSites } from './types';
 import LoginForm from './components/LoginForm';
 import SearchBox from './components/SearchBox';
 import WeatherWidget from './components/WeatherWidget';
+import EditGroupDialog from './components/EditGroupDialog';
 import { sanitizeCSS, isSecureUrl, extractDomain } from './utils/url';
 import './App.css';
 
@@ -68,6 +69,7 @@ import {
   AppBar,
   Tabs,
   Tab,
+  Tooltip,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -260,6 +262,8 @@ function App() {
 
   const [editSiteOpen, setEditSiteOpen] = useState(false);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
+  const [editGroupOpen, setEditGroupOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
 
   // 💡 dnd-kit 新增：设置拖拽传感器
   const sensors = useSensors(

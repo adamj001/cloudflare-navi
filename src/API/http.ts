@@ -37,18 +37,7 @@ export interface Group {
   id?: number;
   name: string;
   order_num: number;
-  sub_menus?: SubMenu[];
-  subMenus?: SubMenu[];
   is_public?: number; // 0 = 私密（仅管理员可见），1 = 公开（访客可见）
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface SubMenu {
-  id?: number;
-  group_id: number;
-  name: string;
-  order_num: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -56,7 +45,6 @@ export interface SubMenu {
 export interface Site {
   id?: number;
   group_id: number;
-  sub_menu_id?: number | null;
   name: string;
   url: string;
   icon: string;
@@ -71,8 +59,6 @@ export interface Site {
 // 分组及其站点 (用于优化 N+1 查询)
 export interface GroupWithSites extends Group {
   id: number; // 确保 id 存在
-  sub_menus: SubMenu[];
-  subMenus: SubMenu[];
   sites: Site[];
 }
 
@@ -87,8 +73,6 @@ export interface Config {
 // 扩展导出数据接口，添加导入结果类型
 export interface ExportData {
   groups: Group[];
-  sub_menus?: SubMenu[];
-  subMenus?: SubMenu[];
   sites: Site[];
   configs: Record<string, string>;
   version: string;
@@ -292,8 +276,6 @@ export function normalizeImportData(data: unknown): ExportData {
   if (isCurrentExportData(data)) {
     return {
       groups: data.groups,
-      sub_menus: data.sub_menus || data.subMenus || [],
-      subMenus: data.sub_menus || data.subMenus || [],
       sites: data.sites,
       configs: data.configs,
       version: data.version,
@@ -376,11 +358,7 @@ export class NavigationAPI {
 
     // 再创建sites表
     await this.db.exec(
-      `CREATE TABLE IF NOT EXISTS sites (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id INTEGER NOT NULL, sub_menu_id INTEGER, name TEXT NOT NULL, url TEXT NOT NULL, icon TEXT, description TEXT, notes TEXT, order_num INTEGER NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE, FOREIGN KEY (sub_menu_id) REFERENCES sub_menus(id) ON DELETE SET NULL);`
-    );
-
-    await this.db.exec(
-      `CREATE TABLE IF NOT EXISTS sub_menus (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id INTEGER NOT NULL, name TEXT NOT NULL, order_num INTEGER NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE);`
+      `CREATE TABLE IF NOT EXISTS sites (id INTEGER PRIMARY KEY AUTOINCREMENT, group_id INTEGER NOT NULL, name TEXT NOT NULL, url TEXT NOT NULL, icon TEXT, description TEXT, notes TEXT, order_num INTEGER NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE);`
     );
 
     // 创建全局配置表
@@ -607,115 +585,50 @@ export class NavigationAPI {
     if (!createdGroup) {
       throw new Error('创建分组失败');
     }
-    if (group.sub_menus || group.subMenus) {
-      await this.replaceSubMenus(createdGroup.id!, group.sub_menus || group.subMenus || []);
-      createdGroup.sub_menus = await this.getSubMenus(createdGroup.id);
-      createdGroup.subMenus = createdGroup.sub_menus;
-    }
     return createdGroup;
   }
 
   async updateGroup(id: number, group: Partial<Group>): Promise<Group | null> {
+    // 字段白名单
     const ALLOWED_FIELDS = ['name', 'order_num', 'is_public'] as const;
     type AllowedField = (typeof ALLOWED_FIELDS)[number];
 
     const updates: string[] = ['updated_at = CURRENT_TIMESTAMP'];
-    const params: (string | number | null)[] = [];
+    const params: (string | number)[] = [];
 
+    // 只允许更新白名单中的字段
     Object.entries(group).forEach(([key, value]) => {
       if (ALLOWED_FIELDS.includes(key as AllowedField) && value !== undefined) {
         updates.push(`${key} = ?`);
         params.push(value);
       } else if (key !== 'id' && key !== 'created_at' && key !== 'updated_at') {
-        console.warn(`???????????????: ${key}`);
+        console.warn(`尝试更新不允许的字段: ${key}`);
       }
     });
 
-    const shouldSyncSubMenus = Array.isArray(group.sub_menus) || Array.isArray(group.subMenus);
-
-    if (updates.length === 1 && !shouldSyncSubMenus) {
-      throw new Error('????????????');
+    if (updates.length === 1) {
+      // 只有 updated_at，没有实际更新
+      throw new Error('没有可更新的字段');
     }
 
-    let updatedGroup: Group | null = null;
-    if (updates.length > 1) {
-      const query = `UPDATE groups SET ${updates.join(
-        ', '
-      )} WHERE id = ? RETURNING id, name, order_num, is_public, created_at, updated_at`;
-      params.push(id);
-
-      const result = await this.db
-        .prepare(query)
-        .bind(...params)
-        .all<Group>();
-
-      if (!result.results || result.results.length === 0) {
-        return null;
-      }
-      updatedGroup = result.results[0] || null;
-    } else {
-      updatedGroup = await this.getGroup(id);
-    }
-
-    if (shouldSyncSubMenus && updatedGroup) {
-      await this.replaceSubMenus(id, group.sub_menus || group.subMenus || []);
-      updatedGroup.sub_menus = await this.getSubMenus(id);
-      updatedGroup.subMenus = updatedGroup.sub_menus;
-    }
-
-    return updatedGroup || null;
-  }
-
-  async getSubMenus(groupId?: number): Promise<SubMenu[]> {
-    let query = 'SELECT id, group_id, name, order_num, created_at, updated_at FROM sub_menus';
-    const params: number[] = [];
-    if (groupId !== undefined) {
-      query += ' WHERE group_id = ?';
-      params.push(groupId);
-    }
-    query += ' ORDER BY group_id, order_num';
+    // 构建安全的参数化查询
+    const query = `UPDATE groups SET ${updates.join(
+      ', '
+    )} WHERE id = ? RETURNING id, name, order_num, is_public, created_at, updated_at`;
+    params.push(id);
 
     const result = await this.db
       .prepare(query)
       .bind(...params)
-      .all<SubMenu>();
-    return result.results || [];
+      .all<Group>();
+
+    if (!result.results || result.results.length === 0) {
+      return null;
+    }
+    const updatedGroup = result.results[0];
+    return updatedGroup || null;
   }
 
-  private async replaceSubMenus(groupId: number, subMenus: SubMenu[]): Promise<void> {
-    const existing = await this.getSubMenus(groupId);
-    const existingIds = new Set(existing.map((subMenu) => subMenu.id).filter(Boolean) as number[]);
-    const incomingIds = new Set(
-      subMenus.map((subMenu) => subMenu.id).filter((id): id is number => typeof id === 'number')
-    );
-
-    for (const existingId of existingIds) {
-      if (!incomingIds.has(existingId)) {
-        await this.db
-          .prepare('UPDATE sites SET sub_menu_id = NULL, updated_at = CURRENT_TIMESTAMP WHERE sub_menu_id = ?')
-          .bind(existingId)
-          .run();
-        await this.db.prepare('DELETE FROM sub_menus WHERE id = ? AND group_id = ?').bind(existingId, groupId).run();
-      }
-    }
-
-    for (const [index, subMenu] of subMenus.entries()) {
-      const name = subMenu.name?.trim();
-      if (!name) continue;
-      const orderNum = subMenu.order_num ?? index;
-      if (subMenu.id && existingIds.has(subMenu.id)) {
-        await this.db
-          .prepare('UPDATE sub_menus SET name = ?, order_num = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND group_id = ?')
-          .bind(name, orderNum, subMenu.id, groupId)
-          .run();
-      } else {
-        await this.db
-          .prepare('INSERT INTO sub_menus (group_id, name, order_num) VALUES (?, ?, ?)')
-          .bind(groupId, name, orderNum)
-          .run();
-      }
-    }
-  }
   async deleteGroup(id: number): Promise<boolean> {
     const result = await this.db.prepare('DELETE FROM groups WHERE id = ?').bind(id).run();
     return result.success;
@@ -724,8 +637,8 @@ export class NavigationAPI {
   // 网站相关 API
   async getSites(groupId?: number): Promise<Site[]> {
     let query =
-      'SELECT id, group_id, sub_menu_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at FROM sites';
-    const params: (string | number | null)[] = [];
+      'SELECT id, group_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at FROM sites';
+    const params: (string | number)[] = [];
 
     if (groupId !== undefined) {
       query += ' WHERE group_id = ?';
@@ -746,27 +659,92 @@ export class NavigationAPI {
    * 返回格式: GroupWithSites[] (每个分组包含其站点数组)
    */
   async getGroupsWithSites(): Promise<GroupWithSites[]> {
-    const [groups, sites, subMenus] = await Promise.all([
-      this.getGroups(),
-      this.getSites(),
-      this.getSubMenus(),
-    ]);
+    // 使用 LEFT JOIN 一次性获取所有数据
+    const query = `
+      SELECT
+        g.id as group_id,
+        g.name as group_name,
+        g.order_num as group_order,
+        g.is_public as group_is_public,
+        g.created_at as group_created_at,
+        g.updated_at as group_updated_at,
+        s.id as site_id,
+        s.name as site_name,
+        s.url as site_url,
+        s.icon as site_icon,
+        s.description as site_description,
+        s.notes as site_notes,
+        s.order_num as site_order,
+        s.is_public as site_is_public,
+        s.created_at as site_created_at,
+        s.updated_at as site_updated_at
+      FROM groups g
+      LEFT JOIN sites s ON g.id = s.group_id
+      ORDER BY g.order_num ASC, s.order_num ASC
+    `;
 
-    return groups.map((group) => {
-      const groupSubMenus = subMenus.filter((subMenu) => subMenu.group_id === group.id);
-      return {
-        ...group,
-        id: group.id!,
-        sub_menus: groupSubMenus,
-        subMenus: groupSubMenus,
-        sites: sites.filter((site) => site.group_id === group.id),
-      };
-    });
+    const result = await this.db.prepare(query).all<{
+      group_id: number;
+      group_name: string;
+      group_order: number;
+      group_is_public?: number;
+      group_created_at: string;
+      group_updated_at: string;
+      site_id: number | null;
+      site_name: string | null;
+      site_url: string | null;
+      site_icon: string | null;
+      site_description: string | null;
+      site_notes: string | null;
+      site_order: number | null;
+      site_is_public?: number;
+      site_created_at: string | null;
+      site_updated_at: string | null;
+    }>();
+
+    // 将查询结果转换为 GroupWithSites 格式
+    const groupsMap = new Map<number, GroupWithSites>();
+
+    for (const row of result.results || []) {
+      // 如果分组不存在,创建它
+      if (!groupsMap.has(row.group_id)) {
+        groupsMap.set(row.group_id, {
+          id: row.group_id,
+          name: row.group_name,
+          order_num: row.group_order,
+          is_public: row.group_is_public,
+          created_at: row.group_created_at,
+          updated_at: row.group_updated_at,
+          sites: [],
+        });
+      }
+
+      // 如果有站点数据,添加到分组的 sites 数组
+      if (row.site_id !== null) {
+        const group = groupsMap.get(row.group_id)!;
+        group.sites.push({
+          id: row.site_id,
+          group_id: row.group_id,
+          name: row.site_name!,
+          url: row.site_url!,
+          icon: row.site_icon || '',
+          description: row.site_description || '',
+          notes: row.site_notes || '',
+          order_num: row.site_order!,
+          is_public: row.site_is_public,
+          created_at: row.site_created_at!,
+          updated_at: row.site_updated_at!,
+        });
+      }
+    }
+
+    return Array.from(groupsMap.values());
   }
+
   async getSite(id: number): Promise<Site | null> {
     const result = await this.db
       .prepare(
-        'SELECT id, group_id, sub_menu_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at FROM sites WHERE id = ?'
+        'SELECT id, group_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at FROM sites WHERE id = ?'
       )
       .bind(id)
       .first<Site>();
@@ -777,14 +755,13 @@ export class NavigationAPI {
     const result = await this.db
       .prepare(
         `
-      INSERT INTO sites (group_id, sub_menu_id, name, url, icon, description, notes, order_num, is_public)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      RETURNING id, group_id, sub_menu_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at
+      INSERT INTO sites (group_id, name, url, icon, description, notes, order_num, is_public)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      RETURNING id, group_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at
     `
       )
       .bind(
         site.group_id,
-        site.sub_menu_id ?? null,
         site.name,
         site.url,
         site.icon || '',
@@ -809,7 +786,6 @@ export class NavigationAPI {
     // 字段白名单
     const ALLOWED_FIELDS = [
       'group_id',
-      'sub_menu_id',
       'name',
       'url',
       'icon',
@@ -821,7 +797,7 @@ export class NavigationAPI {
     type AllowedField = (typeof ALLOWED_FIELDS)[number];
 
     const updates: string[] = ['updated_at = CURRENT_TIMESTAMP'];
-    const params: (string | number | null)[] = [];
+    const params: (string | number)[] = [];
 
     // 只允许更新白名单中的字段
     Object.entries(site).forEach(([key, value]) => {
@@ -841,7 +817,7 @@ export class NavigationAPI {
     // 构建安全的参数化查询
     const query = `UPDATE sites SET ${updates.join(
       ', '
-    )} WHERE id = ? RETURNING id, group_id, sub_menu_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at`;
+    )} WHERE id = ? RETURNING id, group_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at`;
     params.push(id);
 
     const result = await this.db
@@ -1087,7 +1063,7 @@ export class NavigationAPI {
   async getSiteByGroupIdAndUrl(groupId: number, url: string): Promise<Site | null> {
     const result = await this.db
       .prepare(
-        'SELECT id, group_id, sub_menu_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at FROM sites WHERE group_id = ? AND url = ?'
+        'SELECT id, group_id, name, url, icon, description, notes, order_num, is_public, created_at, updated_at FROM sites WHERE group_id = ? AND url = ?'
       )
       .bind(groupId, url)
       .first<Site>();

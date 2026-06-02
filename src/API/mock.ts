@@ -5,7 +5,6 @@ import {
   ExportData,
   ImportResult,
   GroupWithSites,
-  SubMenu,
   normalizeImportData,
 } from './http';
 
@@ -41,7 +40,6 @@ const mockSites: Site[] = [
   {
     id: 1,
     group_id: 1,
-    sub_menu_id: 1,
     name: 'Google',
     url: 'https://www.google.com',
     icon: 'https://img.zhengmi.org/file/1742480539412_微信图片_20240707011628.jpg',
@@ -55,7 +53,6 @@ const mockSites: Site[] = [
   {
     id: 2,
     group_id: 1,
-    sub_menu_id: 2,
     name: 'GitHub',
     url: 'https://github.com',
     icon: 'https://img.zhengmi.org/file/1742480539412_微信图片_20240707011628.jpg',
@@ -105,11 +102,6 @@ const mockSites: Site[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
-];
-
-const mockSubMenus: SubMenu[] = [
-  { id: 1, group_id: 1, name: '搜索', order_num: 0 },
-  { id: 2, group_id: 1, name: '代码', order_num: 1 },
 ];
 
 // 添加模拟配置数据
@@ -227,8 +219,6 @@ export class MockNavigationClient {
     return groups.map((group) => ({
       ...group,
       id: group.id!, // 确保 id 存在
-      sub_menus: mockSubMenus.filter((subMenu) => subMenu.group_id === group.id),
-      subMenus: mockSubMenus.filter((subMenu) => subMenu.group_id === group.id),
       sites: sites.filter((site) => site.group_id === group.id),
     }));
   }
