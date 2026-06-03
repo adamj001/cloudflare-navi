@@ -89,6 +89,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete'; 
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
+// 引入或直接使用我们之前在 http.ts 中导出的新树状接口
+import { Site, Group, GroupTreeNode } from './API/http'; 
 
 
 const isDevEnvironment = import.meta.env.DEV;
@@ -210,7 +212,9 @@ function App() {
     [darkMode]
   );
 
-  const [groups, setGroups] = useState<GroupWithSites[]>([]);
+ 
+const [groups, setGroups] = useState<GroupTreeNode[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
   const currentGroup = groups.find(g => g.id === selectedTab);
@@ -1247,9 +1251,10 @@ function App() {
               {/* ================= 2. ✨ 核心新增：遍历并渲染子菜单 (sub_menus) ================= */}
               {currentGroup?.sub_menus && currentGroup.sub_menus.length > 0 && (
                 <Stack spacing={6}>
-                  {currentGroup.sub_menus.map((subMenu) => {
-                    const subSiteIds = subMenu.sites?.map(s => s.id!) || [];
-                    return (
+                  {currentGroup?.sub_menus?.map((subMenu: GroupTreeNode) => {
+                  const subSiteIds = subMenu.sites?.map((s: Site) => s.id!) || [];
+  
+                  return (
                       <Box key={subMenu.id} sx={{ p: 2, borderRadius: 4, bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
                         {/* 子菜单标题 */}
                         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
