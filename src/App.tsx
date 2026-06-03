@@ -1233,10 +1233,11 @@ function App() {
                       }}>
                         {currentGroup.sites.map((site: Site) => renderSiteCard(site))}
                         
-                        {/* 管理员添加站点按钮 */}
-                        {isAuthenticated && sortMode === SortMode.None && (
-                          {renderAddSiteCard(currentGroup.id!)}
-                        )}
+                      {/* 管理员添加站点按钮 */}
+                      {isAuthenticated && sortMode === SortMode.None && 
+                      renderAddSiteCard(currentGroup.id!) //  直接调用即可
+                      }
+
                       </Box>
                     </SortableContext>
                   </DndContext>
@@ -1268,9 +1269,10 @@ function App() {
                           {subMenu.sites?.map((site: Site) => renderSiteCard(site))}
                           
                           {/* 子菜单持有的添加站点按钮 */}
-                          {isAuthenticated && sortMode === SortMode.None && (
-                            {renderAddSiteCard(subMenu.id!)}
-                          )}
+                          {isAuthenticated && sortMode === SortMode.None && 
+                          renderAddSiteCard(subMenu.id!) //  直接调用即可
+                          }
+
                         </Box>
                       </Box>
                     );
@@ -1283,7 +1285,7 @@ function App() {
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                   {renderAddSiteCard(currentGroup.id!)}
                 </Box>
-              )}
+              }
             </Box>
           )}
 
