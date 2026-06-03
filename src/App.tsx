@@ -791,6 +791,103 @@ function App() {
     }
   };
 
+    // ✨ 提取公用的站点卡片渲染函数
+  const renderSiteCard = (site: Site) => {
+    const CardContent = (
+      <Paper
+        component={isAuthenticated && sortMode === SortMode.None ? 'div' : 'a'}
+        href={!isAuthenticated && sortMode === SortMode.None ? site.url : undefined}
+        target={!isAuthenticated && sortMode === SortMode.None ? '_blank' : undefined}
+        rel={!isAuthenticated && sortMode === SortMode.None ? 'noopener' : undefined}
+        onClick={(e: React.MouseEvent) => {
+            if (sortMode !== SortMode.None) { e.preventDefault(); return; }
+            if (isAuthenticated) { setEditingSite(site); setEditSiteOpen(true); }
+        }}
+        sx={{
+            p: 2.5, borderRadius: 4,
+            bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: (t) => t.shadows[16] + ', 0 8px 32px rgba(0,0,0,0.3)',
+            transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            transform: 'translateY(0)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', textAlign: 'center', position: 'relative',
+            cursor: sortMode !== SortMode.None ? 'grab' : (isAuthenticated ? 'pointer' : 'default'),
+            textDecoration: 'none', color: 'inherit', height: '100%', 
+            '&:hover': {
+              ...(sortMode === SortMode.None && {
+                transform: 'translateY(-10px) scale(1.05)', 
+                boxShadow: (t) => t.shadows[24] + `, 0 0 40px ${t.palette.primary.main}50`, 
+                bgcolor: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)',
+                ...(isAuthenticated && { border: '2px solid #00ff9d' }),
+              })
+            },
+        }}
+      >
+        {isAuthenticated && sortMode === SortMode.None && (
+          <Box sx={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0.5, zIndex: 10 }}>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingSite(site); setEditSiteOpen(true); }} sx={{ bgcolor: 'rgba(0,255,157,0.15)', color: '#00ff9d', '&:hover': { bgcolor: 'rgba(0,255,157,0.3)' }, }}>
+                <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleSiteDelete(site.id!); }} sx={{ bgcolor: 'rgba(255,0,0,0.15)', color: '#ff4444', '&:hover': { bgcolor: 'rgba(255,0,0,0.3)' }, }}>
+                <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        )}
+
+        <Box sx={{ width: 100, height: 100, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1.5 }}>
+            <img
+              src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=256`}
+              alt={site.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
+              onError={(e) => {
+                  const isTextIcon = site.icon && site.icon.length > 0 && !site.icon.startsWith('http');
+                  const displayChar = isTextIcon ? site.icon.trim().charAt(0).toUpperCase() : (site.name?.trim().charAt(0).toUpperCase() || '?');
+                  const bgColor = darkMode ? '#1e1e1e' : '#f5f5f5';
+                  const textColor = darkMode ? '#ffffff' : '#000000';
+                  e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="${bgColor}"/><text x="50" y="50" font-family="Arial,Helvetica,sans-serif" font-size="64" font-weight="bold" fill="${textColor}" text-anchor="middle" dominant-baseline="central">${displayChar}</text></svg>`)}`
+              }}
+            />
+        </Box>
+
+        <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: '100%' }}>
+            {site.name}
+        </Typography>
+        {site.description && site.description !== '暂无描述' && (
+            <Typography variant="caption" noWrap sx={{ opacity: 0.7, fontSize: '0.75rem', color: 'text.secondary', maxWidth: '100%' }}>
+            {site.description}
+            </Typography>
+        )}
+      </Paper>
+    );
+
+    if (sortMode === SortMode.SiteSort) {
+      return (
+        <SortableSiteCard key={site.id} id={site.id!}>
+          {CardContent}
+        </SortableSiteCard>
+      );
+    }
+    return <Box key={site.id} sx={{ height: '100%' }}>{CardContent}</Box>;
+  };
+
+  // ✨ 提取公用的“添加站点”占位卡片
+  const renderAddSiteCard = (targetGroupId: number) => {
+    return (
+      <Paper
+          sx={{
+              p: 2.5, borderRadius: 4, bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)',
+              boxShadow: (t) => t.shadows[16] + ', 0 8px 32px rgba(0,0,0,0.3)', transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+              '&:hover': { transform: 'translateY(-10px) scale(1.05)', boxShadow: (t) => t.shadows[24] + `, 0 0 40px ${t.palette.primary.main}50`, bgcolor: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', },
+              minHeight: '180px', height: '100%'
+          }}
+          onClick={() => handleOpenAddSite(targetGroupId)}
+      >
+          <AddIcon sx={{ fontSize: 64, color: 'primary.main' }} />
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ mt: 1 }}>添加站点</Typography>
+      </Paper>
+    );
+  };
+
   if (isAuthChecking) {
     return (
       <ThemeProvider theme={theme}>
@@ -1110,148 +1207,84 @@ function App() {
              </Alert>
           )}
 
-          {loading ? (
+                    {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
               <CircularProgress size={60} thickness={4} />
             </Box>
           ) : (
-            <DndContext 
-              sensors={sensors} 
-              collisionDetection={closestCenter} 
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={siteIds} strategy={rectSortingStrategy}>
-                  <Box
-                    onPointerDown={handleCardAreaPointerDown}
-                    onPointerUp={handleCardAreaPointerUp}
-                    onPointerCancel={handleCardAreaPointerCancel}
-                    onClickCapture={handleCardAreaClickCapture}
-                    sx={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: { 
-                        xs: 'repeat(auto-fill, minmax(140px, 1fr))', 
-                        md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)` 
-                    },
-                    gap: 3.5, 
-                    pb: 10,
-                    border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
-                    borderRadius: 4,
-                    p: sortMode === SortMode.SiteSort ? 2 : 0,
-                    transition: 'all 0.3s',
-                    touchAction: sortMode === SortMode.None ? 'pan-y' : 'none',
-                  }}>
-                    {currentGroup?.sites?.map((site: Site) => {
-                        const CardContent = (
-                            <Paper
-                                component={isAuthenticated && sortMode === SortMode.None ? 'div' : 'a'}
-                                href={!isAuthenticated && sortMode === SortMode.None ? site.url : undefined}
-                                target={!isAuthenticated && sortMode === SortMode.None ? '_blank' : undefined}
-                                rel={!isAuthenticated && sortMode === SortMode.None ? 'noopener' : undefined}
-                                onClick={(e: React.MouseEvent) => {
-                                    if (sortMode !== SortMode.None) {
-                                        e.preventDefault();
-                                        return;
-                                    }
+            <Box sx={{ pb: 10 }}>
+              {/* ================= 1. 渲染当前顶级分组的直属站点 ================= */}
+              {currentGroup?.sites && currentGroup.sites.length > 0 && (
+                <Box sx={{ mb: 6 }}>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={siteIds} strategy={rectSortingStrategy}>
+                      <Box sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: 'repeat(auto-fill, minmax(140px, 1fr))',
+                          md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)`
+                        },
+                        gap: 3.5,
+                        border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
+                        borderRadius: 4,
+                        p: sortMode === SortMode.SiteSort ? 2 : 0,
+                        transition: 'all 0.3s',
+                        touchAction: sortMode === SortMode.None ? 'pan-y' : 'none',
+                      }}>
+                        {currentGroup.sites.map((site: Site) => renderSiteCard(site))}
+                        
+                        {/* 管理员添加站点按钮 */}
+                        {isAuthenticated && sortMode === SortMode.None && (
+                          {renderAddSiteCard(currentGroup.id!)}
+                        )}
+                      </Box>
+                    </SortableContext>
+                  </DndContext>
+                </Box>
+              )}
 
-                                    if (isAuthenticated) {
-                                        setEditingSite(site);
-                                        setEditSiteOpen(true);
-                                    }
-                                }}
-                                sx={{
-                                    p: 2.5,
-                                    borderRadius: 4,
-                                    bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                                    backdropFilter: 'blur(12px)',
-                                    border: '1px solid rgba(255,255,255,0.12)',
-                                    boxShadow: (t) => t.shadows[16] + ', 0 8px 32px rgba(0,0,0,0.3)',
-                                    transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                                    transform: 'translateY(0)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    textAlign: 'center',
-                                    position: 'relative',
-                                    cursor: sortMode !== SortMode.None ? 'grab' : (isAuthenticated ? 'pointer' : 'default'),
-                                    textDecoration: 'none',
-                                    color: 'inherit',
-                                    height: '100%', 
-                                    '&:hover': {
-                                      ...(sortMode === SortMode.None && {
-                                          transform: 'translateY(-10px) scale(1.05)', 
-                                          boxShadow: (t) => t.shadows[24] + `, 0 0 40px ${t.palette.primary.main}50`, 
-                                          bgcolor: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)',
-                                          ...(isAuthenticated && { border: '2px solid #00ff9d' }),
-                                      })
-                                    },
-                                }}
-                                >
-                                {isAuthenticated && sortMode === SortMode.None && (
-                                    <Box sx={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0.5, zIndex: 10 }}>
-                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingSite(site); setEditSiteOpen(true); }} sx={{ bgcolor: 'rgba(0,255,157,0.15)', color: '#00ff9d', '&:hover': { bgcolor: 'rgba(0,255,157,0.3)' }, }}>
-                                        <EditIcon fontSize="small" />
-                                    </IconButton>
-                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleSiteDelete(site.id!); }} sx={{ bgcolor: 'rgba(255,0,0,0.15)', color: '#ff4444', '&:hover': { bgcolor: 'rgba(255,0,0,0.3)' }, }}>
-                                        <DeleteIcon fontSize="small" />
-                                    </IconButton>
-                                    </Box>
-                                )}
+              {/* ================= 2. ✨ 核心新增：遍历并渲染子菜单 (sub_menus) ================= */}
+              {currentGroup?.sub_menus && currentGroup.sub_menus.length > 0 && (
+                <Stack spacing={6}>
+                  {currentGroup.sub_menus.map((subMenu) => {
+                    const subSiteIds = subMenu.sites?.map(s => s.id!) || [];
+                    return (
+                      <Box key={subMenu.id} sx={{ p: 2, borderRadius: 4, bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
+                        {/* 子菜单标题 */}
+                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                          <span style={{ width: 4, height: 18, backgroundColor: '#00ff9d', borderRadius: 2 }}></span>
+                          {subMenu.name}
+                        </Typography>
 
-                                <Box sx={{ width: 100, height: 100, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1.5 }}>
-                                    <img
-                                    src={site.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(site.url)}&sz=256`}
-                                    alt={site.name}
-                                     loading="lazy"
-                                    style={{ width: '100%', height: '100%', objectFit: 'contain', pointerEvents: 'none' }}
-                                    onError={(e) => {
-                                        const isTextIcon = site.icon && site.icon.length > 0 && !site.icon.startsWith('http');
-                                        const displayChar = isTextIcon ? site.icon.trim().charAt(0).toUpperCase() : (site.name?.trim().charAt(0).toUpperCase() || '?');
-                                        const bgColor = darkMode ? '#1e1e1e' : '#f5f5f5'
-                                        const textColor = darkMode ? '#ffffff' : '#000000'
-                                        e.currentTarget.src = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="${bgColor}"/><text x="50" y="50" font-family="Arial,Helvetica,sans-serif" font-size="64" font-weight="bold" fill="${textColor}" text-anchor="middle" dominant-baseline="central">${displayChar}</text></svg>`)}`
-                                    }}
-                                    />
-                                </Box>
+                        {/* 子菜单下的站点网格 */}
+                        <Box sx={{
+                          display: 'grid',
+                          gridTemplateColumns: {
+                            xs: 'repeat(auto-fill, minmax(140px, 1fr))',
+                            md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)`
+                          },
+                          gap: 3.5,
+                        }}>
+                          {subMenu.sites?.map((site: Site) => renderSiteCard(site))}
+                          
+                          {/* 子菜单持有的添加站点按钮 */}
+                          {isAuthenticated && sortMode === SortMode.None && (
+                            {renderAddSiteCard(subMenu.id!)}
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
 
-                                <Typography variant="subtitle2" fontWeight="bold" noWrap sx={{ maxWidth: '100%' }}>
-                                    {site.name}
-                                </Typography>
-                                {site.description && site.description !== '暂无描述' && (
-                                    <Typography variant="caption" noWrap sx={{ opacity: 0.7, fontSize: '0.75rem', color: 'text.secondary', maxWidth: '100%' }}>
-                                    {site.description}
-                                    </Typography>
-                                )}
-                            </Paper>
-                        );
-
-                        if (sortMode === SortMode.SiteSort) {
-                            return (
-                                <SortableSiteCard key={site.id} id={site.id!}>
-                                    {CardContent}
-                                </SortableSiteCard>
-                            );
-                        }
-                        return <Box key={site.id} sx={{ height: '100%' }}>{CardContent}</Box>;
-                    })}
-
-                  {isAuthenticated && currentGroup && sortMode === SortMode.None && (
-                      <Paper
-                          sx={{
-                              p: 2.5, borderRadius: 4, bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)',
-                              boxShadow: (t) => t.shadows[16] + ', 0 8px 32px rgba(0,0,0,0.3)', transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-                              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                              '&:hover': { transform: 'translateY(-10px) scale(1.05)', boxShadow: (t) => t.shadows[24] + `, 0 0 40px ${t.palette.primary.main}50`, bgcolor: darkMode ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)', },
-                              minHeight: '180px', height: '100%'
-                          }}
-                          onClick={() => handleOpenAddSite(currentGroup.id!)}
-                      >
-                          <AddIcon sx={{ fontSize: 64, color: 'primary.main' }} />
-                          <Typography variant="subtitle2" fontWeight="bold" sx={{ mt: 1 }}>添加站点</Typography>
-                      </Paper>
-                  )}
-              </Box>
-              </SortableContext>
-            </DndContext>
+              {/* 兜底：如果顶级分组和子菜单都没有任何内容，且是管理员，显示一个初始创建按钮 */}
+              {isAuthenticated && currentGroup && !currentGroup.sites?.length && !currentGroup.sub_menus?.length && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                  {renderAddSiteCard(currentGroup.id!)}
+                </Box>
+              )}
+            </Box>
           )}
 
           <Menu anchorEl={menuAnchorEl} open={openMenu} onClose={handleMenuClose}>
