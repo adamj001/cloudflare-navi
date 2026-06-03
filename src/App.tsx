@@ -1285,7 +1285,7 @@ function App() {
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
                   {renderAddSiteCard(currentGroup.id!)}
                 </Box>
-              }
+              )}
             </Box>
           )}
 
