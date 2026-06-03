@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } frnst groupwithtreeom 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { NavigationClient } from './API/client';
 import { MockNavigationClient } from './API/mock';
 import { GroupWithSites } from './types';
