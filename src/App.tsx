@@ -216,6 +216,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<number | null>(null);
+  const [selectedSubTab, setSelectedSubTab] = useState<number | null>(null);
   const currentGroup = groups.find(g => g.id === selectedTab);
   const cardAreaSwipeRef = useRef({
     startX: 0,
@@ -538,16 +539,16 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
       setGroups(sortedGroups);
 
       // ✨================ 关键修复：智能重置 Tab 选中态 ================✨
-      if (sortedGroups.length > 0) {
-        // 情况 A：第一次加载，没有任何选中的 Tab
-        if (selectedTab === null) {
-          setSelectedTab(sortedGroups[0].id);
-        } 
-        // 情况 B：当前选中的 ID 已经不是顶级菜单了（比如刚刚被你编辑成了子菜单）
-        else if (!sortedGroups.some(g => g.id === selectedTab)) {
-          // 强制恢复选中到第一个合法的顶级大分类
-          setSelectedTab(sortedGroups[0].id);
-        }
+     if (sortedGroups.length > 0) {
+  if (selectedTab === null) {
+    setSelectedTab(sortedGroups[0].id);
+    setSelectedSubTab(sortedGroups[0].id); // ✨ 默认指向自己
+  } 
+  else if (!sortedGroups.some(g => g.id === selectedTab)) {
+    setSelectedTab(sortedGroups[0].id);
+    setSelectedSubTab(sortedGroups[0].id); // ✨ 默认指向自己
+  }
+}
       } else {
         setSelectedTab(null);
       }
@@ -1133,8 +1134,11 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                      </Box>
                    ) : (
                      <Tabs
-                        value={selectedTab || false}
-                        onChange={(_, v) => setSelectedTab(v as number)}
+                     value={selectedTab || false}
+                     onChange={(_, v) => {
+                      setSelectedTab(v as number);
+                      setSelectedSubTab(v as number); // ✨ 切换顶级菜单时，二级菜单默认选中主菜单自己
+                      }}
                         variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
                         sx={{
                           '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
@@ -1224,18 +1228,35 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                  正在排序模式：请拖动卡片调整顺序，完成后点击顶部“保存站点排序”。
              </Alert>
           )}
+                    {/* ... 上方是搜索框等内容 ... */}
 
                     {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
               <CircularProgress size={60} thickness={4} />
             </Box>
           ) : (
+            /* ================= ✨ 干净的动态自适应内容区 ================= */
             <Box sx={{ pb: 10 }}>
-              {/* ================= 1. 渲染当前顶级分组的直属站点 ================= */}
-              {currentGroup?.sites && currentGroup.sites.length > 0 && (
-                <Box sx={{ mb: 6 }}>
+              {(() => {
+                // 默认目标：当前选中的顶级大分类
+                let targetRenderGroup = currentGroup;
+                
+                // 如果当前大分类名下安插了子菜单
+                if (currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0) {
+                  // 如果用户点击切换到了某一个具体的子菜单上
+                  if (selectedSubTab !== currentGroup.id) {
+                    targetRenderGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab);
+                  }
+                }
+
+                // 防御性空值判断
+                if (!targetRenderGroup) return null;
+
+                const currentGroupSiteIds = targetRenderGroup.sites?.map(s => s.id!) || [];
+
+                return (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={siteIds} strategy={rectSortingStrategy}>
+                    <SortableContext items={currentGroupSiteIds} strategy={rectSortingStrategy}>
                       <Box sx={{
                         display: 'grid',
                         gridTemplateColumns: {
@@ -1249,8 +1270,22 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                         transition: 'all 0.3s',
                         touchAction: sortMode === SortMode.None ? 'pan-y' : 'none',
                       }}>
-                        {currentGroup.sites.map((site: Site) => renderSiteCard(site))}
+                        {/* 🟢 仅动态渲染过滤出来的目标品类下的站点，不重复、不平铺 */}
+                        {targetRenderGroup.sites?.map((site: Site) => renderSiteCard(site))}
                         
+                        {/* 允许在当前选中的分类/子分类下直接添加新站点 */}
+                        {isAuthenticated && sortMode === SortMode.None && (
+                          renderAddSiteCard(targetRenderGroup.id!)
+                        )}
+                      </Box>
+                    </SortableContext>
+                  </DndContext>
+                );
+              })()}
+            </Box>
+          )}
+          {/* 👆 到这里就完全结束了！后面直接对接你原本代码里的那些对话框 <Dialog> 即可 */}
+
                       {/* 管理员添加站点按钮 */}
                       {isAuthenticated && sortMode === SortMode.None && 
                       renderAddSiteCard(currentGroup.id!) //  直接调用即可
