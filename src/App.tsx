@@ -524,18 +524,20 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const fetchData = async () => {
     try {
       setLoading(true);
-     const groupsWithSites = await api.getGroupsWithSites();
+     // ✨ 关键改动：在赋值末尾加上 as GroupTreeNode[]
+const groupsWithSites = await api.getGroupsWithSites() as GroupTreeNode[];
+
 const sortedGroups = groupsWithSites.map((g: GroupTreeNode) => ({
   ...g,
   sites: g.sites.sort((a, b) => a.order_num - b.order_num),
-  // ✨ 关键补全：把原有的子菜单也保留下来，并且给子菜单里面的站点也排个序！
   sub_menus: (g.sub_menus || []).map((sub: GroupTreeNode) => ({
     ...sub,
     sites: (sub.sites || []).sort((a, b) => a.order_num - b.order_num)
   })).sort((a, b) => a.order_num - b.order_num)
 })).sort((a, b) => a.order_num - b.order_num);
 
-setGroups(sortedGroups); //  类型严丝合缝，完美通过！
+setGroups(sortedGroups);
+
 
 
       if (sortedGroups.length > 0 && selectedTab === null) {
