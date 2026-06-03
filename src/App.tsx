@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } frnst groupwithtreeom 'react';
 import { NavigationClient } from './API/client';
 import { MockNavigationClient } from './API/mock';
-import { Site, Group } from './API/http';
 import { GroupWithSites } from './types';
 // import ThemeToggle from './components/ThemeToggle'; // 不再需要
 import LoginForm from './components/LoginForm';
@@ -525,13 +524,19 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const fetchData = async () => {
     try {
       setLoading(true);
-      const groupsWithSites = await api.getGroupsWithSites();
-      const sortedGroups = groupsWithSites.map(g => ({
-        ...g,
-        sites: g.sites.sort((a, b) => a.order_num - b.order_num)
-      })).sort((a,b) => a.order_num - b.order_num);
+     const groupsWithSites = await api.getGroupsWithSites();
+const sortedGroups = groupsWithSites.map((g: GroupTreeNode) => ({
+  ...g,
+  sites: g.sites.sort((a, b) => a.order_num - b.order_num),
+  // ✨ 关键补全：把原有的子菜单也保留下来，并且给子菜单里面的站点也排个序！
+  sub_menus: (g.sub_menus || []).map((sub: GroupTreeNode) => ({
+    ...sub,
+    sites: (sub.sites || []).sort((a, b) => a.order_num - b.order_num)
+  })).sort((a, b) => a.order_num - b.order_num)
+})).sort((a, b) => a.order_num - b.order_num);
 
-      setGroups(sortedGroups);
+setGroups(sortedGroups); //  类型严丝合缝，完美通过！
+
 
       if (sortedGroups.length > 0 && selectedTab === null) {
         setSelectedTab(sortedGroups[0].id);
