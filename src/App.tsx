@@ -20,7 +20,7 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+  } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
@@ -70,6 +70,10 @@ import {
   Tabs,
   Tab,
   Tooltip,
+  Select,
+  FormControl,
+  InputLabel,
+  SelectChangeEvent,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -964,91 +968,127 @@ function App() {
               </Box>
           </Container>
           
-         {/* 菜单 Tabs */}
-<Box 
-    sx={{ 
-        display: 'flex', py: 1, my: 1, mx: 'auto',
-        width: { xs: '100%', md: 'fit-content' }, 
-        justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible',
-    }}
->
-        <Paper 
-      elevation={4} 
-      sx={{ 
-            width: { xs: '100%', md: 'auto' }, 
-            backdropFilter: 'blur(16px)', 
-            background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
-            borderRadius: 4, px: 1, py: 0.5,
-            border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none'
-      }}
-    >
-    
-    {/* 💡 dnd-kit 分组拖拽上下文 */}
-    <DndContext 
-      sensors={sensors} 
-      collisionDetection={closestCenter} 
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
-           
-           {/* ▼▼▼▼▼▼ 核心修改：排序模式下使用普通 Box，非排序模式下使用 Tabs ▼▼▼▼▼▼ */}
-           {sortMode === SortMode.GroupSort ? (
-             <Box 
-               sx={{ 
-                 display: 'flex', 
-                 gap: 1, 
-                 overflowX: 'auto', 
-                 py: 0.5,
-                 scrollbarWidth: 'none', 
-                 '&::-webkit-scrollbar': { display: 'none' } 
-               }}
-             >
-                {groups.map(g => (
-                  <SortableTab 
-                    key={g.id} 
-                    label={g.name} 
-                    value={g.id} 
-                    sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2, border: '1px solid transparent' }} 
-                  />
-                ))}
-             </Box>
-           ) : (
-             <Tabs
-                value={selectedTab || false}
-                onChange={(_, v) => setSelectedTab(v as number)}
-                variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
-                sx={{
-                  '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
-                  '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start' },
-                  '& .MuiTab-root': {
-                    fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' },
-                    minWidth: { xs: 60, sm: 80 }, py: 1.5, borderRadius: 3, transition: 'all 0.2s',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                  },
-                  '& .MuiTabs-indicator': {
-                    height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d',
-                  },
-                }}
-              >
-                {groups.map(g => (
-                    <Tab key={g.id} label={g.name} value={g.id} />
-                ))}
+                  {/* 菜单 Tabs */}
+         <Box 
+            sx={{ 
+              display: 'flex', py: 1, my: 1, mx: 'auto',
+              width: { xs: '100%', md: 'fit-content' }, 
+              justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible',
+            }}
+         >
+            <Paper 
+              elevation={4} 
+              sx={{ 
+                width: { xs: '100%', md: 'auto' }, 
+                backdropFilter: 'blur(16px)', 
+                background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
+                borderRadius: 4, px: 1, py: 0.5,
+                border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none'
+              }}
+            >
+            
+            {/* dnd-kit 分组拖拽上下文 */}
+            <DndContext 
+              sensors={sensors} 
+              collisionDetection={closestCenter} 
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
+                   
+                   {/* 排序模式下使用普通 Box，非排序模式下使用 Tabs */}
+                   {sortMode === SortMode.GroupSort ? (
+                     <Box 
+                       sx={{ 
+                         display: 'flex', 
+                         gap: 1, 
+                         overflowX: 'auto', 
+                         py: 0.5,
+                         scrollbarWidth: 'none', 
+                         '&::-webkit-scrollbar': { display: 'none' } 
+                       }}
+                     >
+                        {groups.map(g => (
+                          <SortableTab 
+                            key={g.id} 
+                            label={g.name} 
+                            value={g.id} 
+                            sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2, border: '1px solid transparent' }} 
+                          />
+                        ))}
+                     </Box>
+                   ) : (
+                     <Tabs
+                        value={selectedTab || false}
+                        onChange={(_, v) => setSelectedTab(v as number)}
+                        variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
+                        sx={{
+                          '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
+                          '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
+                          '& .MuiTab-root': {
+                            fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' },
+                            minWidth: { xs: 60, sm: 80 }, py: 1, px: 2, borderRadius: 3, transition: 'all 0.2s',
+                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+                          },
+                          '& .MuiTabs-indicator': {
+                            height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d',
+                          },
+                        }}
+                      >
+                        {groups.map(g => {
+                          // ✨ 动态组装带有“编辑”与“删除”按钮的标签文本
+                          const tabLabel = (
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                              <span>{g.name}</span>
+                              {isAuthenticated && (
+                                <Box className="tab-actions" sx={{ display: 'flex', opacity: 0.6, '&:hover': { opacity: 1 } }}>
+                                  {/* 编辑按钮 */}
+                                  <IconButton 
+                                    size="small" 
+                                    sx={{ p: 0.2, color: 'primary.main' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // 阻止切换 Tab
+                                      setEditingGroup(g);
+                                      setEditGroupOpen(true);
+                                    }}
+                                  >
+                                    <EditIcon sx={{ fontSize: '0.9rem' }} />
+                                  </IconButton>
+                                  {/* 删除按钮 */}
+                                  <IconButton 
+                                    size="small" 
+                                    sx={{ p: 0.2, color: 'error.main' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // 阻止切换 Tab
+                                      handleGroupDelete(g.id!);
+                                    }}
+                                    disabled={groups.length <= 1}
+                                  >
+                                    <DeleteIcon sx={{ fontSize: '0.9rem' }} />
+                                  </IconButton>
+                                </Box>
+                              )}
+                            </Box>
+                          );
 
-                {isAuthenticated && (
-                  <Tab
-                    icon={<AddIcon />}
-                    onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }}
-                    sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }}
-                    aria-label="添加分组"
-                  />
-                )}
-              </Tabs>
-           )}
+                          return <Tab key={g.id} label={tabLabel} value={g.id} />;
+                        })}
 
-        </SortableContext>
-    </DndContext>
-             </Paper>
+                        {isAuthenticated && (
+                          <Tab
+                            icon={<AddIcon />}
+                            onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }}
+                            sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }}
+                            aria-label="添加分组"
+                          />
+                        )}
+                      </Tabs>
+                   )}
+
+                </SortableContext>
+            </DndContext>
+          </Paper>
         </Box>
+
         </AppBar>
 
         {/* 主要内容区域 */}
@@ -1307,17 +1347,103 @@ function App() {
           <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
         </Dialog>
 
+                {/* ================= 新增分组弹窗 ================= */}
         <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth>
           <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
-            <TextField autoFocus fullWidth label="分组名称" value={newGroup.name || ''} name="name" onChange={handleGroupInputChange} sx={{ mt: 2 }} />
-            <FormControlLabel control={<Switch checked={newGroup.is_public === 1} onChange={e => setNewGroup({ ...newGroup, is_public: e.target.checked ? 1 : 0 })} />} label="公开分组" />
+            <Stack spacing={2} sx={{ mt: 2 }}>
+              <TextField autoFocus fullWidth label="分组名称" value={newGroup.name || ''} name="name" onChange={handleGroupInputChange} />
+              
+              {/* ✨ 新增：选择父级菜单，使其变身为子菜单 */}
+              <FormControl fullWidth>
+                <InputLabel id="add-group-parent-label">所属父级菜单 (留空则为顶级)</InputLabel>
+                <Select
+                  labelId="add-group-parent-label"
+                  value={newGroup.parent_id || ''}
+                  label="所属父级菜单 (留空则为顶级)"
+                  onChange={(e) => setNewGroup({ ...newGroup, parent_id: e.target.value ? Number(e.target.value) : null })}
+                >
+                  <MenuItem value=""><em>无 (作为顶级菜单)</em></MenuItem>
+                  {groups.filter(g => !g.parent_id && g.id !== newGroup.id).map(g => (
+                    <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControlLabel control={<Switch checked={newGroup.is_public === 1} onChange={e => setNewGroup({ ...newGroup, is_public: e.target.checked ? 1 : 0 })} />} label="公开分组" />
+            </Stack>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseAddGroup}>取消</Button>
             <Button variant="contained" onClick={handleCreateGroup}>创建</Button>
           </DialogActions>
         </Dialog>
+
+        {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
+        <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
+          {editingGroup && (
+            <DialogContent>
+              <Stack spacing={2} sx={{ mt: 2 }}>
+                <TextField 
+                  autoFocus 
+                  fullWidth 
+                  label="分组名称" 
+                  value={editingGroup.name || ''} 
+                  onChange={(e) => setEditingGroup({ ...editingGroup, name: e.target.value })} 
+                />
+                
+                {/* ✨ 允许在编辑时修改或绑定 parent_id 归类为子菜单 */}
+                <FormControl fullWidth>
+                  <InputLabel id="edit-group-parent-label">所属父级菜单 (转换层级)</InputLabel>
+                  <Select
+                    labelId="edit-group-parent-label"
+                    value={editingGroup.parent_id || ''}
+                    label="所属父级菜单 (转换层级)"
+                    onChange={(e) => setEditingGroup({ ...editingGroup, parent_id: e.target.value ? Number(e.target.value) : null })}
+                  >
+                    <MenuItem value=""><em>无 (转换为顶级菜单)</em></MenuItem>
+                    {/* 过滤掉自身，防止自己成为自己的父级造成死循环 */}
+                    {groups.filter(g => !g.parent_id && g.id !== editingGroup.id).map(g => (
+                      <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                <FormControlLabel 
+                  control={
+                    <Switch 
+                      checked={editingGroup.is_public === 1} 
+                      onChange={e => setEditingGroup({ ...editingGroup, is_public: e.target.checked ? 1 : 0 })} 
+                    />
+                  } 
+                  label="公开分组" 
+                />
+              </Stack>
+            </DialogContent>
+          )}
+          <DialogActions>
+            <Button onClick={() => setEditGroupOpen(false)}>取消</Button>
+            <Button 
+              variant="contained" 
+              onClick={async () => {
+                if (editingGroup?.id) {
+                  try {
+                    await api.updateGroup(editingGroup.id, editingGroup);
+                    await fetchData();
+                    setEditGroupOpen(false);
+                    handleError('分组修改成功');
+                  } catch (err) {
+                    handleError('修改分组失败: ' + (err as Error).message);
+                  }
+                }
+              }}
+            >
+              保存修改
+            </Button>
+          </DialogActions>
+        </Dialog>
+
 
         <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth>
           <DialogTitle>新增站点 (分组: {currentGroup?.name}) <IconButton onClick={handleCloseAddSite} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
