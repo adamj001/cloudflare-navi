@@ -522,7 +522,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     setSnackbarOpen(false);
   };
 
-    const fetchData = async () => {
+      const fetchData = async () => {
     try {
       setLoading(true);
       const groupsWithSites = (await api.getGroupsWithSites()) as GroupTreeNode[];
@@ -538,21 +538,18 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
       setGroups(sortedGroups);
 
-      // ✨================ 关键修复：智能重置 Tab 选中态 ================✨
-     if (sortedGroups.length > 0) {
-  if (selectedTab === null) {
-    setSelectedTab(sortedGroups[0].id);
-    setSelectedSubTab(sortedGroups[0].id); // ✨ 默认指向自己
-  } 
-  else if (!sortedGroups.some(g => g.id === selectedTab)) {
-    setSelectedTab(sortedGroups[0].id);
-    setSelectedSubTab(sortedGroups[0].id); // ✨ 默认指向自己
-  }
-}
+      if (sortedGroups.length > 0) {
+        if (selectedTab === null) {
+          setSelectedTab(sortedGroups[0].id);
+          setSelectedSubTab(sortedGroups[0].id);
+        } else if (!sortedGroups.some(g => g.id === selectedTab)) {
+          setSelectedTab(sortedGroups[0].id);
+          setSelectedSubTab(sortedGroups[0].id);
+        }
       } else {
         setSelectedTab(null);
+        setSelectedSubTab(null);
       }
-      
     } catch (error) {
       console.error('加载数据失败:', error);
       handleError('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
@@ -1230,26 +1227,48 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
           )}
                     {/* ... 上方是搜索框等内容 ... */}
 
-                    {loading ? (
+                     {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
               <CircularProgress size={60} thickness={4} />
             </Box>
           ) : (
-            /* ================= ✨ 干净的动态自适应内容区 ================= */
             <Box sx={{ pb: 10 }}>
+              {/* ================= 1. 二级菜单切换标签条 ================= */}
+              {currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0 && (
+                <Box sx={{ mb: 4, display: 'flex', gap: 1, flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 2 }}>
+                  <Button
+                    variant={selectedSubTab === currentGroup.id ? "contained" : "text"}
+                    size="small"
+                    onClick={() => setSelectedSubTab(currentGroup.id!)}
+                    sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                  >
+                    全部
+                  </Button>
+
+                  {currentGroup.sub_menus.map((subMenu: GroupTreeNode) => (
+                    <Button
+                      key={subMenu.id}
+                      variant={selectedSubTab === subMenu.id ? "contained" : "text"}
+                      size="small"
+                      onClick={() => setSelectedSubTab(subMenu.id)}
+                      sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                    >
+                      {subMenu.name}
+                    </Button>
+                  ))}
+                </Box>
+              )}
+
+              {/* ================= 2. 动态挑选的站点网格 ================= */}
               {(() => {
-                // 默认目标：当前选中的顶级大分类
                 let targetRenderGroup = currentGroup;
                 
-                // 如果当前大分类名下安插了子菜单
                 if (currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0) {
-                  // 如果用户点击切换到了某一个具体的子菜单上
                   if (selectedSubTab !== currentGroup.id) {
                     targetRenderGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab);
                   }
                 }
 
-                // 防御性空值判断
                 if (!targetRenderGroup) return null;
 
                 const currentGroupSiteIds = targetRenderGroup.sites?.map(s => s.id!) || [];
@@ -1270,10 +1289,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                         transition: 'all 0.3s',
                         touchAction: sortMode === SortMode.None ? 'pan-y' : 'none',
                       }}>
-                        {/* 🟢 仅动态渲染过滤出来的目标品类下的站点，不重复、不平铺 */}
                         {targetRenderGroup.sites?.map((site: Site) => renderSiteCard(site))}
                         
-                        {/* 允许在当前选中的分类/子分类下直接添加新站点 */}
                         {isAuthenticated && sortMode === SortMode.None && (
                           renderAddSiteCard(targetRenderGroup.id!)
                         )}
@@ -1284,65 +1301,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
               })()}
             </Box>
           )}
-          {/* 👆 到这里就完全结束了！后面直接对接你原本代码里的那些对话框 <Dialog> 即可 */}
 
-                      {/* 管理员添加站点按钮 */}
-                      {isAuthenticated && sortMode === SortMode.None && 
-                      renderAddSiteCard(currentGroup.id!) //  直接调用即可
-                      }
-
-                      </Box>
-                    </SortableContext>
-                  </DndContext>
-                </Box>
-              )}
-
-              {/* ================= 2. ✨ 核心新增：遍历并渲染子菜单 (sub_menus) ================= */}
-              {currentGroup?.sub_menus && currentGroup.sub_menus.length > 0 && (
-                <Stack spacing={6}>
-                  {currentGroup?.sub_menus?.map((subMenu: GroupTreeNode) => {
-                  const subSiteIds = subMenu.sites?.map((s: Site) => s.id!) || [];
-  
-                  return (
-                      <Box key={subMenu.id} sx={{ p: 2, borderRadius: 4, bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.01)' }}>
-                        {/* 子菜单标题 */}
-                        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-                          <span style={{ width: 4, height: 18, backgroundColor: '#00ff9d', borderRadius: 2 }}></span>
-                          {subMenu.name}
-                        </Typography>
-
-                        {/* 子菜单下的站点网格 */}
-                        <Box sx={{
-                          display: 'grid',
-                          gridTemplateColumns: {
-                            xs: 'repeat(auto-fill, minmax(140px, 1fr))',
-                            md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)`
-                          },
-                          gap: 3.5,
-                        }}>
-                          {subMenu.sites?.map((site: Site) => renderSiteCard(site))}
-                          
-                          {/* 子菜单持有的添加站点按钮 */}
-                          {isAuthenticated && sortMode === SortMode.None && 
-                          renderAddSiteCard(subMenu.id!) //  直接调用即可
-                          }
-
-                        </Box>
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              )}
-
-              {/* 兜底：如果顶级分组和子菜单都没有任何内容，且是管理员，显示一个初始创建按钮 */}
-              {isAuthenticated && currentGroup && !currentGroup.sites?.length && !currentGroup.sub_menus?.length && (
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                  {renderAddSiteCard(currentGroup.id!)}
-                </Box>
-              )}
-            </Box>
-          )}
-
+         
           <Menu anchorEl={menuAnchorEl} open={openMenu} onClose={handleMenuClose}>
             <MenuItem onClick={() => { setSortMode(SortMode.GroupSort); handleMenuClose(); }}>
               <ListItemIcon><SortIcon /></ListItemIcon>
