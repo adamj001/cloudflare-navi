@@ -521,30 +521,37 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     setSnackbarOpen(false);
   };
 
-  const fetchData = async () => {
+    const fetchData = async () => {
     try {
       setLoading(true);
-     // ✨ 关键改动：在赋值末尾加上 as GroupTreeNode[]
-const groupsWithSites = await api.getGroupsWithSites() as GroupTreeNode[];
+      const groupsWithSites = (await api.getGroupsWithSites()) as GroupTreeNode[];
+      
+      const sortedGroups = groupsWithSites.map((g: GroupTreeNode) => ({
+        ...g,
+        sites: (g.sites || []).sort((a, b) => a.order_num - b.order_num),
+        sub_menus: (g.sub_menus || []).map((sub: GroupTreeNode) => ({
+          ...sub,
+          sites: (sub.sites || []).sort((a, b) => a.order_num - b.order_num)
+        })).sort((a, b) => a.order_num - b.order_num)
+      })).sort((a, b) => a.order_num - b.order_num);
 
-const sortedGroups = groupsWithSites.map((g: GroupTreeNode) => ({
-  ...g,
-  sites: g.sites.sort((a, b) => a.order_num - b.order_num),
-  sub_menus: (g.sub_menus || []).map((sub: GroupTreeNode) => ({
-    ...sub,
-    sites: (sub.sites || []).sort((a, b) => a.order_num - b.order_num)
-  })).sort((a, b) => a.order_num - b.order_num)
-})).sort((a, b) => a.order_num - b.order_num);
+      setGroups(sortedGroups);
 
-setGroups(sortedGroups);
-
-
-
-      if (sortedGroups.length > 0 && selectedTab === null) {
-        setSelectedTab(sortedGroups[0].id);
-      } else if (selectedTab !== null && !sortedGroups.some(g => g.id === selectedTab)) {
-        setSelectedTab(sortedGroups.length > 0 ? sortedGroups[0].id : null);
+      // ✨================ 关键修复：智能重置 Tab 选中态 ================✨
+      if (sortedGroups.length > 0) {
+        // 情况 A：第一次加载，没有任何选中的 Tab
+        if (selectedTab === null) {
+          setSelectedTab(sortedGroups[0].id);
+        } 
+        // 情况 B：当前选中的 ID 已经不是顶级菜单了（比如刚刚被你编辑成了子菜单）
+        else if (!sortedGroups.some(g => g.id === selectedTab)) {
+          // 强制恢复选中到第一个合法的顶级大分类
+          setSelectedTab(sortedGroups[0].id);
+        }
+      } else {
+        setSelectedTab(null);
       }
+      
     } catch (error) {
       console.error('加载数据失败:', error);
       handleError('加载数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
