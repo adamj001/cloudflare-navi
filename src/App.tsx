@@ -811,13 +811,25 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const renderSiteCard = (site: Site) => {
     const CardContent = (
       <Paper
+        // 关键改动：如果是管理员且非排序，用 div 触发弹窗；如果是普通访客，在电脑端也一律作为 a 标签
         component={isAuthenticated && sortMode === SortMode.None ? 'div' : 'a'}
-        href={!isAuthenticated && sortMode === SortMode.None ? site.url : undefined}
-        target={!isAuthenticated && sortMode === SortMode.None ? '_blank' : undefined}
-        rel={!isAuthenticated && sortMode === SortMode.None ? 'noopener' : undefined}
+        href={sortMode === SortMode.None ? site.url : undefined}
+        target={sortMode === SortMode.None ? '_blank' : undefined}
+        rel={sortMode === SortMode.None ? 'noopener' : undefined}
         onClick={(e: React.MouseEvent) => {
-            if (sortMode !== SortMode.None) { e.preventDefault(); return; }
-            if (isAuthenticated) { setEditingSite(site); setEditSiteOpen(true); }
+            // 1. 如果正在进行站点排序，禁止任何跳转和弹窗
+            if (sortMode !== SortMode.None) { 
+                e.preventDefault(); 
+                return; 
+            }
+            
+            // 2. 如果是管理员登录状态，点击触发编辑弹窗
+            if (isAuthenticated) { 
+                e.preventDefault(); // ✨ 阻止 a 标签的默认跳转，改为弹窗编辑
+                setEditingSite(site); 
+                setEditSiteOpen(true); 
+            }
+            // 3. ✨ 普通访客状态下，不拦截事件，让 href 默认在电脑端新窗口打开
         }}
         sx={{
             p: 2.5, borderRadius: 4,
@@ -1204,14 +1216,27 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             </DndContext>
              {/* ================= 1. 二级菜单切换标签条 ================= */}
               {currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0 && (
-                <Box sx={{ mb: 4, display: 'flex', gap: 1, flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 2 }}>
+                <Box 
+                sx={{ 
+                  mt: 2.5, // 👈 从 1 加大到 2.5（或者3），拉开外边距
+                  pt: 2,   // 👈 从 1 加大到 2，拉开内边距
+                  borderTop: (t) => `1px solid ${t.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`, // 让分割线稍微清晰一点点
+                  display: 'flex', 
+                  gap: 1.5, // 👈 顺便让子菜单按钮彼此之间的左右间距也稍微大一点点（原为1）
+                  justifyContent: { xs: 'flex-start', md: 'center' },
+                  flexWrap: 'nowrap',
+                  overflowX: 'auto',
+                  scrollbarWidth: 'none', 
+                  '&::-webkit-scrollbar': { display: 'none' }
+                  }}
+                  >
                   <Button
                     variant={selectedSubTab === currentGroup.id ? "contained" : "text"}
                     size="small"
                     onClick={() => setSelectedSubTab(currentGroup.id!)}
                     sx={{ borderRadius: 2, fontWeight: 'bold' }}
                   >
-                    全部
+                    主菜单
                   </Button>
 
                   {currentGroup.sub_menus.map((subMenu: GroupTreeNode) => (
