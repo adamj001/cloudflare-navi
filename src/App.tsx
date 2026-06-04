@@ -990,6 +990,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
         )}
 
         {/* 顶部固定栏 */}
+                {/* 顶部固定栏 */}
         <AppBar position="sticky" color="transparent" elevation={0} sx={{
             backdropFilter: 'blur(16px)',
             background: (t) => t.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
@@ -997,356 +998,153 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
           }}>
           <Container maxWidth="xl" sx={{ py: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                           {/* 👇👇👇 Logo 区域开始 👇👇👇 */}
-              <Box sx={{ position: 'relative', height: '48px', width: 'auto', display: 'flex', alignItems: 'center' }}>
-                  <img 
-                    src="/logo-dark.svg" 
-                    alt="WebNav Hub Logo Dark" 
-                    loading="eager" 
-                    style={{ height: '48px', width: 'auto', display: darkMode ? 'block' : 'none', transition: 'opacity 0.2s' }} 
-                  />
-                  <img 
-                    src="/logo-light.svg" 
-                    alt="WebNav Hub Logo Light" 
-                    loading="eager"
-                    style={{ height: '48px', width: 'auto', display: darkMode ? 'none' : 'block', transition: 'opacity 0.2s' }} 
-                  />
-
-                {/* 文字区域 */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1, ml: 1.5 }}>
-                    <Typography 
-                      variant="h5" 
-                      component="div" 
-                      sx={{ 
-                        fontWeight: 700, 
-                        fontSize: { xs: '1.25rem', md: '1.5rem' },
-                        lineHeight: 1.1,
-                        letterSpacing: '-0.5px',
-                        fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-                      }}
-                    >
-                        <span style={{ color: darkMode ? '#90caf9' : '#3E6B96' }}>WebNav</span>
-                        &nbsp;
-                        <span style={{ color: '#E67365' }}>Hub</span>
-                    </Typography>
-
-                    <Typography 
-                      variant="caption" 
-                      noWrap
-                      sx={{ 
-                        color: darkMode ? '#b0bec5' : '#5F7D95',
-                        fontSize: { xs: '0.65rem', md: '0.75rem' },
-                        fontWeight: 500,
-                        letterSpacing: '0.2px'
-                      }}
-                    >
-                        Your Organized Internet Gateway
-                    </Typography>
+                {/* Logo 区域 */}
+                <Box sx={{ position: 'relative', height: '48px', width: 'auto', display: 'flex', alignItems: 'center' }}>
+                    <img 
+                      src="/logo-dark.svg" 
+                      alt="WebNav Hub Logo Dark" 
+                      loading="eager" 
+                      style={{ height: '48px', width: 'auto', display: darkMode ? 'block' : 'none', transition: 'opacity 0.2s' }} 
+                    />
+                    <img 
+                      src="/logo-light.svg" 
+                      alt="WebNav Hub Logo Light" 
+                      loading="eager"
+                      style={{ height: '48px', width: 'auto', display: darkMode ? 'none' : 'block', transition: 'opacity 0.2s' }} 
+                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1, ml: 1.5 }}>
+                        <Typography variant="h5" component="div" sx={{ fontWeight: 700, fontSize: { xs: '1.25rem', md: '1.5rem' }, lineHeight: 1.1, letterSpacing: '-0.5px', fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif' }}>
+                            <span style={{ color: darkMode ? '#90caf9' : '#3E6B96' }}>WebNav</span>&nbsp;<span style={{ color: '#E67365' }}>Hub</span>
+                        </Typography>
+                        <Typography variant="caption" noWrap sx={{ color: darkMode ? '#b0bec5' : '#5F7D95', fontSize: { xs: '0.65rem', md: '0.75rem' }, fontWeight: 500, letterSpacing: '0.2px' }}>
+                            Your Organized Internet Gateway
+                        </Typography>
+                    </Box>
                 </Box>
-              </Box>
-              {/* 👆👆👆 Logo 区域结束 👆👆👆 */}
 
-             
                 {/* 管理按钮区域 */}
                 <Stack direction="row" spacing={1} alignItems="center">
-                    {/* 👇👇👇 新增的天气组件放在最左边 👇👇👇 */}
-                  <WeatherWidget />
-                  {isAuthenticated && sortMode === SortMode.None && (
-                    <>
+                    <WeatherWidget />
+                    {isAuthenticated && sortMode === SortMode.None && (
                       <IconButton onClick={handleMenuOpen} color="inherit">
                         <MenuIcon />
                       </IconButton>
-                    </>
-                  )}
-                  
-                  {isAuthenticated && sortMode !== SortMode.None && (
-                    <>
-                      <Button 
-                        variant="contained" 
-                        size="small" 
-                        startIcon={<SaveIcon />} 
-                        onClick={handleSaveOrder}
-                        sx={{ 
-                          bgcolor: sortMode === SortMode.GroupSort ? 'warning.main' : 'info.main',
-                          '&:hover': {
-                             bgcolor: sortMode === SortMode.GroupSort ? 'warning.dark' : 'info.dark',
-                          }
-                        }}
-                      >
-                          {sortMode === SortMode.GroupSort ? '保存分组排序' : '保存站点排序'}
-                      </Button>
-                      <Button variant="outlined" size="small" startIcon={<CancelIcon />} onClick={cancelSort}>
-                          取消
-                      </Button>
-                    </>
-                  )}
+                    )}
+                    
+                    {isAuthenticated && sortMode !== SortMode.None && (
+                      <>
+                        <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSaveOrder} sx={{ bgcolor: sortMode === SortMode.GroupSort ? 'warning.main' : 'info.main', '&:hover': { bgcolor: sortMode === SortMode.GroupSort ? 'warning.dark' : 'info.dark' } }}>
+                            {sortMode === SortMode.GroupSort ? '保存分组排序' : '保存站点排序'}
+                        </Button>
+                        <Button variant="outlined" size="small" startIcon={<CancelIcon />} onClick={cancelSort}>取消</Button>
+                      </>
+                    )}
 
-                  {isAuthenticated ? (
-                    <IconButton 
-                      color="error" size="medium" onClick={handleLogout} title="退出登录"
-                      sx={{ 
-                        width: 36, height: 36, padding: 0, transition: 'all 0.3s', 
-                          boxShadow: (t) => t.shadows[6], bgcolor: 'error.main', color: 'white',
-                          '&:hover': { boxShadow: '0 0 10px rgba(255,0,0,0.8)', transform: 'scale(1.1)', bgcolor: 'error.dark' } 
-                      }}
-                    >
-                      <LogOut size={20} />
-                    </IconButton>
-                  ) : (
-                    <IconButton 
-                      color="primary" size="medium" onClick={() => setIsAuthRequired(true)} title="管理员登录"
-                      sx={{ 
-                          transition: 'all 0.3s', boxShadow: (t) => t.shadows[6], bgcolor: 'primary.main', color: 'black',
-                        width: 36, height: 36, padding: 0,
-                          '&:hover': { boxShadow: (t) => `0 0 10px ${t.palette.primary.main}80`, transform: 'scale(1.1)', bgcolor: 'primary.dark' } 
-                      }}
-                    >
-                       <UserCog size={20} />
-                    </IconButton>
-                  )}
-                  
-                   <IconButton 
-                      onClick={toggleTheme} 
-                      color="inherit"
-                      title={darkMode ? "切换到亮色模式" : "切换到暗黑模式"}
-                      sx={{ 
-                        width: 40, 
-                        height: 40,
-                        transition: 'all 0.3s',
-                        color: darkMode ? '#fb8c00' : '#64748b', 
-                        '&:hover': { 
-                          bgcolor: darkMode ? 'rgba(251, 140, 0, 0.1)' : 'rgba(100, 116, 139, 0.1)', 
-                          transform: 'rotate(15deg)' 
-                        }
-                      }}
-                    >
+                    {isAuthenticated ? (
+                      <IconButton color="error" size="medium" onClick={handleLogout} title="退出登录" sx={{ width: 36, height: 36, padding: 0, transition: 'all 0.3s', boxShadow: (t) => t.shadows[6], bgcolor: 'error.main', color: 'white', '&:hover': { boxShadow: '0 0 10px rgba(255,0,0,0.8)', transform: 'scale(1.1)', bgcolor: 'error.dark' } }}>
+                        <LogOut size={20} />
+                      </IconButton>
+                    ) : (
+                      <IconButton color="primary" size="medium" onClick={() => setIsAuthRequired(true)} title="管理员登录" sx={{ transition: 'all 0.3s', boxShadow: (t) => t.shadows[6], bgcolor: 'primary.main', color: 'black', width: 36, height: 36, padding: 0, '&:hover': { boxShadow: (t) => `0 0 10px ${t.palette.primary.main}80`, transform: 'scale(1.1)', bgcolor: 'primary.dark' } }}>
+                        <UserCog size={20} />
+                      </IconButton>
+                    )}
+                    
+                    <IconButton onClick={toggleTheme} color="inherit" title={darkMode ? "切换到亮色模式" : "切换到暗黑模式"} sx={{ width: 40, height: 40, transition: 'all 0.3s', color: darkMode ? '#fb8c00' : '#64748b', '&:hover': { bgcolor: darkMode ? 'rgba(251, 140, 0, 0.1)' : 'rgba(100, 116, 139, 0.1)', transform: 'rotate(15deg)' } }}>
                       {darkMode ? <Sun size={24} /> : <Moon size={24} />}
                     </IconButton>
                 </Stack>
               </Box>
           </Container>
           
-                  {/* 菜单 Tabs */}
-         <Box 
-            sx={{ 
-              display: 'flex', py: 1, my: 1, mx: 'auto',
-              width: { xs: '100%', md: 'fit-content' }, 
-              justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible',
-            }}
-         >
-            <Paper 
-              elevation={4} 
-              sx={{ 
-                width: { xs: '100%', md: 'auto' }, 
-                backdropFilter: 'blur(16px)', 
-                background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', 
-                borderRadius: 4, px: 1, py: 0.5,
-                border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none'
-              }}
-            >
-            
-            {/* dnd-kit 分组拖拽上下文 */}
-            <DndContext 
-              sensors={sensors} 
-              collisionDetection={closestCenter} 
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
-                   
-                   {/* 排序模式下使用普通 Box，非排序模式下使用 Tabs */}
+          {/* 菜单大面板（包含主、子双层级菜单） */}
+          <Box sx={{ display: 'flex', py: 1, my: 1, mx: 'auto', width: { xs: '100%', md: 'fit-content' }, justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible' }}>
+            <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none' }}>
+              
+              {/* ================= 🟢 第一层：顶级主菜单 Tabs ================= */}
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
                    {sortMode === SortMode.GroupSort ? (
-                     <Box 
-                       sx={{ 
-                         display: 'flex', 
-                         gap: 1, 
-                         overflowX: 'auto', 
-                         py: 0.5,
-                         scrollbarWidth: 'none', 
-                         '&::-webkit-scrollbar': { display: 'none' } 
-                       }}
-                     >
+                     <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', py: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+                        {groups.map(g => (
+                          <SortableTab key={g.id} label={g.name} value={g.id} sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2 }} />
+                        ))}
+                     </Box>
+                   ) : (
+                     <Tabs
+                        value={selectedTab || false}
+                        onChange={(_, v) => {
+                          setSelectedTab(v as number);
+                          setSelectedSubTab(v as number);
+                        }}
+                        variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
+                        sx={{
+                          '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
+                          '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
+                          '& .MuiTab-root': { fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' }, minWidth: { xs: 60, sm: 80 }, py: 1, px: 2, borderRadius: 3, transition: 'all 0.2s', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } },
+                          '& .MuiTabs-indicator': { height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d' },
+                        }}
+                      >
                         {groups.map(g => {
-                          // ✨ 1. 组装带有“绝对定位”编辑与删除按钮的标签文本
                           const tabLabel = (
                             <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
-                              {/* 主菜单文字 */}
-                              <span style={{ fontSize: 'inherit', fontWeight: 'inherit' }}>{g.name}</span>
-                              
-                              {/* ✨ 管理员状态下，在 Tab 的左侧和右侧悬浮安插微型按钮 */}
+                              <span>{g.name}</span>
                               {isAuthenticated && (
                                 <>
-                                  {/* 左侧微调：编辑顶级菜单 */}
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={(e) => {
-                                      e.stopPropagation(); // 🛑 极其重要：阻止切换 Tab
-                                      setEditingGroup(g);
-                                      setEditGroupOpen(true);
-                                    }}
-                                    sx={{ 
-                                      position: 'absolute', left: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
-                                      p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
-                                      color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' },
-                                      // 优雅交互：默认隐藏，鼠标移入 Tab 时才显现
-                                      className: 'tab-action-btn', 
-                                    }}
-                                  >
+                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }} sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }, className: 'tab-action-btn' }}>
                                     <EditIcon sx={{ fontSize: '0.75rem' }} />
                                   </IconButton>
-
-                                  {/* 右侧微调：删除顶级菜单 */}
-                                  <IconButton 
-                                    size="small" 
-                                    onClick={(e) => {
-                                      e.stopPropagation(); // 🛑 极其重要：阻止切换 Tab
-                                      handleGroupDelete(g.id!);
-                                    }}
-                                    disabled={groups.length <= 1}
-                                    sx={{ 
-                                      position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
-                                      p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
-                                      color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' },
-                                      className: 'tab-action-btn',
-                                    }}
-                                  >
+                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }, className: 'tab-action-btn' }}>
                                     <DeleteIcon sx={{ fontSize: '0.75rem' }} />
                                   </IconButton>
                                 </>
                               )}
                             </Box>
                           );
-
                           return (
-                            <Tab 
-                              key={g.id} 
-                              label={tabLabel} 
-                              value={g.id} 
-                              sx={{
-                                // ✨ 2. 为两侧的按钮留出恰到好处的呼吸空间
-                                px: isAuthenticated ? 3.5 : 2, 
-                                minHeight: '48px',
-                                transition: 'all 0.2s ease',
-                                // 配合下方的 CSS，让按钮实现滑入滑出
-                                '& .tab-action-btn': {
-                                  visibility: 'hidden',
-                                  opacity: 0,
-                                  transition: 'all 0.2s ease',
-                                },
-                                '&:hover .tab-action-btn': {
-                                  visibility: 'visible',
-                                  opacity: 1,
-                                }
-                              }}
-                            />
+                            <Tab key={g.id} label={tabLabel} value={g.id} sx={{ px: isAuthenticated ? 4 : 2, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }} />
                           );
                         })}
 
                         {isAuthenticated && (
-                          <Tab
-                            icon={<AddIcon />}
-                            onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }}
-                            sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }}
-                            aria-label="添加分组"
-                          />
+                          <Tab icon={<AddIcon />} onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }} sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }} aria-label="添加分组" />
                         )}
                       </Tabs>
                    )}
-
                 </SortableContext>
-            </DndContext>
-             {/* ================= 1. 二级菜单切换标签条 ================= */}
+              </DndContext>
+
+              {/* ================= 🔵 第二层：二级子菜单切换标签条 ================= */}
               {currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0 && (
-                <Box 
-                sx={{ 
-                  mt: 2.5, // 👈 从 1 加大到 2.5（或者3），拉开外边距
-                  pt: 2,   // 👈 从 1 加大到 2，拉开内边距
-                  borderTop: (t) => `1px solid ${t.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`, // 让分割线稍微清晰一点点
-                  display: 'flex', 
-                  gap: 1.5, // 👈 顺便让子菜单按钮彼此之间的左右间距也稍微大一点点（原为1）
-                  justifyContent: { xs: 'flex-start', md: 'center' },
-                  flexWrap: 'nowrap',
-                  overflowX: 'auto',
-                  scrollbarWidth: 'none', 
-                  '&::-webkit-scrollbar': { display: 'none' }
-                  }}
-                  >
-                  <Button
-                    variant={selectedSubTab === currentGroup.id ? "contained" : "text"}
-                    size="small"
-                    onClick={() => setSelectedSubTab(currentGroup.id!)}
-                    sx={{ borderRadius: 2, fontWeight: 'bold' }}
-                  >
-                    主菜单
+                <Box sx={{ mt: 2.5, pt: 2, borderTop: (t) => `1px solid ${t.palette.mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`, display: 'flex', gap: 1.5, justifyContent: { xs: 'flex-start', md: 'center' }, flexWrap: 'nowrap', overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+                  <Button variant={selectedSubTab === currentGroup.id ? "contained" : "text"} size="small" onClick={() => setSelectedSubTab(currentGroup.id!)} sx={{ borderRadius: 2, fontWeight: 800, color: selectedSubTab === currentGroup.id ? 'black' : 'text.primary', textTransform: 'none' }}>
+                    全部直属
                   </Button>
 
                   {currentGroup.sub_menus.map((subMenu: GroupTreeNode) => (
-                    <Box 
-                      key={subMenu.id} 
-                      sx={{ 
-                        position: 'relative', // 👈 为绝对定位的按钮提供母体
-                        padding: isAuthenticated ? '6px 20px' : '0px', // 管理员模式下稍微撑开一点空间放按钮
-                      }}
-                    >
-                      <Button
-                        variant={selectedSubTab === subMenu.id ? "contained" : "text"}
-                        size="small"
-                        onClick={() => setSelectedSubTab(subMenu.id)}
-                        sx={{ 
-                          borderRadius: 2, 
-                          fontWeight: 800,
-                          color: selectedSubTab === subMenu.id ? 'black' : 'text.primary',
-                          textTransform: 'none',
-                          whiteSpace: 'nowrap',
-                          px: 2,
-                        }}
-                      >
+                    <Box key={subMenu.id} sx={{ position: 'relative', padding: isAuthenticated ? '0 18px' : '0' }}>
+                      <Button variant={selectedSubTab === subMenu.id ? "contained" : "text"} size="small" onClick={() => setSelectedSubTab(subMenu.id)} sx={{ borderRadius: 2, fontWeight: 800, color: selectedSubTab === subMenu.id ? 'black' : 'text.primary', textTransform: 'none', whiteSpace: 'nowrap' }}>
                         {subMenu.name}
                       </Button>
-
-                      {/* ✨ 管理员状态下，在子菜单的左上角和右上角安插按钮 */}
                       {isAuthenticated && (
                         <>
-                          {/* 左上角：编辑子菜单 */}
-                          <IconButton 
-                            size="small" 
-                            onClick={(e) => {
-                              e.stopPropagation(); // 阻止触发切换菜单
-                              setEditingGroup(subMenu);
-                              setEditGroupOpen(true);
-                            }}
-                            sx={{ 
-                              position: 'absolute', top: -4, left: -4, zIndex: 10,
-                              p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
-                              color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }
-                            }}
-                          >
-                            <EditIcon sx={{ fontSize: '0.75rem' }} />
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(subMenu); setEditGroupOpen(true); }} sx={{ position: 'absolute', top: -6, left: -4, zIndex: 10, p: 0.1, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' } }}>
+                            <EditIcon sx={{ fontSize: '0.65rem' }} />
                           </IconButton>
-
-                          {/* 右上角：删除子菜单 */}
-                          <IconButton 
-                            size="small" 
-                            onClick={(e) => {
-                              e.stopPropagation(); // 阻止触发切换菜单
-                              handleGroupDelete(subMenu.id!);
-                            }}
-                            sx={{ 
-                              position: 'absolute', top: -4, right: -4, zIndex: 10,
-                              p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
-                              color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }
-                            }}
-                          >
-                            <DeleteIcon sx={{ fontSize: '0.75rem' }} />
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(subMenu.id!); }} sx={{ position: 'absolute', top: -6, right: -4, zIndex: 10, p: 0.1, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' } }}>
+                            <DeleteIcon sx={{ fontSize: '0.65rem' }} />
                           </IconButton>
                         </>
                       )}
                     </Box>
                   ))}
+                </Box>
+              )}
 
-          </Paper>
-        </Box>
-
+            </Paper>
+          </Box>
         </AppBar>
+
 
         {/* 主要内容区域 */}
         <Container maxWidth="xl" sx={{ py: 3, position: 'relative', zIndex: 2 }}>
