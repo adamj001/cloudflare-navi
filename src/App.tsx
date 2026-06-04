@@ -19,6 +19,8 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  MouseSensor,
+  TouchSensor,
   } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -157,24 +159,27 @@ const SortableSiteCard = ({ id, children, disabled }: { id: number, children: Re
     };
   
     return (
-      <Box ref={setNodeRef} style={style} {...attributes} {...listeners} sx={{ height: '100%' }}>
-         {children}
-         {!disabled && (
-          <Box sx={{ 
-            position: 'absolute', 
-            top: 8, 
-            left: 8, 
-            zIndex: 20, 
-            cursor: 'grab',
-            bgcolor: 'rgba(0,0,0,0.2)',
-            borderRadius: '50%',
-            p: 0.5,
-            display: 'flex'
-          }}>
-             <DragIndicatorIcon fontSize="small" sx={{ color: 'white', opacity: 0.8 }} />
-          </Box>
-         )}
-      </Box>
+     // 修改后：listeners 从外层 Box 移走
+<Box ref={setNodeRef} style={style} {...attributes} sx={{ height: '100%' }}>
+   {children}
+   {!disabled && (
+    <Box
+      {...listeners}  // ← listeners 只挂在手柄图标上
+      sx={{ 
+        position: 'absolute', 
+        top: 8, 
+        left: 8, 
+        zIndex: 20, 
+        cursor: 'grab',
+        bgcolor: 'rgba(0,0,0,0.2)',
+        borderRadius: '50%',
+        p: 0.5,
+        display: 'flex'
+      }}>
+       <DragIndicatorIcon fontSize="small" sx={{ color: 'white', opacity: 0.8 }} />
+    </Box>
+   )}
+</Box>
     );
   };
 
@@ -276,15 +281,21 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
   // 💡 dnd-kit 新增：设置拖拽传感器
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-        activationConstraint: {
-            distance: 8, 
-        }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
+  useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 8,  // 鼠标拖动超过 8px 才激活
+    },
+  }),
+  useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 250,    // 触摸长按 250ms 才激活拖拽
+      tolerance: 5,
+    },
+  }),
+  useSensor(KeyboardSensor, {
+    coordinateGetter: sortableKeyboardCoordinates,
+  })
+);
   
   // 核心修复：将 useMemo 移动到这里，必须在任何 return 之前！
   const groupIds = useMemo(() => groups.map(g => g.id!), [groups]);
