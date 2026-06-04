@@ -1413,61 +1413,101 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
         </Dialog>
 
 
+                 {/* ================= ✨ 升级版：新增站点弹窗 ================= */}
         <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth>
-          <DialogTitle>新增站点 (分组: {currentGroup?.name}) <IconButton onClick={handleCloseAddSite} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
+          <DialogTitle>新增站点 <IconButton onClick={handleCloseAddSite} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
-            <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack spacing={2.5} sx={{ mt: 1 }}>
+                
+                {/* 自由选择新站点投放哪个菜单下 */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="add-site-group-label">选择投放到哪个菜单/子菜单</InputLabel>
+                  <Select
+                    labelId="add-site-group-label"
+                    value={newSite.group_id || ''}
+                    label="选择投放到哪个菜单/子菜单"
+                    onChange={(e) => setNewSite({ ...newSite, group_id: Number(e.target.value) })}
+                  >
+                    {groups.map((mainGroup) => {
+                      const items = [];
+                      items.push(<MenuItem key={mainGroup.id} value={mainGroup.id}>📁 {mainGroup.name} (主菜单)</MenuItem>);
+                      if (mainGroup.sub_menus && mainGroup.sub_menus.length > 0) {
+                        mainGroup.sub_menus.forEach((sub) => {
+                          items.push(<MenuItem key={sub.id} value={sub.id} sx={{ pl: 4 }}>└── 📄 {sub.name} (子菜单)</MenuItem>);
+                        });
+                      }
+                      return items;
+                    })}
+                  </Select>
+                </FormControl>
+
                 <TextField autoFocus fullWidth label="站点名称" value={newSite.name || ''} name="name" onChange={handleSiteInputChange} />
                 <TextField fullWidth label="URL" value={newSite.url || ''} name="url" onChange={handleSiteInputChange} />
-                <TextField
-                  fullWidth
-                  label="图标URL（可手动输入或自动获取缩写）"
-                  value={newSite.icon || ''}
-                  name="icon" 
-                  onChange={handleSiteInputChange} 
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          edge="end"
-                          onClick={() => {
-                            if (newSite.url) {
-                              const domain = extractDomain(newSite.url);
-                              if (domain) {
-                                const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=256';
-                                setNewSite(prev => ({
-                                  ...prev,
-                                  icon: template.replace('{domain}', domain)
-                                }));
+                
+                {/* 多入口图标选择 */}
+                <Box>
+                  <TextField
+                    fullWidth
+                    label="图标URL或首字代码"
+                    value={newSite.icon || ''}
+                    name="icon" 
+                    onChange={handleSiteInputChange} 
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              if (newSite.url) {
+                                const domain = extractDomain(newSite.url);
+                                if (domain) {
+                                  const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=256';
+                                  setNewSite(prev => ({ ...prev, icon: template.replace('{domain}', domain) }));
+                                } else {
+                                  handleError('无法从 URL 提取域名');
+                                }
                               } else {
-                                 handleError('无法从 URL 提取域名');
+                                 handleError('请先输入有效的 URL');
                               }
-                            } else {
-                               handleError('请先输入有效的 URL');
-                            }
-                          }}
-                          aria-label="自动获取图标"
-                        >
-                          <AutoFixHighIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                            }}
+                          >
+                            <AutoFixHighIcon color="primary" />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, mb: 0.5, fontWeight: 'bold' }}>
+                    快捷选用本地图标首字 (点击即可):
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {['Google', 'GitHub', 'A', 'B', 'C', 'Code', 'Blog', 'Nav'].map((fav) => (
+                      <Button
+                        key={fav} variant="outlined" size="small"
+                        onClick={() => setNewSite({ ...newSite, icon: fav })}
+                        sx={{ py: 0, px: 1, minWidth: 'auto', textTransform: 'none', fontSize: '0.75rem', borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.1)' }}
+                      >
+                        {fav}
+                      </Button>
+                    ))}
+                  </Box>
+                </Box>
+
                 <TextField fullWidth label="描述 (可选)" value={newSite.description || ''} name="description" onChange={handleSiteInputChange} />
                 <FormControlLabel control={<Switch checked={newSite.is_public === 1} onChange={e => setNewSite({ ...newSite, is_public: e.target.checked ? 1 : 0 })} />} label="公开站点" />
             </Stack>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={handleCloseAddSite}>取消</Button>
             <Button variant="contained" onClick={handleCreateSite}>创建</Button>
           </DialogActions>
         </Dialog>
+
         
-               <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
+                      {/* ================= ✨ 升级版：编辑站点弹窗 ================= */}
+        <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
-            编辑站点
+            编辑站点设置
             <IconButton onClick={() => setEditSiteOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}>
               <CloseIcon />
             </IconButton>
@@ -1475,7 +1515,41 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
           {editingSite && (
             <DialogContent>
-              <Stack spacing={2} sx={{ mt: 1 }}>
+              <Stack spacing={2.5} sx={{ mt: 1 }}>
+                
+                {/* 功能 2：✨ 自由切换卡片归属（移动分组） */}
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="edit-site-group-label">更换卡片归属菜单</InputLabel>
+                  <Select
+                    labelId="edit-site-group-label"
+                    value={editingSite.group_id}
+                    label="更换卡片归属菜单"
+                    onChange={(e) => setEditingSite({ ...editingSite, group_id: Number(e.target.value) })}
+                  >
+                    {/* 循环遍历所有菜单，支持渲染出 “顶级菜单” 和 “-- 子菜单” 的层级结构 */}
+                    {groups.map((mainGroup) => {
+                      const items = [];
+                      // 先把顶级主菜单自己塞进去
+                      items.push(
+                        <MenuItem key={mainGroup.id} value={mainGroup.id}>
+                          📁 {mainGroup.name} (主菜单)
+                        </MenuItem>
+                      );
+                      // 如果有名下的子菜单，也一并塞入下拉框（做缩进展示）
+                      if (mainGroup.sub_menus && mainGroup.sub_menus.length > 0) {
+                        mainGroup.sub_menus.forEach((sub) => {
+                          items.push(
+                            <MenuItem key={sub.id} value={sub.id} sx={{ pl: 4 }}>
+                              └── 📄 {sub.name} (子菜单)
+                            </MenuItem>
+                          );
+                        });
+                      }
+                      return items;
+                    })}
+                  </Select>
+                </FormControl>
+
                 <TextField
                   autoFocus
                   fullWidth
@@ -1486,7 +1560,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
                 <TextField
                   fullWidth
-                  label="URL（修改后会自动更新图标默认值）"
+                  label="网站跳转 URL"
                   value={editingSite.url || ''}
                   onChange={(e) => {
                     const url = e.target.value;
@@ -1500,46 +1574,70 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                   }}
                 />
 
-                <TextField
-                  fullWidth
-                  label="图标URL（可手动输入或自动获取缩写）"
-                  value={editingSite.icon || ''}
-                  onChange={(e) => setEditingSite({ ...editingSite, icon: e.target.value })} 
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            if (!editingSite.url) {
-                               handleError('请先输入有效的 URL');
-                               return;
-                            }
-                            const domain = extractDomain(editingSite.url);
-                            if (domain) {
-                              const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=256';
-                              setEditingSite({ ...editingSite, icon: template.replace('{domain}', domain) });
-                            } else {
-                               handleError('无法从 URL 提取域名');
-                            }
-                          }}
-                          aria-label="自动获取图标"
-                        >
-                          <AutoFixHighIcon />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+                {/* 功能 1：✨ 多入口站点图标选择（快捷预设 + 自动获取 + 手动输入三合一） */}
+                <Box>
+                  <TextField
+                    fullWidth
+                    label="图标 URL 或本地文字代码"
+                    value={editingSite.icon || ''}
+                    onChange={(e) => setEditingSite({ ...editingSite, icon: e.target.value })} 
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip title="基于URL自动爬取高清Favicon">
+                            <IconButton
+                              size="small"
+                              onClick={() => {
+                                if (!editingSite.url) {
+                                  handleError('请先输入有效的 URL');
+                                  return;
+                                }
+                                const domain = extractDomain(editingSite.url);
+                                if (domain) {
+                                  const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=256';
+                                  setEditingSite({ ...editingSite, icon: template.replace('{domain}', domain) });
+                                } else {
+                                  handleError('无法从 URL 提取域名');
+                                }
+                              }}
+                            >
+                              <AutoFixHighIcon color="primary" />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                  
+                  {/* 快捷常用本地预设图标选择区（点击可直接覆盖输入框） */}
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, mb: 0.5, fontWeight: 'bold' }}>
+                    快捷推荐本地图标代码 (点击可直接选用):
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                    {['Google', 'GitHub', 'A', 'B', 'C', 'Code', 'Blog', 'Nav'].map((fav) => (
+                      <Button
+                        key={fav}
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setEditingSite({ ...editingSite, icon: fav })}
+                        sx={{ 
+                          py: 0, px: 1, minWidth: 'auto', textTransform: 'none', fontSize: '0.75rem',
+                          borderRadius: 1.5, border: '1px solid rgba(255,255,255,0.1)'
+                        }}
+                      >
+                        {fav}
+                      </Button>
+                    ))}
+                  </Box>
+                </Box>
 
                 <TextField
                   fullWidth
-                  label="描述（可选）"
+                  label="描述 (可选)"
                   value={editingSite.description || ''}
                   onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })}
                 />
 
-                {/* 👇👇👇 新增的部分在这里 👇👇👇 */}
                 <FormControlLabel 
                   control={
                     <Switch 
@@ -1549,21 +1647,24 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                   } 
                   label="公开站点" 
                 />
-                {/* 👆👆👆 新增结束 👆👆👆 */}
-                
               </Stack>
             </DialogContent>
           )}
 
-          <DialogActions>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
             <Button onClick={() => setEditSiteOpen(false)}>取消</Button>
             <Button
               variant="contained"
               onClick={async () => {
                 if (editingSite?.id) {
-                  await api.updateSite(editingSite.id, editingSite);
-                  await fetchData();
-                  setEditSiteOpen(false);
+                  try {
+                    await api.updateSite(editingSite.id, editingSite);
+                    await fetchData();
+                    setEditSiteOpen(false);
+                    handleError('站点保存成功');
+                  } catch (err) {
+                    handleError('保存失败: ' + (err as Error).message);
+                  }
                 }
               }}
             >
