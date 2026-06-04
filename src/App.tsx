@@ -1202,6 +1202,31 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
                 </SortableContext>
             </DndContext>
+             {/* ================= 1. 二级菜单切换标签条 ================= */}
+              {currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0 && (
+                <Box sx={{ mb: 4, display: 'flex', gap: 1, flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 2 }}>
+                  <Button
+                    variant={selectedSubTab === currentGroup.id ? "contained" : "text"}
+                    size="small"
+                    onClick={() => setSelectedSubTab(currentGroup.id!)}
+                    sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                  >
+                    全部
+                  </Button>
+
+                  {currentGroup.sub_menus.map((subMenu: GroupTreeNode) => (
+                    <Button
+                      key={subMenu.id}
+                      variant={selectedSubTab === subMenu.id ? "contained" : "text"}
+                      size="small"
+                      onClick={() => setSelectedSubTab(subMenu.id)}
+                      sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                    >
+                      {subMenu.name}
+                    </Button>
+                  ))}
+                </Box>
+              )}
           </Paper>
         </Box>
 
@@ -1233,32 +1258,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             </Box>
           ) : (
             <Box sx={{ pb: 10 }}>
-              {/* ================= 1. 二级菜单切换标签条 ================= */}
-              {currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0 && (
-                <Box sx={{ mb: 4, display: 'flex', gap: 1, flexWrap: 'wrap', borderBottom: '1px solid rgba(255,255,255,0.1)', pb: 2 }}>
-                  <Button
-                    variant={selectedSubTab === currentGroup.id ? "contained" : "text"}
-                    size="small"
-                    onClick={() => setSelectedSubTab(currentGroup.id!)}
-                    sx={{ borderRadius: 2, fontWeight: 'bold' }}
-                  >
-                    全部
-                  </Button>
-
-                  {currentGroup.sub_menus.map((subMenu: GroupTreeNode) => (
-                    <Button
-                      key={subMenu.id}
-                      variant={selectedSubTab === subMenu.id ? "contained" : "text"}
-                      size="small"
-                      onClick={() => setSelectedSubTab(subMenu.id)}
-                      sx={{ borderRadius: 2, fontWeight: 'bold' }}
-                    >
-                      {subMenu.name}
-                    </Button>
-                  ))}
-                </Box>
-              )}
-
+             
               {/* ================= 2. 动态挑选的站点网格 ================= */}
               {(() => {
                 let targetRenderGroup = currentGroup;
@@ -1276,7 +1276,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                 return (
                   <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                     <SortableContext items={currentGroupSiteIds} strategy={rectSortingStrategy}>
-                      <Box sx={{
+                      <Box 
+                      onPointerDown={handleCardAreaPointerDown}
+        onPointerUp={handleCardAreaPointerUp}
+        onPointerCancel={handleCardAreaPointerCancel}
+        onClickCapture={handleCardAreaClickCapture}
+                      sx={{
                         display: 'grid',
                         gridTemplateColumns: {
                           xs: 'repeat(auto-fill, minmax(140px, 1fr))',
