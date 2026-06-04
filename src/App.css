@@ -78,3 +78,17 @@ scroll-behavior: auto !important;
   visibility: visible;
   opacity: 1;
 }
+/* ✨ 顶级主菜单按钮的优雅动效 */
+.MuiTab-root .tab-action-btn {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-50%) scale(0.6) !important; /* 默认缩小隐藏 */
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* 鼠标悬停到该主菜单标签上时，两侧的编辑/删除按钮会像羽翼一样丝滑地向两边展开 */
+.MuiTab-root:hover .tab-action-btn {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(-50%) scale(1) !important; /* 展开到正常大小 */
+}

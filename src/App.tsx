@@ -851,15 +851,48 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             },
         }}
       >
+       {/* ✨ 修改：将卡片的编辑和删除图标分别绝对定位到左上角和右上角 */}
         {isAuthenticated && sortMode === SortMode.None && (
-          <Box sx={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0.5, zIndex: 10 }}>
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingSite(site); setEditSiteOpen(true); }} sx={{ bgcolor: 'rgba(0,255,157,0.15)', color: '#00ff9d', '&:hover': { bgcolor: 'rgba(0,255,157,0.3)' }, }}>
-                <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleSiteDelete(site.id!); }} sx={{ bgcolor: 'rgba(255,0,0,0.15)', color: '#ff4444', '&:hover': { bgcolor: 'rgba(255,0,0,0.3)' }, }}>
-                <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Box>
+          <>
+            {/* 左上角：编辑站点 */}
+            <Box sx={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setEditingSite(site); 
+                  setEditSiteOpen(true); 
+                }} 
+                sx={{ 
+                  bgcolor: darkMode ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.8)',
+                  color: '#00ff9d', 
+                  border: '1px solid rgba(0,255,157,0.3)',
+                  '&:hover': { bgcolor: '#00ff9d', color: 'black' }, 
+                }}
+              >
+                  <EditIcon fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {/* 右上角：删除站点 */}
+            <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 10 }}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  handleSiteDelete(site.id!); 
+                }} 
+                sx={{ 
+                  bgcolor: darkMode ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.8)',
+                  color: '#ff4444', 
+                  border: '1px solid rgba(255,0,0,0.3)',
+                  '&:hover': { bgcolor: '#ff4444', color: 'white' }, 
+                }}
+              >
+                  <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Box>
+          </>
         )}
 
         <Box sx={{ width: 100, height: 100, mb: 1.5, borderRadius: 3, overflow: 'hidden', bgcolor: 'rgba(255,255,255,0.1)', p: 1.5 }}>
@@ -1132,73 +1165,80 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                          '&::-webkit-scrollbar': { display: 'none' } 
                        }}
                      >
-                        {groups.map(g => (
-                          <SortableTab 
-                            key={g.id} 
-                            label={g.name} 
-                            value={g.id} 
-                            sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2, border: '1px solid transparent' }} 
-                          />
-                        ))}
-                     </Box>
-                   ) : (
-                     <Tabs
-                     value={selectedTab || false}
-                     onChange={(_, v) => {
-                      setSelectedTab(v as number);
-                      setSelectedSubTab(v as number); // ✨ 切换顶级菜单时，二级菜单默认选中主菜单自己
-                      }}
-                        variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
-                        sx={{
-                          '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
-                          '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
-                          '& .MuiTab-root': {
-                            fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' },
-                            minWidth: { xs: 60, sm: 80 }, py: 1, px: 2, borderRadius: 3, transition: 'all 0.2s',
-                            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                          },
-                          '& .MuiTabs-indicator': {
-                            height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d',
-                          },
-                        }}
-                      >
                         {groups.map(g => {
-                          // ✨ 动态组装带有“编辑”与“删除”按钮的标签文本
+                          // ✨ 1. 组装带有“绝对定位”编辑与删除按钮的标签文本
                           const tabLabel = (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <span>{g.name}</span>
+                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
+                              {/* 主菜单文字 */}
+                              <span style={{ fontSize: 'inherit', fontWeight: 'inherit' }}>{g.name}</span>
+                              
+                              {/* ✨ 管理员状态下，在 Tab 的左侧和右侧悬浮安插微型按钮 */}
                               {isAuthenticated && (
-                                <Box className="tab-actions" sx={{ display: 'flex', opacity: 0.6, '&:hover': { opacity: 1 } }}>
-                                  {/* 编辑按钮 */}
+                                <>
+                                  {/* 左侧微调：编辑顶级菜单 */}
                                   <IconButton 
                                     size="small" 
-                                    sx={{ p: 0.2, color: 'primary.main' }}
                                     onClick={(e) => {
-                                      e.stopPropagation(); // 阻止切换 Tab
+                                      e.stopPropagation(); // 🛑 极其重要：阻止切换 Tab
                                       setEditingGroup(g);
                                       setEditGroupOpen(true);
                                     }}
+                                    sx={{ 
+                                      position: 'absolute', left: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
+                                      p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+                                      color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' },
+                                      // 优雅交互：默认隐藏，鼠标移入 Tab 时才显现
+                                      className: 'tab-action-btn', 
+                                    }}
                                   >
-                                    <EditIcon sx={{ fontSize: '0.9rem' }} />
+                                    <EditIcon sx={{ fontSize: '0.75rem' }} />
                                   </IconButton>
-                                  {/* 删除按钮 */}
+
+                                  {/* 右侧微调：删除顶级菜单 */}
                                   <IconButton 
                                     size="small" 
-                                    sx={{ p: 0.2, color: 'error.main' }}
                                     onClick={(e) => {
-                                      e.stopPropagation(); // 阻止切换 Tab
+                                      e.stopPropagation(); // 🛑 极其重要：阻止切换 Tab
                                       handleGroupDelete(g.id!);
                                     }}
                                     disabled={groups.length <= 1}
+                                    sx={{ 
+                                      position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
+                                      p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+                                      color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' },
+                                      className: 'tab-action-btn',
+                                    }}
                                   >
-                                    <DeleteIcon sx={{ fontSize: '0.9rem' }} />
+                                    <DeleteIcon sx={{ fontSize: '0.75rem' }} />
                                   </IconButton>
-                                </Box>
+                                </>
                               )}
                             </Box>
                           );
 
-                          return <Tab key={g.id} label={tabLabel} value={g.id} />;
+                          return (
+                            <Tab 
+                              key={g.id} 
+                              label={tabLabel} 
+                              value={g.id} 
+                              sx={{
+                                // ✨ 2. 为两侧的按钮留出恰到好处的呼吸空间
+                                px: isAuthenticated ? 3.5 : 2, 
+                                minHeight: '48px',
+                                transition: 'all 0.2s ease',
+                                // 配合下方的 CSS，让按钮实现滑入滑出
+                                '& .tab-action-btn': {
+                                  visibility: 'hidden',
+                                  opacity: 0,
+                                  transition: 'all 0.2s ease',
+                                },
+                                '&:hover .tab-action-btn': {
+                                  visibility: 'visible',
+                                  opacity: 1,
+                                }
+                              }}
+                            />
+                          );
                         })}
 
                         {isAuthenticated && (
@@ -1240,18 +1280,69 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                   </Button>
 
                   {currentGroup.sub_menus.map((subMenu: GroupTreeNode) => (
-                    <Button
-                      key={subMenu.id}
-                      variant={selectedSubTab === subMenu.id ? "contained" : "text"}
-                      size="small"
-                      onClick={() => setSelectedSubTab(subMenu.id)}
-                      sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                    <Box 
+                      key={subMenu.id} 
+                      sx={{ 
+                        position: 'relative', // 👈 为绝对定位的按钮提供母体
+                        padding: isAuthenticated ? '6px 20px' : '0px', // 管理员模式下稍微撑开一点空间放按钮
+                      }}
                     >
-                      {subMenu.name}
-                    </Button>
+                      <Button
+                        variant={selectedSubTab === subMenu.id ? "contained" : "text"}
+                        size="small"
+                        onClick={() => setSelectedSubTab(subMenu.id)}
+                        sx={{ 
+                          borderRadius: 2, 
+                          fontWeight: 800,
+                          color: selectedSubTab === subMenu.id ? 'black' : 'text.primary',
+                          textTransform: 'none',
+                          whiteSpace: 'nowrap',
+                          px: 2,
+                        }}
+                      >
+                        {subMenu.name}
+                      </Button>
+
+                      {/* ✨ 管理员状态下，在子菜单的左上角和右上角安插按钮 */}
+                      {isAuthenticated && (
+                        <>
+                          {/* 左上角：编辑子菜单 */}
+                          <IconButton 
+                            size="small" 
+                            onClick={(e) => {
+                              e.stopPropagation(); // 阻止触发切换菜单
+                              setEditingGroup(subMenu);
+                              setEditGroupOpen(true);
+                            }}
+                            sx={{ 
+                              position: 'absolute', top: -4, left: -4, zIndex: 10,
+                              p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+                              color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }
+                            }}
+                          >
+                            <EditIcon sx={{ fontSize: '0.75rem' }} />
+                          </IconButton>
+
+                          {/* 右上角：删除子菜单 */}
+                          <IconButton 
+                            size="small" 
+                            onClick={(e) => {
+                              e.stopPropagation(); // 阻止触发切换菜单
+                              handleGroupDelete(subMenu.id!);
+                            }}
+                            sx={{ 
+                              position: 'absolute', top: -4, right: -4, zIndex: 10,
+                              p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+                              color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }
+                            }}
+                          >
+                            <DeleteIcon sx={{ fontSize: '0.75rem' }} />
+                          </IconButton>
+                        </>
+                      )}
+                    </Box>
                   ))}
-                </Box>
-              )}
+
           </Paper>
         </Box>
 
