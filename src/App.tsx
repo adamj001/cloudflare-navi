@@ -406,7 +406,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     cardAreaSwipeRef.current.pointerId = null;
   };
 
-  const handleCardAreaClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleCardAreaClick = (event: React.MouseEvent<HTMLDivElement>) => {
   if (suppressCardClickRef.current) {
     event.preventDefault();
     // 删掉 stopPropagation —— 不要在 capture 阶段拦截，避免误伤子元素的 click
@@ -857,6 +857,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                 size="small" 
                 onClick={(e) => { 
                   e.stopPropagation(); 
+                  e.nativeEvent.stopImmediatePropagation(); // ← 新增这行
                   setEditingSite(site); 
                   setEditSiteOpen(true); 
                 }} 
@@ -877,6 +878,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                 size="small" 
                 onClick={(e) => { 
                   e.stopPropagation(); 
+                  e.nativeEvent.stopImmediatePropagation(); // ← 新增这行
+
                   handleSiteDelete(site.id!); 
                 }} 
                 sx={{ 
@@ -1191,7 +1194,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                       onPointerDown={handleCardAreaPointerDown}
         onPointerUp={handleCardAreaPointerUp}
         onPointerCancel={handleCardAreaPointerCancel}
-       onClick={handleCardAreaClickCapture}
+       onClick={handleCardAreaClick}
                       sx={{
                         display: 'grid',
                         gridTemplateColumns: {
