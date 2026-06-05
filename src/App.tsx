@@ -624,18 +624,19 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   };
 
   const handleOpenAddSite = (groupId: number) => {
-    const group = groups.find((g) => g.id === groupId);
-    const maxOrderNum = group?.sites.length ? Math.max(...group.sites.map((s) => s.order_num)) + 1 : 0;
-    setNewSite({
-      name: '',
-      url: '',
-      icon: '',
-      description: '',
-      notes: '',
-      group_id: groupId,
-      order_num: maxOrderNum,
-      is_public: 1,
-    });
+    const handleOpenAddSite = (groupId: number) => {
+  // 先找顶级，再找子菜单
+  const group = groups.find(g => g.id === groupId)
+    ?? groups.flatMap(g => g.sub_menus ?? []).find(s => s.id === groupId);
+  const maxOrderNum = group?.sites?.length
+    ? Math.max(...group.sites.map(s => s.order_num)) + 1
+    : 0;
+  setNewSite({
+    name: '', url: '', icon: '', description: '', notes: '',
+    group_id: groupId,
+    order_num: maxOrderNum,
+    is_public: 1,
+  });
     setOpenAddSite(true);
   };
 
@@ -999,13 +1000,13 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                 {/* Logo 区域 */}
                 <Box sx={{ position: 'relative', height: '48px', width: 'auto', display: 'flex', alignItems: 'center' }}>
                     <img 
-                      src="/logo-dark.svg" 
+                      src="/logo-transp.svg" 
                       alt="WebNav Hub Logo Dark" 
                       loading="eager" 
                       style={{ height: '48px', width: 'auto', display: darkMode ? 'block' : 'none', transition: 'opacity 0.2s' }} 
                     />
                     <img 
-                      src="/logo-light.svg" 
+                      src="/logo-transp.svg" 
                       alt="WebNav Hub Logo Light" 
                       loading="eager"
                       style={{ height: '48px', width: 'auto', display: darkMode ? 'none' : 'block', transition: 'opacity 0.2s' }} 
@@ -1432,11 +1433,20 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
           </DialogTitle>
           
           {(() => {
-            const selectedGroup = groups.find(g => g.id === newSite.group_id);
-            const currentMainGroupId = selectedGroup?.parent_id ? selectedGroup.parent_id : newSite.group_id;
-            const mainGroupObj = groups.find(g => g.id === currentMainGroupId);
-            const hasSubMenus = mainGroupObj?.sub_menus && mainGroupObj.sub_menus.length > 0;
+  let selectedGroup = groups.find(g => g.id === newSite.group_id);
+  let currentMainGroupId: number;
 
+  if (selectedGroup) {
+    currentMainGroupId = selectedGroup.id!;
+  } else {
+    const parentGroup = groups.find(g =>
+      g.sub_menus?.some(sub => sub.id === newSite.group_id)
+    );
+    currentMainGroupId = parentGroup?.id ?? newSite.group_id;
+  }
+
+  const mainGroupObj = groups.find(g => g.id === currentMainGroupId);
+  const hasSubMenus = mainGroupObj?.sub_menus && mainGroupObj.sub_menus.length > 0;
             return (
               <DialogContent>
                 <Stack spacing={3} sx={{ mt: 1 }}>
@@ -1537,7 +1547,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <TextField fullWidth placeholder="或留空自动获取..." value={newSite.icon || ''} name="icon" onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '16px', bgcolor: darkMode ? '#14161d' : '#e6ecf4', boxShadow: darkMode ? 'inset 2px 2px 5px #0a0b0e, inset -2px -2px 5px #1e212a' : 'inset 2px 2px 5px #b8b0c5, inset -2px -2px 5px #ffffff', '& fieldset': { border: 'none' }, fontWeight: 600, color: 'text.primary' } }} />
                       <Box sx={{ width: 56, height: 56, minWidth: 56, borderRadius: '16px', display: 'grid', placeItems: 'center', p: 1, bgcolor: darkMode ? '#252932' : '#ffffff', boxShadow: darkMode ? '4px 4px 10px #0a0b0e, -4px -4px 10px #242932' : '4px 4px 10px #c8d0dc, -4px -4px 10px #ffffff' }}>
-                        <img src={newSite.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(newSite.url || 'github.com')}&sz=256`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.src = "/logo-dark.svg"; }} />
+                        <img src={newSite.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(newSite.url || 'github.com')}&sz=256`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.src = "/logo-transp.svg"; }} />
                       </Box>
                     </Box>
                   </Box>
@@ -1578,16 +1588,23 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
           </DialogTitle>
 
           {editingSite && (() => {
-            // 💡 局部计算：找出当前选中的菜单（用来判断它到底是顶级主菜单还是子菜单）
-            const selectedGroup = groups.find(g => g.id === editingSite.group_id);
-            
-            // 计算当前卡片所属的“顶级主菜单 ID”
-            // 如果 selectedGroup 自己有 parent_id，说明它是个子菜单，它的主菜单是它的 parent_id；否则它自己就是主菜单
-            const currentMainGroupId = selectedGroup?.parent_id ? selectedGroup.parent_id : editingSite.group_id;
-            
-            // 顺藤摸瓜：根据计算出的主菜单 ID，找出这个主菜单对象，看它肚子里的 sub_menus
-            const mainGroupObj = groups.find(g => g.id === currentMainGroupId);
-            const hasSubMenus = mainGroupObj?.sub_menus && mainGroupObj.sub_menus.length > 0;
+  // 先在顶级菜单里找
+  let selectedGroup = groups.find(g => g.id === editingSite.group_id);
+  let currentMainGroupId: number;
+
+  if (selectedGroup) {
+    // 找到了 → 说明 group_id 本身就是顶级菜单
+    currentMainGroupId = selectedGroup.id!;
+  } else {
+    // 没找到 → 说明 group_id 是某个子菜单的 id，去 sub_menus 里翻
+    const parentGroup = groups.find(g =>
+      g.sub_menus?.some(sub => sub.id === editingSite.group_id)
+    );
+    currentMainGroupId = parentGroup?.id ?? editingSite.group_id;
+  }
+
+  const mainGroupObj = groups.find(g => g.id === currentMainGroupId);
+  const hasSubMenus = mainGroupObj?.sub_menus && mainGroupObj.sub_menus.length > 0;
 
             return (
               <DialogContent>
@@ -1699,7 +1716,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <TextField fullWidth placeholder="或留空自动获取..." value={editingSite.icon || ''} onChange={(e) => setEditingSite({ ...editingSite, icon: e.target.value })} InputProps={{ sx: { borderRadius: '16px', bgcolor: darkMode ? '#14161d' : '#e6ecf4', boxShadow: darkMode ? 'inset 2px 2px 5px #0a0b0e, inset -2px -2px 5px #1e212a' : 'inset 2px 2px 5px #b8b0c5, inset -2px -2px 5px #ffffff', '& fieldset': { border: 'none' }, fontWeight: 600, color: 'text.primary' } }} />
                       <Box sx={{ width: 56, height: 56, minWidth: 56, borderRadius: '16px', display: 'grid', placeItems: 'center', p: 1, bgcolor: darkMode ? '#252932' : '#ffffff', boxShadow: darkMode ? '4px 4px 10px #0a0b0e, -4px -4px 10px #242932' : '4px 4px 10px #c8d0dc, -4px -4px 10px #ffffff' }}>
-                        <img src={editingSite.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(editingSite.url || 'github.com')}&sz=256`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.src = "/logo-dark.svg"; }} />
+                        <img src={editingSite.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(editingSite.url || 'github.com')}&sz=256`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.src = "/logo-transp.svg"; }} />
                       </Box>
                     </Box>
                   </Box>
