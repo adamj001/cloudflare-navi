@@ -14,8 +14,7 @@ import './App.css';
 import {
   DndContext,
   closestCenter,
-  KeyboardSensor,
-  PointerSensor,
+  KeyboardSensor,  
   useSensor,
   useSensors,
   DragEndEvent,
@@ -160,23 +159,15 @@ const SortableSiteCard = ({ id, children, disabled }: { id: number, children: Re
   
     return (
      // 修改后：listeners 从外层 Box 移走
+ 修改后：listeners 从外层 Box 移到手柄 Box
 <Box ref={setNodeRef} style={style} {...attributes} sx={{ height: '100%' }}>
    {children}
    {!disabled && (
     <Box
-      {...listeners}  // ← listeners 只挂在手柄图标上
-      sx={{ 
-        position: 'absolute', 
-        top: 8, 
-        left: 8, 
-        zIndex: 20, 
-        cursor: 'grab',
-        bgcolor: 'rgba(0,0,0,0.2)',
-        borderRadius: '50%',
-        p: 0.5,
-        display: 'flex'
-      }}>
-       <DragIndicatorIcon fontSize="small" sx={{ color: 'white', opacity: 0.8 }} />
+      {...listeners}
+      sx={{ position: 'absolute', top: 8, left: 8, zIndex: 20, cursor: 'grab',
+           bgcolor: 'rgba(0,0,0,0.2)', borderRadius: '50%', p: 0.5, display: 'flex' }}>
+      <DragIndicatorIcon fontSize="small" sx={{ color: 'white', opacity: 0.8 }} />
     </Box>
    )}
 </Box>
@@ -280,17 +271,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
 
   // 💡 dnd-kit 新增：设置拖拽传感器
-  const sensors = useSensors(
+ const sensors = useSensors(
   useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 8,  // 鼠标拖动超过 8px 才激活
-    },
+    activationConstraint: { distance: 8 },
   }),
   useSensor(TouchSensor, {
-    activationConstraint: {
-      delay: 250,    // 触摸长按 250ms 才激活拖拽
-      tolerance: 5,
-    },
+    activationConstraint: { delay: 250, tolerance: 5 },
   }),
   useSensor(KeyboardSensor, {
     coordinateGetter: sortableKeyboardCoordinates,
@@ -422,12 +408,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   };
 
   const handleCardAreaClickCapture = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (suppressCardClickRef.current) {
-      event.preventDefault();
-      event.stopPropagation();
-      suppressCardClickRef.current = false;
-    }
-  };
+  if (suppressCardClickRef.current) {
+    event.preventDefault();
+    // 删掉 stopPropagation —— 不要在 capture 阶段拦截，避免误伤子元素的 click
+    suppressCardClickRef.current = false;
+  }
+};
 
   const checkAuthStatus = async () => {
     try {
@@ -1206,7 +1192,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                       onPointerDown={handleCardAreaPointerDown}
         onPointerUp={handleCardAreaPointerUp}
         onPointerCancel={handleCardAreaPointerCancel}
-        onClickCapture={handleCardAreaClickCapture}
+       onClick={handleCardAreaClickCapture}
                       sx={{
                         display: 'grid',
                         gridTemplateColumns: {
@@ -1454,7 +1440,14 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             return (
               <DialogContent>
                 <Stack spacing={3} sx={{ mt: 1 }}>
-                  
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>站点名称</Typography>
+                    <TextField fullWidth name="name" value={newSite.name || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>网站跳转 URL</Typography>
+                    <TextField fullWidth name="url" value={newSite.url || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                  </Box>
                   {/* 第一级：选择主菜单 */}
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8, fontSize: '0.95rem' }}>
@@ -1549,14 +1542,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                     </Box>
                   </Box>
 
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>站点名称</Typography>
-                    <TextField fullWidth name="name" value={newSite.name || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>网站跳转 URL</Typography>
-                    <TextField fullWidth name="url" value={newSite.url || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
-                  </Box>
+                  
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>描述（可选）</Typography>
                     <TextField fullWidth multiline rows={2} placeholder="简短描述..." name="description" value={newSite.description || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
@@ -1606,7 +1592,14 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             return (
               <DialogContent>
                 <Stack spacing={3} sx={{ mt: 1 }}>
-                  
+                 <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>站点名称</Typography>
+                    <TextField fullWidth value={editingSite.name || ''} onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>网站跳转 URL</Typography>
+                    <TextField fullWidth value={editingSite.url || ''} onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                  </Box> 
                   {/* 1️⃣ 第一级下拉框：永久出现的“所属主菜单” */}
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8, fontSize: '0.95rem' }}>
@@ -1711,14 +1704,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                     </Box>
                   </Box>
 
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>站点名称</Typography>
-                    <TextField fullWidth value={editingSite.name || ''} onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>网站跳转 URL</Typography>
-                    <TextField fullWidth value={editingSite.url || ''} onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
-                  </Box>
+                  
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>描述（可选）</Typography>
                     <TextField fullWidth multiline rows={2} placeholder="简短描述..." value={editingSite.description || ''} onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
