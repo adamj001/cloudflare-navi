@@ -622,8 +622,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
       handleError('创建分组失败: ' + (error as Error).message);
     }
   };
-
-  const handleOpenAddSite = (groupId: number) => {
+  
     const handleOpenAddSite = (groupId: number) => {
   // 先找顶级，再找子菜单
   const group = groups.find(g => g.id === groupId)
@@ -638,6 +637,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     is_public: 1,
   });
     setOpenAddSite(true);
+
   };
 
   const handleCloseAddSite = () => {
