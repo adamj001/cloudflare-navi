@@ -159,8 +159,7 @@ const SortableSiteCard = ({ id, children, disabled }: { id: number, children: Re
   
     return (
      // 修改后：listeners 从外层 Box 移走
- 修改后：listeners 从外层 Box 移到手柄 Box
-<Box ref={setNodeRef} style={style} {...attributes} sx={{ height: '100%' }}>
+ <Box ref={setNodeRef} style={style} {...attributes} sx={{ height: '100%' }}>
    {children}
    {!disabled && (
     <Box
