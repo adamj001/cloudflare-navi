@@ -362,9 +362,10 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   };
 
   const handleCardAreaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) {
-      return;
-    }
+  if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) {
+    return;
+  }
+
 
     cardAreaSwipeRef.current = {
       startX: event.clientX,
@@ -372,39 +373,36 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
       pointerId: event.pointerId,
       didSwipe: false,
     };
-    event.currentTarget.setPointerCapture(event.pointerId);
+    // event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    const swipe = cardAreaSwipeRef.current;
-    if (swipe.pointerId !== event.pointerId || swipe.didSwipe) {
-      return;
-    }
+  const swipe = cardAreaSwipeRef.current;
+  if (swipe.pointerId !== event.pointerId || swipe.didSwipe) {
+    return;
+  }
 
-    const deltaX = event.clientX - swipe.startX;
-    const deltaY = event.clientY - swipe.startY;
-    const isHorizontalSwipe = Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4;
+  const deltaX = event.clientX - swipe.startX;
+  const deltaY = event.clientY - swipe.startY;
+  const isHorizontalSwipe = Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4;
 
-    if (isHorizontalSwipe) {
-      swipe.didSwipe = true;
-      suppressCardClickRef.current = true;
-      switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
-      window.setTimeout(() => {
-        suppressCardClickRef.current = false;
-      }, 0);
-    }
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
+  if (isHorizontalSwipe) {
+    swipe.didSwipe = true;
+    suppressCardClickRef.current = true;
+    switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
+    window.setTimeout(() => {
+      suppressCardClickRef.current = false;
+    }, 0);
+  }
+   // if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+   //  event.currentTarget.releasePointerCapture(event.pointerId);
+   // }
   };
 
   const handleCardAreaPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (cardAreaSwipeRef.current.pointerId === event.pointerId && event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    cardAreaSwipeRef.current.pointerId = null;
-  };
+  // ❌ 删掉 releasePointerCapture 相关逻辑
+  cardAreaSwipeRef.current.pointerId = null;
+};
 
   const handleCardAreaClick = (event: React.MouseEvent<HTMLDivElement>) => {
   if (suppressCardClickRef.current) {
