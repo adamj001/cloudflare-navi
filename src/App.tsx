@@ -1442,7 +1442,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     const parentGroup = groups.find(g =>
       g.sub_menus?.some(sub => sub.id === newSite.group_id)
     );
-    currentMainGroupId = parentGroup?.id ?? newSite.group_id;
+    currentMainGroupId = parentGroup?.id ?? newSite.group_id ?? 0;
   }
 
   const mainGroupObj = groups.find(g => g.id === currentMainGroupId);
@@ -1600,7 +1600,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     const parentGroup = groups.find(g =>
       g.sub_menus?.some(sub => sub.id === editingSite.group_id)
     );
-    currentMainGroupId = parentGroup?.id ?? editingSite.group_id;
+    currentMainGroupId = parentGroup?.id ?? editingSite.group_id ?? 0;
   }
 
   const mainGroupObj = groups.find(g => g.id === currentMainGroupId);
