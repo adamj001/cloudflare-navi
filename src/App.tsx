@@ -124,12 +124,12 @@ const DEFAULT_CONFIGS = {
 function SortableTab(props: any) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.value });
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 2 : 1, // 拖拽时层级更高
-    opacity: isDragging ? 0.5 : 1, // 拖拽时半透明
-    cursor: 'grab'
-  };
+  transform: CSS.Transform.toString(transform),
+  transition,
+  zIndex: isDragging ? 100 : 'auto',
+  opacity: isDragging ? 0.5 : 1,
+  touchAction: isDragging ? 'none' : 'pan-y', // ← pan-y 允许垂直滚动
+};
   return (
     <Tab {...props} ref={setNodeRef} style={style} {...attributes} {...listeners} 
       icon={<DragIndicatorIcon sx={{ fontSize: '1rem', opacity: 0.6, mr: 0.5 }} />}
@@ -267,7 +267,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     activationConstraint: { distance: 8 },
   }),
   useSensor(TouchSensor, {
-    activationConstraint: { delay: 250, tolerance: 5 },
+    activationConstraint: { delay: 500, tolerance: 8 },
   }),
   useSensor(KeyboardSensor, {
     coordinateGetter: sortableKeyboardCoordinates,
@@ -1486,7 +1486,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                   {/* 第二级：按需出现子菜单 */}
                   {hasSubMenus && (
                     <Box sx={{ animation: 'fadeIn 0.3s ease' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8, fontSize: '0.95rem', color: 'primary.main' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8, fontSize: '0.95rem', color: 'text.primary' }}>
                         └── 归属子菜单
                       </Typography>
                       <FormControl fullWidth variant="outlined">
