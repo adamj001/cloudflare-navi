@@ -158,19 +158,11 @@ const SortableSiteCard = ({ id, children, disabled }: { id: number, children: Re
     };
   
     return (
-     // 修改后：listeners 从外层 Box 移走
- <Box ref={setNodeRef} style={style} {...attributes} sx={{ height: '100%' }}>
-   {children}
-   {!disabled && (
-    <Box
-      {...listeners}
-      sx={{ position: 'absolute', top: 8, left: 8, zIndex: 20, cursor: 'grab',
-           bgcolor: 'rgba(0,0,0,0.2)', borderRadius: '50%', p: 0.5, display: 'flex' }}>
-      <DragIndicatorIcon fontSize="small" sx={{ color: 'white', opacity: 0.8 }} />
-    </Box>
-   )}
-</Box>
-    );
+  <Box ref={setNodeRef} style={style} {...attributes} {...listeners} sx={{ height: '100%', position: 'relative' }}>
+    {children}
+  </Box>
+);
+
   };
 
 function App() {
@@ -1064,7 +1056,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
                    {sortMode === SortMode.GroupSort ? (
-                     <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', py: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+                     <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', py: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
                         {groups.map(g => (
                           <SortableTab key={g.id} label={g.name} value={g.id} sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2 }} />
                         ))}
@@ -1079,8 +1071,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                         variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
                         sx={{
                           '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
-                          '& .MuiTabs-flexContainer': { gap: 1, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
-                          '& .MuiTab-root': { fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' }, minWidth: { xs: 60, sm: 80 }, py: 1, px: 2, borderRadius: 3, transition: 'all 0.2s', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } },
+                          '& .MuiTabs-flexContainer': { gap: 0.5, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
+                          '& .MuiTab-root': { fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' }, minWidth: { xs: 40, sm: 50 }, py: 1, px: 1.5, borderRadius: 3, transition: 'all 0.2s', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } },
                           '& .MuiTabs-indicator': { height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d' },
                         }}
                       >
@@ -1101,7 +1093,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                             </Box>
                           );
                           return (
-                            <Tab key={g.id} label={tabLabel} value={g.id} sx={{ px: isAuthenticated ? 4 : 2, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }} />
+                            <Tab key={g.id} label={tabLabel} value={g.id} sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }} />
                           );
                         })}
 
