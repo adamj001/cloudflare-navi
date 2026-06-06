@@ -150,12 +150,12 @@ const SortableSiteCard = ({ id, children, disabled }: { id: number, children: Re
     } = useSortable({ id, disabled });
   
     const style = {
-      transform: CSS.Transform.toString(transform),
-      transition,
-      zIndex: isDragging ? 100 : 'auto',
-      opacity: isDragging ? 0.5 : 1,
-      touchAction: 'none', // 防止移动端滚动干扰
-    };
+  transform: CSS.Transform.toString(transform),
+  transition,
+  zIndex: isDragging ? 100 : 'auto',
+  opacity: isDragging ? 0.5 : 1,
+  touchAction: isDragging ? 'none' : 'pan-y', // 只有拖拽激活时才锁定
+};
   
     return (
   <Box ref={setNodeRef} style={style} {...attributes} {...listeners} sx={{ height: '100%', position: 'relative' }}>
@@ -1190,15 +1190,15 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                         display: 'grid',
                         gridTemplateColumns: {
                           xs: 'repeat(auto-fill, minmax(140px, 1fr))',
-                          md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)`
-                        },
-                        gap: 3.5,
-                        border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
-                        borderRadius: 4,
-                        p: sortMode === SortMode.SiteSort ? 2 : 0,
-                        transition: 'all 0.3s',
-                        touchAction: sortMode === SortMode.None ? 'pan-y' : 'none',
-                      }}>
+                           md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)`
+                          },
+                          gap: 3.5,
+                          border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
+                          borderRadius: 4,
+                          p: sortMode === SortMode.SiteSort ? 2 : 0,
+                          transition: 'all 0.3s',
+                          // ← 删掉 touchAction 这行
+                          }}>
                         {targetRenderGroup.sites?.map((site: Site) => renderSiteCard(site))}
                         
                         {isAuthenticated && sortMode === SortMode.None && (
