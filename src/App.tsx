@@ -145,7 +145,8 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
   onLongPress?: () => void  // ← 新增
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
-  const longPressTimer = useRef<ReturnType<typeof const tabLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+const tabLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -1109,32 +1110,48 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                           '& .MuiTabs-indicator': { height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d' },
                         }}
                       >
-                        {groups.map(g => {
-                          const tabLabel = ( ... ); // 不变
-                          const handleTabPointerDown = () => {
+                         {groups.map(g => {
+                          const tabLabel = (
+                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
+                            <span>{g.name}</span>
+                              {isAuthenticated && (
+                              <>
+                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }} sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }, className: 'tab-action-btn' }}>
+                                  <EditIcon sx={{ fontSize: '0.75rem' }} />
+                                  </IconButton>       
+                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }, className: 'tab-action-btn' }}>
+                                    <DeleteIcon sx={{ fontSize: '0.75rem' }} />
+                                  </IconButton>
+                                        </>
+                                    )}
+                          </Box>
+                          );                  
+
+                         const handleTabPointerDown = () => {
                             if (!isAuthenticated) return;
                             tabLongPressTimer.current = setTimeout(() => {
-                              setSortMode(SortMode.GroupSort);
+                             setSortMode(SortMode.GroupSort);
                             }, 500);
                           };
                           const handleTabPointerUp = () => {
                             if (tabLongPressTimer.current) {
-                              clearTimeout(tabLongPressTimer.current);
-                              tabLongPressTimer.current = null;
+                             clearTimeout(tabLongPressTimer.current);
+                             tabLongPressTimer.current = null;
                             }
                           };
-                          return (
-                          <Tab 
-                          key={g.id} 
-                          label={tabLabel} 
-                          value={g.id}
-                          onPointerDown={handleTabPointerDown}
-                          onPointerUp={handleTabPointerUp}
-                          onPointerLeave={handleTabPointerUp}
-                          sx={{ ... }} 
+
+                         return (
+                           <Tab
+                            key={g.id}
+                          label={tabLabel}
+                            value={g.id}
+                            onPointerDown={handleTabPointerDown}
+                            onPointerUp={handleTabPointerUp}
+                            onPointerLeave={handleTabPointerUp}
+                            sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }}
                           />
                         );
-                        })}
+                        })}                          
 
                         {isAuthenticated && (
                           <Tab icon={<AddIcon />} onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }} sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }} aria-label="添加分组" />
