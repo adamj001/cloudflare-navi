@@ -316,26 +316,30 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   };
   
   const handleSaveOrder = async () => {
-      try {
-          if (sortMode === SortMode.GroupSort) {
-              const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
-              await api.updateGroupOrder(orders);
-              handleError('分组顺序已保存');
-          } else if (sortMode === SortMode.SiteSort) {
-                // 找到当前实际渲染的 group（可能是子菜单）
-                let targetGroup = currentGroup;
-                if (currentGroup?.sub_menus?.length && selectedSubTab !== currentGroup.id) {
-                  targetGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab) ?? currentGroup;
-                }
-                if (!targetGroup) return;
-  
-          await fetchData();
-          setSortMode(SortMode.None);
-      } catch (error) {
-        console.error('保存排序失败:', error);
-        handleError('保存失败: ' + (error as Error).message);
+  try {
+    if (sortMode === SortMode.GroupSort) {
+      const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
+      await api.updateGroupOrder(orders);
+      handleError('分组顺序已保存');
+    } else if (sortMode === SortMode.SiteSort) {
+      // 找到当前实际渲染的 group（可能是子菜单）
+      let targetGroup = currentGroup;
+      if (currentGroup?.sub_menus?.length && selectedSubTab !== currentGroup.id) {
+        targetGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab) ?? currentGroup;
       }
-  };
+      if (!targetGroup) return;
+      const siteOrders = targetGroup.sites.map((site, index) => ({ id: site.id as number, order_num: index }));
+      await api.updateSiteOrder(siteOrders);
+      handleError('站点顺序已保存');
+    }  // ← 这个花括号关闭 else if，之前漏掉了
+    await fetchData();
+    setSortMode(SortMode.None);
+  } catch (error) {
+    console.error('保存排序失败:', error);
+    handleError('保存失败: ' + (error as Error).message);
+  }
+};
+
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
