@@ -146,7 +146,8 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-const tabLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -237,6 +238,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     pointerId: null as number | null,
     didSwipe: false,
   });
+  const tabLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const suppressCardClickRef = useRef(false);
   const [sortMode, setSortMode] = useState<SortMode>(SortMode.None);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
