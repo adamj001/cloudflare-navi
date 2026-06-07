@@ -946,15 +946,8 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
         )}
       </Paper>
     );
-
-    if (sortMode === SortMode.SiteSort) {
-      return (
-        <SortableSiteCard key={site.id} id={site.id!}>
-          {CardContent}
-        </SortableSiteCard>
-      );
-    }
-    return <Box key={site.id} sx={{ height: '100%' }}>{CardContent}</Box>;
+     return CardContent; 
+    
   };
 
   // ✨ 提取公用的“添加站点”占位卡片
