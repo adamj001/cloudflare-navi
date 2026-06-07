@@ -142,12 +142,10 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
   id: number, 
   children: React.ReactNode, 
   disabled?: boolean,
-  onLongPress?: () => void  // ← 新增
+  onLongPress?: () => void
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
-
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -157,39 +155,43 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
     touchAction: isDragging ? 'none' : 'pan-y',
   };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (!disabled && onLongPress) {
-      longPressTimer.current = setTimeout(() => {
-        onLongPress();
-      }, 500);
-    }
-    // 把 listeners 里的 onPointerDown 也触发
-    (listeners as any)?.onPointerDown?.(e);
+  // 长按检测挂在外层 div 上，不干扰 listeners
+  const handlePointerDown = () => {
+    if (disabled || !onLongPress) return;
+    longPressTimer.current = setTimeout(() => {
+      onLongPress();
+    }, 500);
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
+  const handlePointerUp = () => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
-    (listeners as any)?.onPointerUp?.(e);
   };
 
   return (
-    <Box
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
+    // 外层 div 专门负责长按检测
+    <div
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      sx={{ height: '100%', position: 'relative' }}
+      style={{ height: '100%' }}
     >
-      {children}
-    </Box>
+      {/* 内层 Box 专门负责 dnd-kit 拖拽，两者完全隔离 */}
+      <Box
+        ref={setNodeRef}
+        style={style}
+        {...attributes}
+        {...listeners}
+        sx={{ height: '100%', position: 'relative' }}
+      >
+        {children}
+      </Box>
+    </div>
   );
 };
+
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -319,11 +321,14 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
               const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
               await api.updateGroupOrder(orders);
               handleError('分组顺序已保存');
-          } else if (sortMode === SortMode.SiteSort && currentGroup) {
-              const siteOrders = currentGroup.sites.map((site, index) => ({ id: site.id as number, order_num: index }));
-              await api.updateSiteOrder(siteOrders);
-              handleError('站点顺序已保存');
-          }
+          } else if (sortMode === SortMode.SiteSort) {
+                // 找到当前实际渲染的 group（可能是子菜单）
+                let targetGroup = currentGroup;
+                if (currentGroup?.sub_menus?.length && selectedSubTab !== currentGroup.id) {
+                  targetGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab) ?? currentGroup;
+                }
+                if (!targetGroup) return;
+  
           await fetchData();
           setSortMode(SortMode.None);
       } catch (error) {
