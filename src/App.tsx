@@ -138,32 +138,56 @@ function SortableTab(props: any) {
   );
 }
 
-// 💡 dnd-kit 新增：可拖拽的站点卡片包装器
-const SortableSiteCard = ({ id, children, disabled }: { id: number, children: React.ReactNode, disabled?: boolean }) => {
-    const {
-      attributes,
-      listeners,
-      setNodeRef,
-      transform,
-      transition,
-      isDragging,
-    } = useSortable({ id, disabled });
-  
-    const style = {
-  transform: CSS.Transform.toString(transform),
-  transition,
-  zIndex: isDragging ? 100 : 'auto',
-  opacity: isDragging ? 0.5 : 1,
-  touchAction: isDragging ? 'none' : 'pan-y', // 只有拖拽激活时才锁定
-};
-  
-    return (
-  <Box ref={setNodeRef} style={style} {...attributes} {...listeners} sx={{ height: '100%', position: 'relative' }}>
-    {children}
-  </Box>
-);
+const SortableSiteCard = ({ id, children, disabled, onLongPress }: { 
+  id: number, 
+  children: React.ReactNode, 
+  disabled?: boolean,
+  onLongPress?: () => void  // ← 新增
+}) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id, disabled });
+  const longPressTimer = useRef<ReturnType<typeof const tabLongPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+    touchAction: isDragging ? 'none' : 'pan-y',
   };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!disabled && onLongPress) {
+      longPressTimer.current = setTimeout(() => {
+        onLongPress();
+      }, 500);
+    }
+    // 把 listeners 里的 onPointerDown 也触发
+    (listeners as any)?.onPointerDown?.(e);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    (listeners as any)?.onPointerUp?.(e);
+  };
+
+  return (
+    <Box
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      sx={{ height: '100%', position: 'relative' }}
+    >
+      {children}
+    </Box>
+  );
+};
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -354,42 +378,51 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   };
 
   const handleCardAreaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-  if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) {
-    return;
-  }
-
-
-    cardAreaSwipeRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      pointerId: event.pointerId,
-      didSwipe: false,
-    };
-    // event.currentTarget.setPointerCapture(event.pointerId);
+  if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) return;
+  cardAreaSwipeRef.current = {
+    startX: event.clientX,
+    startY: event.clientY,
+    pointerId: event.pointerId,
+    didSwipe: false,
   };
+  event.currentTarget.setPointerCapture(event.pointerId);
+};
 
-  const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+// ← 新增 pointerMove 处理
+const handleCardAreaPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
   const swipe = cardAreaSwipeRef.current;
-  if (swipe.pointerId !== event.pointerId || swipe.didSwipe) {
-    return;
-  }
+  if (swipe.pointerId !== event.pointerId || swipe.didSwipe) return;
 
   const deltaX = event.clientX - swipe.startX;
   const deltaY = event.clientY - swipe.startY;
-  const isHorizontalSwipe = Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 1.4;
+
+  // 水平位移超过 30px 且水平分量大于垂直分量就触发
+  const isHorizontalSwipe = Math.abs(deltaX) >= 30 && Math.abs(deltaX) > Math.abs(deltaY);
 
   if (isHorizontalSwipe) {
     swipe.didSwipe = true;
     suppressCardClickRef.current = true;
     switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
-    window.setTimeout(() => {
-      suppressCardClickRef.current = false;
-    }, 0);
+    window.setTimeout(() => { suppressCardClickRef.current = false; }, 0);
   }
-   // if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-   //  event.currentTarget.releasePointerCapture(event.pointerId);
-   // }
-  };
+};
+
+const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+  const swipe = cardAreaSwipeRef.current;
+  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+  // pointerMove 没触发时的兜底（极短距离快速划）
+  if (swipe.pointerId === event.pointerId && !swipe.didSwipe) {
+    const deltaX = event.clientX - swipe.startX;
+    const deltaY = event.clientY - swipe.startY;
+    if (Math.abs(deltaX) >= 20 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      suppressCardClickRef.current = true;
+      switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
+      window.setTimeout(() => { suppressCardClickRef.current = false; }, 0);
+    }
+  }
+};
 
   const handleCardAreaPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
   // ❌ 删掉 releasePointerCapture 相关逻辑
@@ -1077,24 +1110,30 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                         }}
                       >
                         {groups.map(g => {
-                          const tabLabel = (
-                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
-                              <span>{g.name}</span>
-                              {isAuthenticated && (
-                                <>
-                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }} sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }, className: 'tab-action-btn' }}>
-                                    <EditIcon sx={{ fontSize: '0.75rem' }} />
-                                  </IconButton>
-                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }, className: 'tab-action-btn' }}>
-                                    <DeleteIcon sx={{ fontSize: '0.75rem' }} />
-                                  </IconButton>
-                                </>
-                              )}
-                            </Box>
-                          );
+                          const tabLabel = ( ... ); // 不变
+                          const handleTabPointerDown = () => {
+                            if (!isAuthenticated) return;
+                            tabLongPressTimer.current = setTimeout(() => {
+                              setSortMode(SortMode.GroupSort);
+                            }, 500);
+                          };
+                          const handleTabPointerUp = () => {
+                            if (tabLongPressTimer.current) {
+                              clearTimeout(tabLongPressTimer.current);
+                              tabLongPressTimer.current = null;
+                            }
+                          };
                           return (
-                            <Tab key={g.id} label={tabLabel} value={g.id} sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }} />
-                          );
+                          <Tab 
+                          key={g.id} 
+                          label={tabLabel} 
+                          value={g.id}
+                          onPointerDown={handleTabPointerDown}
+                          onPointerUp={handleTabPointerUp}
+                          onPointerLeave={handleTabPointerUp}
+                          sx={{ ... }} 
+                          />
+                        );
                         })}
 
                         {isAuthenticated && (
@@ -1183,6 +1222,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                     <SortableContext items={currentGroupSiteIds} strategy={rectSortingStrategy}>
                       <Box 
                       onPointerDown={handleCardAreaPointerDown}
+                      onPointerMove={handleCardAreaPointerMove}   // ← 新增
         onPointerUp={handleCardAreaPointerUp}
         onPointerCancel={handleCardAreaPointerCancel}
        onClick={handleCardAreaClick}
@@ -1199,7 +1239,20 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
                           transition: 'all 0.3s',
                           // ← 删掉 touchAction 这行
                           }}>
-                        {targetRenderGroup.sites?.map((site: Site) => renderSiteCard(site))}
+                        {targetRenderGroup.sites?.map((site: Site) => (
+                          <SortableSiteCard 
+                          key={site.id} 
+                          id={site.id!} 
+                          disabled={sortMode !== SortMode.SiteSort}
+                          onLongPress={() => {
+                            if (isAuthenticated && sortMode === SortMode.None) {
+                              setSortMode(SortMode.SiteSort);
+                            }
+                          }}
+                          >
+                            {renderSiteCard(site)}
+                            </SortableSiteCard>
+                          ))}
                         
                         {isAuthenticated && sortMode === SortMode.None && (
                           renderAddSiteCard(targetRenderGroup.id!)
@@ -1214,16 +1267,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
          
           <Menu anchorEl={menuAnchorEl} open={openMenu} onClose={handleMenuClose}>
-            <MenuItem onClick={() => { setSortMode(SortMode.GroupSort); handleMenuClose(); }}>
-              <ListItemIcon><SortIcon /></ListItemIcon>
-              <ListItemText>编辑分组排序</ListItemText>
-            </MenuItem>
-
-            <MenuItem onClick={startSiteSort} disabled={!currentGroup || currentGroup.sites.length <= 1}>
-              <ListItemIcon><ViewModuleIcon /></ListItemIcon>
-              <ListItemText>编辑当前分组站点排序</ListItemText>
-            </MenuItem>
             
+                        
             <Divider />
             
             <MenuItem onClick={() => { handleOpenConfig(); handleMenuClose(); }}>
