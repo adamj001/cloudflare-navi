@@ -388,11 +388,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     pointerId: event.pointerId,
     didSwipe: false,
   };
-  event.currentTarget.setPointerCapture(event.pointerId);
+  // event.currentTarget.setPointerCapture(event.pointerId);
 };
 
 // ← 新增 pointerMove 处理
 const handleCardAreaPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  if (sortMode !== SortMode.None) return; // ← 加这行
   const swipe = cardAreaSwipeRef.current;
   if (swipe.pointerId !== event.pointerId || swipe.didSwipe) return;
 
@@ -411,6 +412,7 @@ const handleCardAreaPointerMove = (event: React.PointerEvent<HTMLDivElement>) =>
 };
 
 const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+  if (sortMode !== SortMode.None) return; // ← 加这行
   const swipe = cardAreaSwipeRef.current;
   if (event.currentTarget.hasPointerCapture(event.pointerId)) {
     event.currentTarget.releasePointerCapture(event.pointerId);
