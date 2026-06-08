@@ -356,24 +356,48 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             const newIndex = items.findIndex(i => i.id === over.id);
             return arrayMove(items, oldIndex, newIndex);
         });
-     } else if (sortMode === SortMode.SiteSort && currentGroup) {
-  let targetGroup = currentGroup;
-  if (
-    selectedSubTab !== currentGroup.id
-  ) {
-    targetGroup =
-    currentGroup.sub_menus.find(
-      sub => sub.id === selectedSubTab
-    ) ?? currentGroup;
-  }  
-  currentGroup.sub_menus?.length &&
-        setGroups(prevGroups => {
-            const groupIndex = prevGroups.findIndex(g => g.id === currentGroup.id);
-            if(groupIndex === -1) return prevGroups;
+     } else if (sortMode === SortMode.SiteSort) {
+  setGroups(prevGroups => {
+    // 先找到当前实际显示的 group（可能是子菜单）
+    let targetGroup = prevGroups.find(g => g.id === currentGroup?.id);
+    if (!targetGroup) return prevGroups;
 
-            const currentSites = prevGroups[groupIndex].sites;
-            const oldIndex = currentSites.findIndex(s => s.id === active.id);
-            const newIndex = currentSites.findIndex(s => s.id === over.id);
+    let targetSites = targetGroup.sites;
+    let targetGroupIndex = prevGroups.indexOf(targetGroup);
+
+    // 如果当前是子菜单视图，要在子菜单的 sites 里找卡片
+    if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
+      const subGroup = targetGroup.sub_menus.find(sub => sub.id === selectedSubTab);
+      if (subGroup) {
+        targetSites = subGroup.sites;
+      }
+    }
+
+    const oldIndex = targetSites.findIndex(s => s.id === active.id);
+    const newIndex = targetSites.findIndex(s => s.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return prevGroups;
+
+    const newGroups = [...prevGroups];
+    if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
+      // 更新子菜单的 sites
+      const subIndex = targetGroup.sub_menus.findIndex(sub => sub.id === selectedSubTab);
+      newGroups[targetGroupIndex] = {
+        ...newGroups[targetGroupIndex],
+        sub_menus: newGroups[targetGroupIndex].sub_menus!.map((sub, idx) =>
+          idx === subIndex ? { ...sub, sites: arrayMove(targetSites, oldIndex, newIndex) } : sub
+        ),
+      };
+    } else {
+      // 更新父菜单的 sites
+      newGroups[targetGroupIndex] = {
+        ...newGroups[targetGroupIndex],
+        sites: arrayMove(targetSites, oldIndex, newIndex)
+      };
+    }
+    return newGroups;
+  });
+}
             
             const newGroups = [...prevGroups];
             newGroups[groupIndex] = {
