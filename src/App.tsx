@@ -303,7 +303,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   useSensor(MouseSensor, {
     activationConstraint: { distance: 8 },
   }),
- useSensor(TouchSensor, {git
+ useSensor(TouchSensor, {
   activationConstraint: { 
     delay: 200,
     tolerance: 8,
