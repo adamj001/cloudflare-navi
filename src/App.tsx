@@ -399,14 +399,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   });
 }
             
-            const newGroups = [...prevGroups];
-            newGroups[groupIndex] = {
-                ...newGroups[groupIndex],
-                sites: arrayMove(currentSites, oldIndex, newIndex)
-            };
-            return newGroups;
-        });
-    }
+           
   };
 
   const switchAdjacentGroup = (direction: 'previous' | 'next') => {
