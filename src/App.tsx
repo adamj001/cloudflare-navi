@@ -155,12 +155,12 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
   touchAction: disabled ? 'auto' : 'none',  // ← 排序模式下完全禁用，非排序模式(disabled=true)恢复auto
 };
 
-  const handlePointerDown = (e: React.PointerEvent) => {
-    if (disabled || !onLongPress) return;
-    longPressTimer.current = setTimeout(() => {
-      onLongPress();
-    }, 500);
-  };
+  const handlePointerDown = () => {
+  if (!onLongPress) return;  // ← 只判断 onLongPress，不判断 disabled
+  longPressTimer.current = setTimeout(() => {
+    onLongPress();
+  }, 300);
+};
 
   const handlePointerUp = () => {
     if (longPressTimer.current) {
