@@ -406,8 +406,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     }
     return newGroups;
   });
+  setTimeout(() => {
+    handleSaveOrder();
+  }, 100); // 等 setGroups 完成后再保存
 }
-            
+}
+           
            
   };
 
@@ -1101,15 +1105,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                       </IconButton>
                     )}
                     
-                    {isAuthenticated && sortMode !== SortMode.None && (
-                      <>
-                        <Button variant="contained" size="small" startIcon={<SaveIcon />} onClick={handleSaveOrder} sx={{ bgcolor: sortMode === SortMode.GroupSort ? 'warning.main' : 'info.main', '&:hover': { bgcolor: sortMode === SortMode.GroupSort ? 'warning.dark' : 'info.dark' } }}>
-                            {sortMode === SortMode.GroupSort ? '保存分组排序' : '保存站点排序'}
-                        </Button>
-                        <Button variant="outlined" size="small" startIcon={<CancelIcon />} onClick={cancelSort}>取消</Button>
-                      </>
-                    )}
-
+                    
                     {isAuthenticated ? (
                       <IconButton color="error" size="medium" onClick={handleLogout} title="退出登录" sx={{ width: 36, height: 36, padding: 0, transition: 'all 0.3s', boxShadow: (t) => t.shadows[6], bgcolor: 'error.main', color: 'white', '&:hover': { boxShadow: '0 0 10px rgba(255,0,0,0.8)', transform: 'scale(1.1)', bgcolor: 'error.dark' } }}>
                         <LogOut size={20} />
@@ -1251,12 +1247,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
             </Box>
           )}
           
-          {sortMode === SortMode.SiteSort && (
-             <Alert severity="info" sx={{ mb: 3, mx: 'auto', maxWidth: 600, border: (t) => `1px solid ${t.palette.info.main}` }} icon={<DragIndicatorIcon />}>
-                 正在排序模式：请拖动卡片调整顺序，完成后点击顶部“保存站点排序”。
-             </Alert>
-          )}
-                    {/* ... 上方是搜索框等内容 ... */}
+                              {/* ... 上方是搜索框等内容 ... */}
 
                      {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '400px' }}>
@@ -1295,11 +1286,11 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                            md: `repeat(${Number(configs['site.desktopColumns'] || 6)}, 1fr)`
                           },
                           gap: 3.5,
-                          border: sortMode === SortMode.SiteSort ? (t) => `2px dashed ${t.palette.info.main}` : 'none',
+                          border: 'none', 
                           borderRadius: 4,
-                          p: sortMode === SortMode.SiteSort ? 2 : 0,
+                          p: 0,
                           transition: 'all 0.3s',
-                          // ← 删掉 touchAction 这行
+                          
                           }}>
                         {targetRenderGroup.sites?.map((site: Site) => (
                           <SortableSiteCard 
