@@ -296,8 +296,11 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     activationConstraint: { distance: 8 },
   }),
   useSensor(TouchSensor, {
-    activationConstraint: { delay: 500, tolerance: 8 },
-  }),
+    activationConstraint: {
+    distance: 5
+  }
+})
+
   useSensor(KeyboardSensor, {
     coordinateGetter: sortableKeyboardCoordinates,
   })
@@ -353,7 +356,17 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
             const newIndex = items.findIndex(i => i.id === over.id);
             return arrayMove(items, oldIndex, newIndex);
         });
-    } else if (sortMode === SortMode.SiteSort && currentGroup) {
+     } else if (sortMode === SortMode.SiteSort && currentGroup) {
+  let targetGroup = currentGroup;
+  if (
+    selectedSubTab !== currentGroup.id
+  ) {
+    targetGroup =
+    currentGroup.sub_menus.find(
+      sub => sub.id === selectedSubTab
+    ) ?? currentGroup;
+  }  
+  currentGroup.sub_menus?.length &&
         setGroups(prevGroups => {
             const groupIndex = prevGroups.findIndex(g => g.id === currentGroup.id);
             if(groupIndex === -1) return prevGroups;
