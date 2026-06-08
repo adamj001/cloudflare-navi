@@ -299,7 +299,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     activationConstraint: {
     distance: 5
   }
-})
+}),
 
   useSensor(KeyboardSensor, {
     coordinateGetter: sortableKeyboardCoordinates,
