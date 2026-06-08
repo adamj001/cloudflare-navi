@@ -155,8 +155,7 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
     touchAction: isDragging ? 'none' : 'pan-y',
   };
 
-  // 长按检测挂在外层 div 上，不干扰 listeners
-  const handlePointerDown = () => {
+  const handlePointerDown = (e: React.PointerEvent) => {
     if (disabled || !onLongPress) return;
     longPressTimer.current = setTimeout(() => {
       onLongPress();
@@ -171,27 +170,36 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
   };
 
   return (
-    // 外层 div 专门负责长按检测
     <div
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      style={{ height: '100%' }}
+      // ↓ 关键：阻止冒泡，防止触发外层网格的滑动切换逻辑
+      onPointerMove={(e) => { if (!disabled) e.stopPropagation(); }}
+      style={{ 
+        height: '100%',
+        userSelect: 'none',
+        WebkitUserSelect: 'none' as any,
+      }}
     >
-      {/* 内层 Box 专门负责 dnd-kit 拖拽，两者完全隔离 */}
       <Box
         ref={setNodeRef}
         style={style}
         {...attributes}
         {...listeners}
-        sx={{ height: '100%', position: 'relative' }}
+        sx={{ 
+          height: '100%', 
+          position: 'relative',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+        }}
       >
         {children}
       </Box>
     </div>
   );
 };
-
 
 function App() {
   const [darkMode, setDarkMode] = useState(() => {
@@ -295,10 +303,11 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   useSensor(MouseSensor, {
     activationConstraint: { distance: 8 },
   }),
-  useSensor(TouchSensor, {
-    activationConstraint: {
-    distance: 5
-  }
+ useSensor(TouchSensor, {git
+  activationConstraint: { 
+    delay: 200,
+    tolerance: 8,
+  },
 }),
 
   useSensor(KeyboardSensor, {
