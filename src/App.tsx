@@ -327,14 +327,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     setMenuAnchorEl(null);
   };
   
-  const handleSaveOrder = async () => {
+ const handleSaveOrder = async () => {
   try {
     if (sortMode === SortMode.GroupSort) {
       const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
       await api.updateGroupOrder(orders);
-      handleError('分组顺序已保存');
     } else if (sortMode === SortMode.SiteSort) {
-      // 找到当前实际渲染的 group（可能是子菜单）
       let targetGroup = currentGroup;
       if (currentGroup?.sub_menus?.length && selectedSubTab !== currentGroup.id) {
         targetGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab) ?? currentGroup;
@@ -342,78 +340,66 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
       if (!targetGroup) return;
       const siteOrders = targetGroup.sites.map((site, index) => ({ id: site.id as number, order_num: index }));
       await api.updateSiteOrder(siteOrders);
-      handleError('站点顺序已保存');
-    }  // ← 这个花括号关闭 else if，之前漏掉了
-    await fetchData();
-    setSortMode(SortMode.None);
+    }
   } catch (error) {
     console.error('保存排序失败:', error);
-    handleError('保存失败: ' + (error as Error).message);
   }
 };
-
-
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) {
-      return;
-    }
+  const { active, over } = event;
+  
+  if (!over || active.id === over.id) {
+    // 没有移动位置，直接退出排序模式
+    setSortMode(SortMode.None);
+    return;
+  }
 
-    if (sortMode === SortMode.GroupSort) {
-        setGroups((items) => {
-            const oldIndex = items.findIndex(i => i.id === active.id);
-            const newIndex = items.findIndex(i => i.id === over.id);
-            return arrayMove(items, oldIndex, newIndex);
-        });
-     } else if (sortMode === SortMode.SiteSort) {
-  setGroups(prevGroups => {
-    // 先找到当前实际显示的 group（可能是子菜单）
-    let targetGroup = prevGroups.find(g => g.id === currentGroup?.id);
-    if (!targetGroup) return prevGroups;
-
-    let targetSites = targetGroup.sites;
-    let targetGroupIndex = prevGroups.indexOf(targetGroup);
-
-    // 如果当前是子菜单视图，要在子菜单的 sites 里找卡片
-    if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
-      const subGroup = targetGroup.sub_menus.find(sub => sub.id === selectedSubTab);
-      if (subGroup) {
-        targetSites = subGroup.sites;
+  if (sortMode === SortMode.GroupSort) {
+    setGroups((items) => {
+      const oldIndex = items.findIndex(i => i.id === active.id);
+      const newIndex = items.findIndex(i => i.id === over.id);
+      return arrayMove(items, oldIndex, newIndex);
+    });
+    setTimeout(() => {
+      handleSaveOrder();
+      setSortMode(SortMode.None);
+    }, 100);
+  } else if (sortMode === SortMode.SiteSort) {
+    setGroups(prevGroups => {
+      let targetGroup = prevGroups.find(g => g.id === currentGroup?.id);
+      if (!targetGroup) return prevGroups;
+      let targetSites = targetGroup.sites;
+      const targetGroupIndex = prevGroups.indexOf(targetGroup);
+      if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
+        const subGroup = targetGroup.sub_menus.find(sub => sub.id === selectedSubTab);
+        if (subGroup) targetSites = subGroup.sites;
       }
-    }
-
-    const oldIndex = targetSites.findIndex(s => s.id === active.id);
-    const newIndex = targetSites.findIndex(s => s.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) return prevGroups;
-
-    const newGroups = [...prevGroups];
-    if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
-      // 更新子菜单的 sites
-      const subIndex = targetGroup.sub_menus.findIndex(sub => sub.id === selectedSubTab);
-      newGroups[targetGroupIndex] = {
-        ...newGroups[targetGroupIndex],
-        sub_menus: newGroups[targetGroupIndex].sub_menus!.map((sub, idx) =>
-          idx === subIndex ? { ...sub, sites: arrayMove(targetSites, oldIndex, newIndex) } : sub
-        ),
-      };
-    } else {
-      // 更新父菜单的 sites
-      newGroups[targetGroupIndex] = {
-        ...newGroups[targetGroupIndex],
-        sites: arrayMove(targetSites, oldIndex, newIndex)
-      };
-    }
-    return newGroups;
-  });
-  setTimeout(() => {
-    handleSaveOrder();
-  }, 100); // 等 setGroups 完成后再保存
-}
-}
-           
-           
-  };
+      const oldIndex = targetSites.findIndex(s => s.id === active.id);
+      const newIndex = targetSites.findIndex(s => s.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return prevGroups;
+      const newGroups = [...prevGroups];
+      if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
+        const subIndex = targetGroup.sub_menus.findIndex(sub => sub.id === selectedSubTab);
+        newGroups[targetGroupIndex] = {
+          ...newGroups[targetGroupIndex],
+          sub_menus: newGroups[targetGroupIndex].sub_menus!.map((sub, idx) =>
+            idx === subIndex ? { ...sub, sites: arrayMove(targetSites, oldIndex, newIndex) } : sub
+          ),
+        };
+      } else {
+        newGroups[targetGroupIndex] = {
+          ...newGroups[targetGroupIndex],
+          sites: arrayMove(targetSites, oldIndex, newIndex)
+        };
+      }
+      return newGroups;
+    });
+    setTimeout(() => {
+      handleSaveOrder();
+      setSortMode(SortMode.None);
+    }, 100);
+  }
+};
 
   const switchAdjacentGroup = (direction: 'previous' | 'next') => {
     if (sortMode !== SortMode.None || groups.length <= 1 || selectedTab === null) {
@@ -1128,7 +1114,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
             <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none' }}>
               
               {/* ================= 🟢 第一层：顶级主菜单 Tabs ================= */}
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragCancel={() => setSortMode(SortMode.None)}>
                 <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
                    {sortMode === SortMode.GroupSort ? (
                      <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', py: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
@@ -1271,7 +1257,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                 const currentGroupSiteIds = targetRenderGroup.sites?.map(s => s.id!) || [];
 
                 return (
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragCancel={() => setSortMode(SortMode.None)}>
                     <SortableContext items={currentGroupSiteIds} strategy={rectSortingStrategy}>
                       <Box 
                       onPointerDown={handleCardAreaPointerDown}
