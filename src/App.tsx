@@ -148,12 +148,12 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 100 : 'auto',
-    opacity: isDragging ? 0.5 : 1,
-    touchAction: isDragging ? 'none' : 'pan-y',
-  };
+  transform: CSS.Transform.toString(transform),
+  transition,
+  zIndex: isDragging ? 100 : 'auto',
+  opacity: isDragging ? 0.5 : 1,
+  touchAction: disabled ? 'auto' : 'none',  // ← 排序模式下完全禁用，非排序模式(disabled=true)恢复auto
+};
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if (disabled || !onLongPress) return;
