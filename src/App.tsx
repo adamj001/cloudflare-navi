@@ -120,24 +120,54 @@ const DEFAULT_CONFIGS = {
    'site.desktopColumns': '6', // 👈 新增这一行，默认 6 列
 };
 
-// 💡 dnd-kit 新增：可拖拽的 Tab 组件包装器
 function SortableTab(props: any) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
-    id: props.value,
-    disabled: props.disabled  // ← 加这行
-  });
+  const { disabled, onLongPress, ...tabProps } = props;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: props.value, disabled });
+
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 100 : 'auto',
     opacity: isDragging ? 0.5 : 1,
-    touchAction: props.disabled ? 'auto' : 'none',  // ← 非排序时允许正常交互
+    touchAction: disabled ? 'auto' : 'none',
   };
+
+  const handlePointerDown = () => {
+    if (!onLongPress) return;
+    longPressTimer.current = setTimeout(() => {
+      onLongPress();
+    }, 500);
+  };
+  const handlePointerUp = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   return (
-    <Tab {...props} ref={setNodeRef} style={style} {...attributes} {...(props.disabled ? {} : listeners)} />
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...(disabled ? {} : listeners)}   // ← disabled 时不绑定拖拽监听
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+    >
+      <Tab
+        {...tabProps}
+        icon={!disabled
+          ? <DragIndicatorIcon sx={{ fontSize: '1rem', opacity: 0.6, mr: 0.5 }} />
+          : undefined}
+        iconPosition="start"
+      />
+    </div>
   );
 }
-  
 
 const SortableSiteCard = ({ id, children, disabled, onLongPress }: { 
   id: number, 
@@ -315,7 +345,12 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     coordinateGetter: sortableKeyboardCoordinates,
   })
 );
-  
+ // 新增菜单专用 sensors，长按 500ms 激活
+const groupSensors = useSensors(
+  useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+  useSensor(TouchSensor, { activationConstraint: { delay: 500, tolerance: 5 } }),
+  useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+); 
   // 核心修复：将 useMemo 移动到这里，必须在任何 return 之前！
   const groupIds = useMemo(() => groups.map(g => g.id!), [groups]);
   const siteIds = useMemo(() => currentGroup?.sites.map(s => s.id!) || [], [currentGroup]);
@@ -1115,47 +1150,46 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
             <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: 'none' }}>
               
               {/* ================= 🟢 第一层：顶级主菜单 Tabs ================= */}
-              <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={() => {
-                if (pendingSortRef.current) {
-                  setSortMode(SortMode.GroupSort);
-                  pendingSortRef.current = false;
-                }
-              }}
-              onDragEnd={handleDragEnd}
-              onDragCancel={() => {
-                pendingSortRef.current = false;
-                setSortMode(SortMode.None);
-              }}
-            >              
-                <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
+               <DndContext
+  sensors={sensors}
+  collisionDetection={closestCenter}
+  onDragStart={() => {
+    // Tab 区域拖拽开始 = 确认进入 GroupSort（如果还没进入）
+    setSortMode(SortMode.GroupSort);
+  }}
+  onDragEnd={handleDragEnd}
+  onDragCancel={() => {
+    setSortMode(SortMode.None);
+  }}
+>           
+               <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
   <Tabs
-    value={selectedTab || false}
+    value={sortMode === SortMode.GroupSort ? false : (selectedTab || false)}
     onChange={(_, v) => {
-      if (sortMode !== SortMode.None) return; // 排序中不切换
+      if (sortMode === SortMode.GroupSort) return; // 排序中禁止切换
       setSelectedTab(v as number);
       setSelectedSubTab(v as number);
     }}
-    variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
-    sx={{
-      '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
-      '& .MuiTabs-flexContainer': { gap: 0.5, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
-      '& .MuiTab-root': { fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' }, minWidth: { xs: 40, sm: 50 }, py: 1, px: 1.5, borderRadius: 3, transition: 'all 0.2s', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } },
-      '& .MuiTabs-indicator': { height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d' },
-    }}
+    variant="scrollable"
+    scrollButtons="auto"
+    allowScrollButtonsMobile
+    sx={{ /* 保持原来的样式不变 */ }}
   >
     {groups.map(g => {
+      const isGroupSorting = sortMode === SortMode.GroupSort;
+
+      // 只在非排序时显示编辑/删除按钮
       const tabLabel = (
         <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
           <span>{g.name}</span>
-          {isAuthenticated && sortMode === SortMode.None && (
+          {isAuthenticated && !isGroupSorting && (
             <>
-              <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }} sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' } }}>
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }}
+                sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }, className: 'tab-action-btn' }}>
                 <EditIcon sx={{ fontSize: '0.75rem' }} />
               </IconButton>
-              <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' } }}>
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1}
+                sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }, className: 'tab-action-btn' }}>
                 <DeleteIcon sx={{ fontSize: '0.75rem' }} />
               </IconButton>
             </>
@@ -1163,36 +1197,21 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
         </Box>
       );
 
-      const handleTabPointerDown = () => {
-        if (!isAuthenticated) return;
-        tabLongPressTimer.current = setTimeout(() => {
-          if (navigator.vibrate) navigator.vibrate(50);
-          setSortMode(SortMode.GroupSort);
-        }, 500);
-      };
-      const handleTabPointerUp = () => {
-        if (tabLongPressTimer.current) {
-          clearTimeout(tabLongPressTimer.current);
-          tabLongPressTimer.current = null;
-        }
-      };
-
       return (
         <SortableTab
           key={g.id}
           label={tabLabel}
           value={g.id}
-          disabled={sortMode !== SortMode.GroupSort}
-          onPointerDown={handleTabPointerDown}
-          onPointerUp={handleTabPointerUp}
-          onPointerLeave={handleTabPointerUp}
-          sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease' }}
+          disabled={!isGroupSorting}          // ← 非排序时禁用拖拽
+          onLongPress={isAuthenticated ? () => setSortMode(SortMode.GroupSort) : undefined}
+          sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }}
         />
       );
     })}
 
-    {isAuthenticated && sortMode === SortMode.None && (
-      <Tab icon={<AddIcon />} onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }} sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }} aria-label="添加分组" />
+    {isAuthenticated && (
+      <Tab icon={<AddIcon />} onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }}
+        sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }} aria-label="添加分组" />
     )}
   </Tabs>
 </SortableContext>
