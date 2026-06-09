@@ -1111,7 +1111,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
           
           {/* 菜单大面板（包含主、子双层级菜单） */}
           <Box sx={{ display: 'flex', py: 1, my: 1, mx: 'auto', width: { xs: '100%', md: 'fit-content' }, justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible' }}>
-            <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none' }}>
+            <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: 'none' }}>
               
               {/* ================= 🟢 第一层：顶级主菜单 Tabs ================= */}
               <DndContext
@@ -1119,7 +1119,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
               collisionDetection={closestCenter}
               onDragStart={() => {
                 if (pendingSortRef.current) {
-                  setSortMode(SortMode.SiteSort);
+                  setSortMode(SortMode.GroupSort);
                   pendingSortRef.current = false;
                 }
               }}
@@ -1169,11 +1169,12 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                           );                  
 
                          const handleTabPointerDown = () => {
-                            if (!isAuthenticated) return;
-                            tabLongPressTimer.current = setTimeout(() => {
-                             setSortMode(SortMode.GroupSort);
-                            }, 500);
-                          };
+                          if (!isAuthenticated) return;
+                          tabLongPressTimer.current = setTimeout(() => {
+                           if (navigator.vibrate) navigator.vibrate(50);
+                           pendingSortRef.current = true;  // ← 只标记，不直接 setSortMode
+                           }, 500);
+                          };                        
                           const handleTabPointerUp = () => {
                             if (tabLongPressTimer.current) {
                              clearTimeout(tabLongPressTimer.current);
