@@ -93,7 +93,7 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { Site, Group, GroupTreeNode } from './API/http'; 
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-const pendingSortRef = useRef(false); // 在 App 组件顶部加这个
+
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
 
@@ -256,7 +256,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
-
+  const pendingSortRef = useRef(false); // 在 App 组件顶部加这个
   type ViewMode = 'readonly' | 'edit';
   const [viewMode, setViewMode] = useState<ViewMode>('readonly');
 
