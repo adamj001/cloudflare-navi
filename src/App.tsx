@@ -149,24 +149,21 @@ function SortableTab(props: any) {
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...(disabled ? {} : listeners)}   // ← disabled 时不绑定拖拽监听
-      onPointerDown={handlePointerDown}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-    >
-      <Tab
-        {...tabProps}
-        icon={!disabled
-          ? <DragIndicatorIcon sx={{ fontSize: '1rem', opacity: 0.6, mr: 0.5 }} />
-          : undefined}
-        iconPosition="start"
-      />
-    </div>
-  );
+  <div
+    ref={setNodeRef}
+    style={style}
+    {...attributes}
+    {...(disabled ? {} : listeners)}
+    onPointerDown={handlePointerDown}
+    onPointerUp={handlePointerUp}
+    onPointerLeave={handlePointerUp}
+  >
+    <Tab
+      {...tabProps}
+      // ← 删掉 icon 和 iconPosition 两行
+    />
+  </div>
+);
 }
 
 const SortableSiteCard = ({ id, children, disabled, onLongPress }: { 
