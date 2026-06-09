@@ -122,21 +122,22 @@ const DEFAULT_CONFIGS = {
 
 // 💡 dnd-kit 新增：可拖拽的 Tab 组件包装器
 function SortableTab(props: any) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: props.value });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id: props.value,
+    disabled: props.disabled  // ← 加这行
+  });
   const style = {
-  transform: CSS.Transform.toString(transform),
-  transition,
-  zIndex: isDragging ? 100 : 'auto',
-  opacity: isDragging ? 0.5 : 1,
-  touchAction: isDragging ? 'none' : 'pan-y', // ← pan-y 允许垂直滚动
-};
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : 'auto',
+    opacity: isDragging ? 0.5 : 1,
+    touchAction: props.disabled ? 'auto' : 'none',  // ← 非排序时允许正常交互
+  };
   return (
-    <Tab {...props} ref={setNodeRef} style={style} {...attributes} {...listeners} 
-      icon={<DragIndicatorIcon sx={{ fontSize: '1rem', opacity: 0.6, mr: 0.5 }} />}
-      iconPosition="start"
-    />
+    <Tab {...props} ref={setNodeRef} style={style} {...attributes} {...(props.disabled ? {} : listeners)} />
   );
 }
+  
 
 const SortableSiteCard = ({ id, children, disabled, onLongPress }: { 
   id: number, 
@@ -1130,77 +1131,71 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
               }}
             >              
                 <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
-                   {sortMode === SortMode.GroupSort ? (
-                     <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', py: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
-                        {groups.map(g => (
-                          <SortableTab key={g.id} label={g.name} value={g.id} sx={{ minHeight: '48px', bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 2 }} />
-                        ))}
-                     </Box>
-                   ) : (
-                     <Tabs
-                        value={selectedTab || false}
-                        onChange={(_, v) => {
-                          setSelectedTab(v as number);
-                          setSelectedSubTab(v as number);
-                        }}
-                        variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
-                        sx={{
-                          '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
-                          '& .MuiTabs-flexContainer': { gap: 0.5, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
-                          '& .MuiTab-root': { fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' }, minWidth: { xs: 40, sm: 50 }, py: 1, px: 1.5, borderRadius: 3, transition: 'all 0.2s', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } },
-                          '& .MuiTabs-indicator': { height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d' },
-                        }}
-                      >
-                         {groups.map(g => {
-                          const tabLabel = (
-                            <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
-                            <span>{g.name}</span>
-                              {isAuthenticated && (
-                              <>
-                                 <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }} sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }, className: 'tab-action-btn' }}>
-                                  <EditIcon sx={{ fontSize: '0.75rem' }} />
-                                  </IconButton>       
-                                  <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }, className: 'tab-action-btn' }}>
-                                    <DeleteIcon sx={{ fontSize: '0.75rem' }} />
-                                  </IconButton>
-                                        </>
-                                    )}
-                          </Box>
-                          );                  
+  <Tabs
+    value={selectedTab || false}
+    onChange={(_, v) => {
+      if (sortMode !== SortMode.None) return; // 排序中不切换
+      setSelectedTab(v as number);
+      setSelectedSubTab(v as number);
+    }}
+    variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile
+    sx={{
+      '& .MuiTabs-scroller': { overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } },
+      '& .MuiTabs-flexContainer': { gap: 0.5, flexWrap: 'nowrap', justifyContent: 'flex-start', alignItems: 'center' },
+      '& .MuiTab-root': { fontWeight: 800, color: 'text.primary', fontSize: { xs: '0.85rem', sm: '1rem' }, minWidth: { xs: 40, sm: 50 }, py: 1, px: 1.5, borderRadius: 3, transition: 'all 0.2s', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } },
+      '& .MuiTabs-indicator': { height: 4, borderRadius: 2, background: 'linear-gradient(90deg, #00ff9d, #00b86e)', boxShadow: '0 0 12px #00ff9d' },
+    }}
+  >
+    {groups.map(g => {
+      const tabLabel = (
+        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
+          <span>{g.name}</span>
+          {isAuthenticated && sortMode === SortMode.None && (
+            <>
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }} sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' } }}>
+                <EditIcon sx={{ fontSize: '0.75rem' }} />
+              </IconButton>
+              <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1} sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' } }}>
+                <DeleteIcon sx={{ fontSize: '0.75rem' }} />
+              </IconButton>
+            </>
+          )}
+        </Box>
+      );
 
-                         const handleTabPointerDown = () => {
-                          if (!isAuthenticated) return;
-                          tabLongPressTimer.current = setTimeout(() => {
-                           if (navigator.vibrate) navigator.vibrate(50);
-                           pendingSortRef.current = true;  // ← 只标记，不直接 setSortMode
-                           }, 500);
-                          };                        
-                          const handleTabPointerUp = () => {
-                            if (tabLongPressTimer.current) {
-                             clearTimeout(tabLongPressTimer.current);
-                             tabLongPressTimer.current = null;
-                            }
-                          };
+      const handleTabPointerDown = () => {
+        if (!isAuthenticated) return;
+        tabLongPressTimer.current = setTimeout(() => {
+          if (navigator.vibrate) navigator.vibrate(50);
+          setSortMode(SortMode.GroupSort);
+        }, 500);
+      };
+      const handleTabPointerUp = () => {
+        if (tabLongPressTimer.current) {
+          clearTimeout(tabLongPressTimer.current);
+          tabLongPressTimer.current = null;
+        }
+      };
 
-                         return (
-                           <Tab
-                            key={g.id}
-                          label={tabLabel}
-                            value={g.id}
-                            onPointerDown={handleTabPointerDown}
-                            onPointerUp={handleTabPointerUp}
-                            onPointerLeave={handleTabPointerUp}
-                            sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease', '& .tab-action-btn': { visibility: 'hidden', opacity: 0, transition: 'all 0.2s ease' }, '&:hover .tab-action-btn': { visibility: 'visible', opacity: 1 } }}
-                          />
-                        );
-                        })}                          
+      return (
+        <SortableTab
+          key={g.id}
+          label={tabLabel}
+          value={g.id}
+          disabled={sortMode !== SortMode.GroupSort}
+          onPointerDown={handleTabPointerDown}
+          onPointerUp={handleTabPointerUp}
+          onPointerLeave={handleTabPointerUp}
+          sx={{ px: isAuthenticated ? 2.5 : 1.5, minHeight: '48px', transition: 'all 0.2s ease' }}
+        />
+      );
+    })}
 
-                        {isAuthenticated && (
-                          <Tab icon={<AddIcon />} onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }} sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }} aria-label="添加分组" />
-                        )}
-                      </Tabs>
-                   )}
-                </SortableContext>
+    {isAuthenticated && sortMode === SortMode.None && (
+      <Tab icon={<AddIcon />} onClick={(e) => { e.preventDefault(); handleOpenAddGroup(); }} sx={{ minWidth: { xs: 40, sm: 50 }, '&:hover': { bgcolor: 'rgba(0,255,157,0.1)' } }} aria-label="添加分组" />
+    )}
+  </Tabs>
+</SortableContext>
               </DndContext>
 
               {/* ================= 🔵 第二层：二级子菜单切换标签条 ================= */}
