@@ -93,7 +93,7 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import { Site, Group, GroupTreeNode } from './API/http'; 
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
-
+const pendingSortRef = useRef(false); // 在 App 组件顶部加这个
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
 
@@ -1114,7 +1114,21 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
             <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: sortMode === SortMode.GroupSort ? (t) => `2px dashed ${t.palette.warning.main}` : 'none' }}>
               
               {/* ================= 🟢 第一层：顶级主菜单 Tabs ================= */}
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragCancel={() => setSortMode(SortMode.None)}>
+              <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={() => {
+                if (pendingSortRef.current) {
+                  setSortMode(SortMode.SiteSort);
+                  pendingSortRef.current = false;
+                }
+              }}
+              onDragEnd={handleDragEnd}
+              onDragCancel={() => {
+                pendingSortRef.current = false;
+                setSortMode(SortMode.None);
+              }}
+            >              
                 <SortableContext items={groupIds} strategy={horizontalListSortingStrategy}>
                    {sortMode === SortMode.GroupSort ? (
                      <Box sx={{ display: 'flex', gap: 0.5, overflowX: 'auto', py: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
@@ -1257,7 +1271,21 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                 const currentGroupSiteIds = targetRenderGroup.sites?.map(s => s.id!) || [];
 
                 return (
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} onDragCancel={() => setSortMode(SortMode.None)}>
+                  <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={() => {
+                if (pendingSortRef.current) {
+                  setSortMode(SortMode.SiteSort);
+                  pendingSortRef.current = false;
+                }
+              }}
+              onDragEnd={handleDragEnd}
+              onDragCancel={() => {
+                pendingSortRef.current = false;
+                setSortMode(SortMode.None);
+              }}
+            > 
                     <SortableContext items={currentGroupSiteIds} strategy={rectSortingStrategy}>
                       <Box 
                       onPointerDown={handleCardAreaPointerDown}
@@ -1279,16 +1307,16 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
                           
                           }}>
                         {targetRenderGroup.sites?.map((site: Site) => (
-                          <SortableSiteCard 
-                          key={site.id} 
-                          id={site.id!} 
-                          disabled={sortMode !== SortMode.SiteSort}
+                         <SortableSiteCard
+                          key={site.id}
+                          id={site.id!}
+                          disabled={sortMode !== SortMode.SiteSort && !pendingSortRef.current}
                           onLongPress={() => {
                             if (isAuthenticated && sortMode === SortMode.None) {
-                              setSortMode(SortMode.SiteSort);
+                              pendingSortRef.current = true;
                             }
                           }}
-                          >
+                            >                       
                             {renderSiteCard(site)}
                             </SortableSiteCard>
                           ))}
