@@ -139,7 +139,7 @@ function SortableTab(props: any) {
     if (!onLongPress) return;
     longPressTimer.current = setTimeout(() => {
       onLongPress();
-    }, 500);
+    }, 300);
   };
   const handlePointerUp = () => {
     if (longPressTimer.current) {
@@ -1177,22 +1177,44 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
 
       // 只在非排序时显示编辑/删除按钮
       const tabLabel = (
-        <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center', px: 1 }}>
-          <span>{g.name}</span>
-          {isAuthenticated && !isGroupSorting && (
-            <>
-              <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }}
-                sx={{ position: 'absolute', left: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' }, className: 'tab-action-btn' }}>
-                <EditIcon sx={{ fontSize: '0.75rem' }} />
-              </IconButton>
-              <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }} disabled={groups.length <= 1}
-                sx={{ position: 'absolute', right: -16, top: '50%', transform: 'translateY(-50%)', zIndex: 10, p: 0.2, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' }, className: 'tab-action-btn' }}>
-                <DeleteIcon sx={{ fontSize: '0.75rem' }} />
-              </IconButton>
-            </>
-          )}
-        </Box>
-      );
+  <Box sx={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+    <span>{g.name}</span>
+    {isAuthenticated && !isGroupSorting && (
+      <>
+        {/* 左上角：编辑 */}
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }}
+          sx={{
+            position: 'absolute', top: -12, left: -6, zIndex: 10,
+            p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+            color: 'primary.main',
+            '&:hover': { bgcolor: 'primary.main', color: 'black' },
+            className: 'tab-action-btn'
+          }}
+        >
+          <EditIcon sx={{ fontSize: '0.75rem' }} />
+        </IconButton>
+
+        {/* 右上角：删除 */}
+        <IconButton
+          size="small"
+          onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }}
+          disabled={groups.length <= 1}
+          sx={{
+            position: 'absolute', top: -12, right: -6, zIndex: 10,
+            p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+            color: 'error.main',
+            '&:hover': { bgcolor: 'error.main', color: 'white' },
+            className: 'tab-action-btn'
+          }}
+        >
+          <DeleteIcon sx={{ fontSize: '0.75rem' }} />
+        </IconButton>
+      </>
+    )}
+  </Box>
+);
 
       return (
         <SortableTab
@@ -1357,21 +1379,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
             
             <Divider />
             
-            {currentGroup && (
-                <MenuItem 
-                    onClick={() => { handleGroupDelete(currentGroup.id!); handleMenuClose(); }} 
-                    sx={{ color: 'error.main' }}
-                    disabled={groups.length <= 1}
-                >
-                    <ListItemIcon sx={{ color: 'error.main' }}>
-                        <DeleteIcon />
-                    </ListItemIcon>
-                    <ListItemText>删除分组: {currentGroup.name}</ListItemText>
-                </MenuItem>
-            )}
-            
-            <Divider />
-            
+                       
             <MenuItem onClick={() => { handleExportData(); handleMenuClose(); }}>
               <ListItemIcon><FileDownloadIcon /></ListItemIcon>
               <ListItemText>导出数据</ListItemText>
