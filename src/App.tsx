@@ -1314,10 +1314,11 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
                 let targetRenderGroup = currentGroup;
                 
                 if (currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0) {
-                  if (selectedSubTab !== currentGroup.id) {
-                    targetRenderGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab);
-                  }
+                if (selectedSubTab !== currentGroup.id) {
+                  targetRenderGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab)
+                    ?? currentGroup.sub_menus[0]; // ← 找不到时fallback到第一个子菜单
                 }
+              }             
 
                 if (!targetRenderGroup) return null;
 
