@@ -443,12 +443,16 @@ const groupSensors = useSensors(
     if (currentIndex === -1) {
       return;
     }
-
     const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     const nextGroup = groups[nextIndex];
     if (nextGroup?.id) {
-      setSelectedTab(nextGroup.id);
-    }
+  setSelectedTab(nextGroup.id);
+  if (nextGroup.sub_menus && nextGroup.sub_menus.length > 0) {
+    setSelectedSubTab(nextGroup.sub_menus[0].id!);
+  } else {
+    setSelectedSubTab(nextGroup.id);
+  }
+}
   };
 
   const handleCardAreaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
