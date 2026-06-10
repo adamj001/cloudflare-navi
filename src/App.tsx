@@ -1186,7 +1186,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
           size="small"
           onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }}
           sx={{
-            position: 'absolute', top: -12, left: -6, zIndex: 10,
+            position: 'absolute', top: -18, left: -10, zIndex: 10,
             p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
             color: 'primary.main',
             '&:hover': { bgcolor: 'primary.main', color: 'black' },
@@ -1202,7 +1202,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
           onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }}
           disabled={groups.length <= 1}
           sx={{
-            position: 'absolute', top: -12, right: -6, zIndex: 10,
+            position: 'absolute', top: -18, right: -10, zIndex: 10,
             p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
             color: 'error.main',
             '&:hover': { bgcolor: 'error.main', color: 'white' },
