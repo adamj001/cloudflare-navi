@@ -1177,14 +1177,9 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
   <Tabs
     value={sortMode === SortMode.GroupSort ? false : (selectedTab || false)}
     onChange={(_, v) => {
-  const newGroup = groups.find(g => g.id === v);
   setSelectedTab(v as number);
-  // 有子菜单时默认选中第一个子菜单，没有则选自身
-  if (newGroup?.sub_menus && newGroup.sub_menus.length > 0) {
-    setSelectedSubTab(newGroup.sub_menus[0].id!);
-  } else {
-    setSelectedSubTab(v as number);
-  }
+  // ✨ 无论有没有子菜单，切换主菜单时，子菜单选中状态都默认设为主菜单自身 ID（代表直属/全部）
+  setSelectedSubTab(v as number);
 }}
     variant="scrollable"
     scrollButtons="auto"
