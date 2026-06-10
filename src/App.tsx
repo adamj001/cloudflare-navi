@@ -636,11 +636,21 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
 
       if (sortedGroups.length > 0) {
         if (selectedTab === null) {
-          setSelectedTab(sortedGroups[0].id);
-          setSelectedSubTab(sortedGroups[0].id);
+          const firstGroup = sortedGroups[0];
+setSelectedTab(firstGroup.id);
+if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
+  setSelectedSubTab(firstGroup.sub_menus[0].id!);
+} else {
+  setSelectedSubTab(firstGroup.id);
+}
         } else if (!sortedGroups.some(g => g.id === selectedTab)) {
-          setSelectedTab(sortedGroups[0].id);
-          setSelectedSubTab(sortedGroups[0].id);
+         const firstGroup = sortedGroups[0];
+setSelectedTab(firstGroup.id);
+if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
+  setSelectedSubTab(firstGroup.sub_menus[0].id!);
+} else {
+  setSelectedSubTab(firstGroup.id);
+}
         }
       } else {
         setSelectedTab(null);
@@ -1163,10 +1173,15 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
   <Tabs
     value={sortMode === SortMode.GroupSort ? false : (selectedTab || false)}
     onChange={(_, v) => {
-      if (sortMode === SortMode.GroupSort) return; // 排序中禁止切换
-      setSelectedTab(v as number);
-      setSelectedSubTab(v as number);
-    }}
+  const newGroup = groups.find(g => g.id === v);
+  setSelectedTab(v as number);
+  // 有子菜单时默认选中第一个子菜单，没有则选自身
+  if (newGroup?.sub_menus && newGroup.sub_menus.length > 0) {
+    setSelectedSubTab(newGroup.sub_menus[0].id!);
+  } else {
+    setSelectedSubTab(v as number);
+  }
+}}
     variant="scrollable"
     scrollButtons="auto"
     allowScrollButtonsMobile
@@ -1202,7 +1217,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
           onClick={(e) => { e.stopPropagation(); handleGroupDelete(g.id!); }}
           disabled={groups.length <= 1}
           sx={{
-            position: 'absolute', top: -18, right: -10, zIndex: 10,
+            position: 'absolute', top: -18, right: -16, zIndex: 10,
             p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
             color: 'error.main',
             '&:hover': { bgcolor: 'error.main', color: 'white' },
