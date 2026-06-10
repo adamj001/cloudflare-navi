@@ -435,23 +435,21 @@ const groupSensors = useSensors(
 };
 
   const switchAdjacentGroup = (direction: 'previous' | 'next') => {
-    if (sortMode !== SortMode.None || groups.length <= 1 || selectedTab === null) {
-      return;
-    }
+  if (sortMode !== SortMode.None || groups.length <= 1 || selectedTab === null) {
+    return;
+  }
 
-    const currentIndex = groups.findIndex((group) => group.id === selectedTab);
-    if (currentIndex === -1) {
-      return;
-    }
-    const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
-    const nextGroup = groups[nextIndex];
-    if (nextGroup?.id) {
+  const currentIndex = groups.findIndex((group) => group.id === selectedTab);
+  if (currentIndex === -1) return;
+
+  const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+  const nextGroup = groups[nextIndex];
+  if (nextGroup?.id) {
     setSelectedTab(nextGroup.id);
-    // 始终显示直属菜单
-    setSelectedSubTab(nextGroup.id);
+    setSelectedSubTab(nextGroup.id);  // ← 改这里，不管有没有子菜单，都用主菜单id
   }
 };
-
+ 
   const handleCardAreaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
   if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) return;
   cardAreaSwipeRef.current = {
@@ -637,8 +635,22 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
 
       if (sortedGroups.length > 0) {
         if (selectedTab === null) {
-        setSelectedTab(firstGroup.id);
-setSelectedSubTab(firstGroup.id);
+          const firstGroup = sortedGroups[0];
+setSelectedTab(firstGroup.id);
+if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
+  setSelectedSubTab(firstGroup.sub_menus[0].id!);
+} else {
+  setSelectedSubTab(firstGroup.id);
+}
+        } else if (!sortedGroups.some(g => g.id === selectedTab)) {
+         const firstGroup = sortedGroups[0];
+setSelectedTab(firstGroup.id);
+if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
+  setSelectedSubTab(firstGroup.sub_menus[0].id!);
+} else {
+  setSelectedSubTab(firstGroup.id);
+}
+        }
       } else {
         setSelectedTab(null);
         setSelectedSubTab(null);
