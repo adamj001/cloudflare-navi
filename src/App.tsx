@@ -1313,12 +1313,16 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
               {(() => {
                 let targetRenderGroup = currentGroup;
                 
-                if (currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0) {
-                if (selectedSubTab !== currentGroup.id) {
-                  targetRenderGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab)
-                    ?? currentGroup.sub_menus[0]; // ← 找不到时fallback到第一个子菜单
-                }
-              }             
+                 if (currentGroup && currentGroup.sub_menus && currentGroup.sub_menus.length > 0) {
+                   const subMatch = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab);
+                    if (subMatch) {
+                      // selectedSubTab 匹配到了某个子菜单
+                     targetRenderGroup = subMatch;
+                    } else {
+                      // 没匹配到（包括 selectedSubTab 是当前主菜单id或旧主菜单id的情况）
+                      // 显示直属内容，不做替换，targetRenderGroup 保持 currentGroup
+                    }
+                  }                            
 
                 if (!targetRenderGroup) return null;
 
