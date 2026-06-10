@@ -446,14 +446,11 @@ const groupSensors = useSensors(
     const nextIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
     const nextGroup = groups[nextIndex];
     if (nextGroup?.id) {
-  setSelectedTab(nextGroup.id);
-  if (nextGroup.sub_menus && nextGroup.sub_menus.length > 0) {
-    setSelectedSubTab(nextGroup.sub_menus[0].id!);
-  } else {
+    setSelectedTab(nextGroup.id);
+    // 始终显示直属菜单
     setSelectedSubTab(nextGroup.id);
   }
-}
-  };
+};
 
   const handleCardAreaPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
   if (sortMode !== SortMode.None || groups.length <= 1 || !event.isPrimary) return;
@@ -640,22 +637,8 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
 
       if (sortedGroups.length > 0) {
         if (selectedTab === null) {
-          const firstGroup = sortedGroups[0];
-setSelectedTab(firstGroup.id);
-if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
-  setSelectedSubTab(firstGroup.sub_menus[0].id!);
-} else {
-  setSelectedSubTab(firstGroup.id);
-}
-        } else if (!sortedGroups.some(g => g.id === selectedTab)) {
-         const firstGroup = sortedGroups[0];
-setSelectedTab(firstGroup.id);
-if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
-  setSelectedSubTab(firstGroup.sub_menus[0].id!);
-} else {
-  setSelectedSubTab(firstGroup.id);
-}
-        }
+        setSelectedTab(firstGroup.id);
+setSelectedSubTab(firstGroup.id);
       } else {
         setSelectedTab(null);
         setSelectedSubTab(null);
