@@ -1092,12 +1092,11 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
         )}
 
         {/* 顶部固定栏 */}
-                {/* 顶部固定栏 */}
-        <AppBar position="sticky" color="transparent" elevation={0} sx={{
-            backdropFilter: 'blur(16px)',
-            background: (t) => t.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-            zIndex: 100, pt: 1,
-          }}>
+        <AppBar position="fixed" color="transparent" elevation={0} sx={{
+          background: (t) => t.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+          zIndex: 1200, pt: 1,
+        }}>
+    backdropFilter: 'blur(16px)',
           <Container maxWidth="xl" sx={{ py: 1 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {/* Logo 区域 */}
@@ -1277,6 +1276,8 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
             </Paper>
           </Box>
         </AppBar>
+        {/* 占位符1：补偿 header 基础高度（logo + 按钮行） */}
+<Box sx={{ height: { xs: '120px', md: '140px' } }} />
 
 
         {/* 主要内容区域 */}
