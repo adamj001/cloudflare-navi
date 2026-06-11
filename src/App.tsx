@@ -360,29 +360,10 @@ const groupSensors = useSensors(
     setMenuAnchorEl(null);
   };
   
- const handleSaveOrder = async () => {
-  try {
-    if (sortMode === SortMode.GroupSort) {
-      const orders = groups.map((g, i) => ({ id: g.id!, order_num: i }));
-      await api.updateGroupOrder(orders);
-    } else if (sortMode === SortMode.SiteSort) {
-      let targetGroup = currentGroup;
-      if (currentGroup?.sub_menus?.length && selectedSubTab !== currentGroup.id) {
-        targetGroup = currentGroup.sub_menus.find(sub => sub.id === selectedSubTab) ?? currentGroup;
-      }
-      if (!targetGroup) return;
-      const siteOrders = targetGroup.sites.map((site, index) => ({ id: site.id as number, order_num: index }));
-      await api.updateSiteOrder(siteOrders);
-    }
-  } catch (error) {
-    console.error('保存排序失败:', error);
-  }
-};
   const handleDragEnd = (event: DragEndEvent) => {
   const { active, over } = event;
-  
+
   if (!over || active.id === over.id) {
-    // 没有移动位置，直接退出排序模式
     setSortMode(SortMode.None);
     return;
   }
@@ -391,46 +372,51 @@ const groupSensors = useSensors(
     setGroups((items) => {
       const oldIndex = items.findIndex(i => i.id === active.id);
       const newIndex = items.findIndex(i => i.id === over.id);
-      return arrayMove(items, oldIndex, newIndex);
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      // ✅ 在 setter 里直接拿到新顺序，立即保存
+      const orders = newItems.map((g, i) => ({ id: g.id!, order_num: i }));
+      api.updateGroupOrder(orders).catch(e => console.error('保存排序失败:', e));
+      return newItems;
     });
-    setTimeout(() => {
-      handleSaveOrder();
-      setSortMode(SortMode.None);
-    }, 100);
+    setSortMode(SortMode.None);
+
   } else if (sortMode === SortMode.SiteSort) {
     setGroups(prevGroups => {
-      let targetGroup = prevGroups.find(g => g.id === currentGroup?.id);
-      if (!targetGroup) return prevGroups;
-      let targetSites = targetGroup.sites;
-      const targetGroupIndex = prevGroups.indexOf(targetGroup);
-      if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
-        const subGroup = targetGroup.sub_menus.find(sub => sub.id === selectedSubTab);
-        if (subGroup) targetSites = subGroup.sites;
-      }
+      const targetGroupIndex = prevGroups.findIndex(g => g.id === currentGroup?.id);
+      if (targetGroupIndex === -1) return prevGroups;
+      const targetGroup = prevGroups[targetGroupIndex];
+      const newGroups = [...prevGroups];
+
+      const isSubMenu = targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id;
+      const subIndex = isSubMenu
+        ? targetGroup.sub_menus!.findIndex(sub => sub.id === selectedSubTab)
+        : -1;
+      const targetSites = isSubMenu
+        ? targetGroup.sub_menus![subIndex].sites
+        : targetGroup.sites;
+
       const oldIndex = targetSites.findIndex(s => s.id === active.id);
       const newIndex = targetSites.findIndex(s => s.id === over.id);
       if (oldIndex === -1 || newIndex === -1) return prevGroups;
-      const newGroups = [...prevGroups];
-      if (targetGroup.sub_menus?.length && selectedSubTab !== targetGroup.id) {
-        const subIndex = targetGroup.sub_menus.findIndex(sub => sub.id === selectedSubTab);
+
+      const newSites = arrayMove(targetSites, oldIndex, newIndex);
+      // ✅ 立即保存新顺序
+      const siteOrders = newSites.map((site, i) => ({ id: site.id as number, order_num: i }));
+      api.updateSiteOrder(siteOrders).catch(e => console.error('保存排序失败:', e));
+
+      if (isSubMenu) {
         newGroups[targetGroupIndex] = {
           ...newGroups[targetGroupIndex],
           sub_menus: newGroups[targetGroupIndex].sub_menus!.map((sub, idx) =>
-            idx === subIndex ? { ...sub, sites: arrayMove(targetSites, oldIndex, newIndex) } : sub
+            idx === subIndex ? { ...sub, sites: newSites } : sub
           ),
         };
       } else {
-        newGroups[targetGroupIndex] = {
-          ...newGroups[targetGroupIndex],
-          sites: arrayMove(targetSites, oldIndex, newIndex)
-        };
+        newGroups[targetGroupIndex] = { ...newGroups[targetGroupIndex], sites: newSites };
       }
       return newGroups;
     });
-    setTimeout(() => {
-      handleSaveOrder();
-      setSortMode(SortMode.None);
-    }, 100);
+    setSortMode(SortMode.None);
   }
 };
 
@@ -1365,7 +1351,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
                          <SortableSiteCard
                           key={site.id}
                           id={site.id!}
-                          disabled={sortMode !== SortMode.SiteSort && !pendingSortRef.current}
+                          disabled={!isAuthenticated || (sortMode !== SortMode.None && sortMode !== SortMode.SiteSort)}
                           onLongPress={() => {
                             if (isAuthenticated && sortMode === SortMode.None) {
                               pendingSortRef.current = true;
