@@ -740,24 +740,33 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     setOpenAddSite(false);
   };
 
- const handleSiteInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const handleSiteInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
   const { name, value } = e.target;
+  
   setNewSite(prev => {
     let updated = { ...prev, [name]: value };
+    
+    // ✨ 智能保底优化：只有当用户【第一次】输入 URL，且图标框目前还是空的（或者处于初始状态）时，才触发自动抓取
     if (name === 'url' && value.trim()) {
-      try {
-        const domain = extractDomain(value);
-        if (domain) {
-          const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=256';
-          updated.icon = template.replace('{domain}', domain);
+      // 如果用户之前已经手动改过图标，或者点过 [Horse] 等按钮，我们绝不盲目覆盖它
+      const isIconEmpty = !prev.icon || prev.icon.trim() === '';
+      
+      if (isIconEmpty) {
+        try {
+          const domain = extractDomain(value);
+          if (domain) {
+            const template = configs['site.iconApi'] || 'https://www.google.com/s2/favicons?domain={domain}&sz=256';
+            updated.icon = template.replace('{domain}', domain);
+          }
+        } catch (err) {
+          console.warn('提取域名失败', err);
         }
-      } catch (err) {
-        console.warn('提取域名失败', err);
       }
     }
     return updated;
   });
 };
+
 
   const handleCreateSite = async () => {
     try {

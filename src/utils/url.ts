@@ -76,19 +76,27 @@ export function isSecureIconUrl(url: string): boolean {
 /**
  * 从 URL 中提取域名
  */
-export function extractDomain(url: string): string | null {
-  if (!url) return null;
-
+export function extractDomain(url: string): string {
+  if (!url) return '';
+  let cleanedUrl = url.trim();
+  
+  // 1. 如果输入的根本不是网址，而是一个纯本地代号（不包含点号，如 'Google', 'A'），直接判定无域名
+  if (!cleanedUrl.includes('.')) {
+    return '';
+  }
+  
+  // 2. 补齐协议头防止原生 URL 类崩溃
+  if (!/^https?:\/\//i.test(cleanedUrl)) {
+    cleanedUrl = 'https://' + cleanedUrl;
+  }
+  
   try {
-    let fullUrl = url;
-    if (!/^https?:\/\//i.test(url)) {
-      fullUrl = 'http://' + url;
-    }
-    const parsedUrl = new URL(fullUrl);
-    return parsedUrl.hostname;
+    const parsed = new URL(cleanedUrl);
+    // 拿到的 hostname 如果是 www.github.com，去掉前缀 www. 统一规整为 github.com
+    return parsed.hostname.replace(/^www\./i, '');
   } catch {
-    const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n?]+)/im);
-    return match && match[1] ? match[1] : url;
+    // 3. 如果实在解析失败（比如用户刚打了一个不完整的网址前缀），温和地返回空字符串，绝不盲目返回原字符串
+    return '';
   }
 }
 
