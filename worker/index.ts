@@ -225,7 +225,7 @@ function validateExportData(data: unknown): { valid: boolean; errors: string[] }
         });
     }
 
-    // 验证 sites
+     // 验证 sites
     if (!Array.isArray(d.sites)) {
         errors.push('sites 必须是数组');
     } else {
@@ -240,18 +240,20 @@ function validateExportData(data: unknown): { valid: boolean; errors: string[] }
             }
             if (!s.url || typeof s.url !== 'string') {
                 errors.push(`sites[${index}]: url 必须是字符串`);
-            } else {
-                try {
-                    new URL(s.url);
-                } catch {
-                    errors.push(`sites[${index}]: url 格式无效`);
-                }
             }
             if (typeof s.group_id !== 'number') {
                 errors.push(`sites[${index}]: group_id 必须是数字`);
             }
             if (typeof s.order_num !== 'number') {
                 errors.push(`sites[${index}]: order_num 必须是数字`);
+            }
+            // ✨ 核心新增：导入恢复时，放行并验证 icon 字段的字符串类型
+            if (s.icon !== undefined && s.icon !== null && typeof s.icon !== 'string') {
+                errors.push(`sites[${index}]: icon 必须是字符串类型`);
+            }
+            // ✨ 顺便放行你的备注 notes 字段
+            if (s.notes !== undefined && s.notes !== null && typeof s.notes !== 'string') {
+                errors.push(`sites[${index}]: notes 必须是字符串类型`);
             }
         });
     }
@@ -745,36 +747,7 @@ export default {
 
                     const result = await env.DB.prepare(query).bind(...params).all();
                     return createJsonResponse(result.results || [], request);
-                } else if (path.startsWith("sites/") && method === "GET") {
-                    const idStr = path.split("/")[1];
-                    if (!idStr) {
-                        return createJsonResponse({ error: "无效的ID" }, request, { status: 400 });
-                    }
-                    const id = parseInt(idStr);
-                    if (isNaN(id)) {
-                        return createJsonResponse({ error: "无效的ID" }, request, { status: 400 });
-                    }
-
-                    const site = await api.getSite(id);
-                    return createJsonResponse(site, request);
-                } else if (path === "sites" && method === "POST") {
-                    const data = (await validateRequestBody(request)) as SiteInput;
-
-                    // 验证站点数据
-                    const validation = validateSite(data);
-                    if (!validation.valid) {
-                        return createJsonResponse(
-                            {
-                                success: false,
-                                message: `验证失败: ${validation.errors?.join(", ")}`,
-                            },
-                            request,
-                            { status: 400 }
-                        );
-                    }
-
-                    const result = await api.createSite(validation.sanitizedData as Site);
-                    return createJsonResponse(result, request);
+                
                 } else if (path.startsWith("sites/") && method === "PUT") {
                     const idStr = path.split("/")[1];
                     if (!idStr) {
@@ -787,46 +760,34 @@ export default {
 
                     const data = (await validateRequestBody(request)) as Partial<Site>;
 
-                    // 验证更新的站点数据
+                    // 验证更新的 URL
                     if (data.url !== undefined) {
                         let url = data.url.trim();
-                        // 如果没有协议,自动添加 https://
-                        if (!/^https?:\/\//i.test(url)) {
-                            url = 'https://' + url;
-                        }
-                        try {
-                            new URL(url);
-                            data.url = url; // 使用修正后的URL
-                        } catch {
-                            return createJsonResponse(
-                                {
-                                    success: false,
-                                    message: "无效的URL格式",
-                                },
-                                request,
-                                { status: 400 }
-                            );
+                        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                        try { new URL(url); data.url = url; } catch {
+                            return createJsonResponse({ success: false, message: "无效的URL格式" }, request, { status: 400 });
                         }
                     }
 
-                    if (data.icon !== undefined && data.icon !== "") {
+                    // ✨ 完美修复：修改卡片属性时，安全放行本地图标代号（如 'Google', 'A'）
+                    if (data.icon !== undefined) {
                         let iconUrl = data.icon.trim();
-                        // 如果没有协议,自动添加 https://
-                        if (!/^https?:\/\//i.test(iconUrl) && !/^data:/i.test(iconUrl)) {
-                            iconUrl = 'https://' + iconUrl;
-                        }
-                        try {
-                            new URL(iconUrl);
-                            data.icon = iconUrl; // 使用修正后的URL
-                        } catch {
-                            return createJsonResponse(
-                                {
-                                    success: false,
-                                    message: "无效的图标URL格式",
-                                },
-                                request,
-                                { status: 400 }
-                            );
+                        if (iconUrl !== "") {
+                            // 判断它是否像一个真正的网址
+                            const isUrlLike = /^https?:\/\//i.test(iconUrl) || (iconUrl.includes('.') && !iconUrl.includes(' '));
+                            if (isUrlLike && !/^https?:\/\//i.test(iconUrl) && !/^data:/i.test(iconUrl)) {
+                                iconUrl = 'https://' + iconUrl;
+                            }
+                            
+                            if (/^https?:\/\//i.test(iconUrl)) {
+                                try { new URL(iconUrl); data.icon = iconUrl; } catch {
+                                    return createJsonResponse({ success: false, message: "无效的图标URL格式" }, request, { status: 400 });
+                                }
+                            } else {
+                                data.icon = iconUrl; // 🟢 如果是纯文本代号，直接原样放行存入 D1
+                            }
+                        } else {
+                            data.icon = "";
                         }
                     }
 
@@ -1144,22 +1105,27 @@ function validateSite(data: SiteInput): {
         }
     }
 
-    // 验证图标URL (可选)
+   // ✨ 完美修复：新增卡片提交时，验证并允许将本地图标代码直接存入数据库
     if (data.icon !== undefined) {
         if (typeof data.icon !== "string") {
             errors.push("图标URL必须是字符串");
-        } else if (data.icon) {
+        } else if (data.icon.trim()) {
             let iconUrl = data.icon.trim();
-            // 如果没有协议,自动添加 https://
-            if (!/^https?:\/\//i.test(iconUrl) && !/^data:/i.test(iconUrl)) {
+            const isUrlLike = /^https?:\/\//i.test(iconUrl) || (iconUrl.includes('.') && !iconUrl.includes(' '));
+            
+            if (isUrlLike && !/^https?:\/\//i.test(iconUrl) && !/^data:/i.test(iconUrl)) {
                 iconUrl = 'https://' + iconUrl;
             }
-            try {
-                // 验证URL格式
-                new URL(iconUrl);
-                sanitizedData.icon = iconUrl;
-            } catch {
-                errors.push("无效的图标URL格式");
+
+            if (/^https?:\/\//i.test(iconUrl)) {
+                try {
+                    new URL(iconUrl);
+                    sanitizedData.icon = iconUrl;
+                } catch {
+                    errors.push("无效的图标URL格式");
+                }
+            } else {
+                sanitizedData.icon = iconUrl; // 🟢 允许直接将 'Google' 或 'Blog' 这种非 URL 纯文本安全送往数据库
             }
         } else {
             sanitizedData.icon = "";
