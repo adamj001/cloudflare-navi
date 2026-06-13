@@ -74,6 +74,9 @@ import {
   FormControl,
   InputLabel,
   SelectChangeEvent,
+  Backdrop, 
+  LinearProgress,
+  Theme,
 } from '@mui/material';
 import SortIcon from '@mui/icons-material/Sort';
 import SaveIcon from '@mui/icons-material/Save';
@@ -1462,14 +1465,25 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseImport}>取消</Button>
-            <Button 
-              variant="contained" 
-              onClick={handleImportData} 
-              disabled={!importFile || importLoading}
-              startIcon={importLoading ? <CircularProgress size={20} /> : null}
-            >
-              {importLoading ? '导入中...' : '开始导入'}
-            </Button>
+            <Box>
+  <input
+    accept=".json"
+    style={{ display: 'none' }}
+    id="raised-button-file"
+    type="file"
+    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        handleImportData(file); // 👈 此时这里传进去的才是真正的 File 对象，类型百分百对齐！
+      }
+    }}
+  />
+  <label htmlFor="raised-button-file">
+    <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+      导入数据恢复
+    </Button>
+  </label>
+</Box>
           </DialogActions>
         </Dialog>
         
@@ -1948,7 +1962,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
         <Backdrop
           open={isSyncing}
           sx={{ 
-            zIndex: (theme) => theme.zIndex.drawer + 100,
+            zIndex: (theme: any) => theme.zIndex.drawer + 100,
             color: '#fff',
             backdropFilter: 'blur(8px)',
             background: 'rgba(0, 0, 0, 0.4)'
