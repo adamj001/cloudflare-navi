@@ -1499,7 +1499,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
             />
             {importError && <Alert severity="error">{importError}</Alert>}
             {importFile && (
-              <Alert severity="info">已选择文件: {importFiltargetFile.name}</Alert>
+              <Alert severity="info">已选择文件: {importFile.name}</Alert>
             )}
           </DialogContent>
           <DialogActions>
