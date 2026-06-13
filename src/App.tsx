@@ -96,7 +96,10 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
-
+// ✨ 控制导入导出进度条的状态
+  const [syncProgress, setSyncProgress] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncStatusText, setSyncStatusText] = useState<string>('');
 const api =
   isDevEnvironment && !useRealApi
     ? new MockNavigationClient()
@@ -816,33 +819,45 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
 
   const handleExportData = async () => {
     try {
-      const allSites: Site[] = [];
-      groups.forEach((group) => {
-        if (group.sites && group.sites.length > 0) {
-          allSites.push(...group.sites);
-        }
-      });
-      const exportData = {
-        groups: groups.map((group) => ({
-          id: group.id,
-          name: group.name,
-          order_num: group.order_num,
-        })),
-        sites: allSites,
-        configs: configs,
-        version: '1.0',
-        exportDate: new Date().toISOString(),
-      };
-      const dataStr = JSON.stringify(exportData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-      const exportFileName = `导航站备份_${new Date().toISOString().slice(0, 10)}.json`;
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileName);
-      linkElement.click();
+      setIsSyncing(true);
+      setSyncProgress(10);
+      setSyncStatusText('正在打包整理全站数据...');
+
+      // 1. 模拟前半段进度
+      const timer1 = setTimeout(() => setSyncProgress(40), 300);
+      const timer2 = setTimeout(() => setSyncProgress(75), 600);
+
+      // 2. 真正向后端发起请求
+      const data = await api.exportData(); 
+      
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      setSyncProgress(90);
+      setSyncStatusText('数据打包完成，正在准备下载文件...');
+
+      // 3. 触发浏览器下载
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `webnav-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // 4. 完美收尾
+      setSyncProgress(100);
+      setSyncStatusText('导出成功！备份文件已安全下载。');
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncProgress(0);
+      }, 1000);
+
     } catch (error) {
-      console.error('导出数据失败:', error);
-      handleError('导出数据失败');
+      console.error('导出失败:', error);
+      handleError('导出失败: ' + (error instanceof Error ? error.message : '未知错误'));
+      setIsSyncing(false);
     }
   };
 
@@ -867,46 +882,54 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     }
   };
 
-  const handleImportData = async () => {
-    if (!importFile) {
-      handleError('请选择要导入的文件');
-      return;
-    }
+  const handleImportData = async (file: File) => {
+    if (!file) return;
+    
     try {
-      setImportLoading(true);
-      setImportError(null);
-      const fileReader = new FileReader();
-      fileReader.readAsText(importFile, 'UTF-8');
-      fileReader.onload = async (e) => {
+      setIsSyncing(true);
+      setSyncProgress(15);
+      setSyncStatusText('正在读取本地备份文件...');
+
+      const reader = new FileReader();
+      
+      reader.onload = async (e) => {
         try {
-          if (!e.target?.result) {
-            throw new Error('读取文件失败');
-          }
-          const importData = JSON.parse(e.target.result as string);
-          const result = await api.importData(importData);
-          if (!result.success) {
-            throw new Error(result.error || '导入失败');
-          }
+          const jsonText = e.target?.result as string;
+          const parsedData = JSON.parse(jsonText);
+          
+          setSyncProgress(50);
+          setSyncStatusText('正在深度校验数据完整性与安全性...');
+          
+          // 发送给 Cloudflare Worker 后端进行深度还原
+          await api.importData(parsedData);
+          
+          setSyncProgress(85);
+          setSyncStatusText('后端写入数据库成功，正在刷新本地视图...');
+          
+          // 重新拉取最新数据，确保卡片和Logo完美呈现
           await fetchData();
-          await fetchConfigs();
-          handleCloseImport();
-          handleError('导入成功！');
-        } catch (error) {
-          console.error('解析导入数据失败:', error);
-          handleError('解析导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
-        } finally {
-          setImportLoading(false);
+          
+          setSyncProgress(100);
+          setSyncStatusText('恢复成功！全站数据已刷新。');
+          handleError('数据导入恢复成功');
+          
+          setTimeout(() => {
+            setIsSyncing(false);
+            setSyncProgress(0);
+          }, 1200);
+          
+        } catch (err) {
+          handleError('解析或导入失败: ' + (err as Error).message);
+          setIsSyncing(false);
         }
       };
-      fileReader.onerror = () => {
-        handleError('读取文件失败');
-        setImportLoading(false);
-      };
+
+      reader.readAsText(file);
     } catch (error) {
-      console.error('导入数据失败:', error);
-      handleError('导入数据失败: ' + (error as Error).message);
+      handleError('读取文件失败');
+      setIsSyncing(false);
     }
-  };
+  }
 
     // ✨ 提取公用的站点卡片渲染函数
   const renderSiteCard = (site: Site) => {
@@ -1877,7 +1900,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
             <Button variant="contained" onClick={async () => { if (editingSite?.id) { await api.updateSite(editingSite.id, editingSite); await fetchData(); setEditSiteOpen(false); handleError('保存成功！'); } }} sx={{ borderRadius: '12px', px: 3, fontWeight: 700, textTransform: 'none', boxShadow: 'none' }}>保存修改</Button>
           </DialogActions>
         </Dialog>
-
+        {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
@@ -1895,7 +1918,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
                 />
               </Box>
 
-               <Box>
+              <Box>
                 <Typography variant="caption" color="text.secondary">
                 桌面端每行显示数量: {tempConfigs['site.desktopColumns'] || 6}
                 </Typography>
@@ -1908,7 +1931,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
                 marks
                 valueLabelDisplay="auto"
                 />
-            </Box>
+              </Box>
 
               <TextField label="自定义CSS" value={tempConfigs['site.customCss']} onChange={handleConfigInputChange} name="site.customCss" multiline rows={6} fullWidth />
             </Stack>
@@ -1918,7 +1941,73 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
             <Button variant="contained" onClick={handleSaveConfig}>保存</Button>
           </DialogActions>
         </Dialog>
-      </Box>
+
+        {/* ========================================================================= */}
+        {/* ✨ 顶奢质感：导入导出专属新拟态悬浮进度条遮罩层（新安插在这里） */}
+        {/* ========================================================================= */}
+        <Backdrop
+          open={isSyncing}
+          sx={{ 
+            zIndex: (theme) => theme.zIndex.drawer + 100,
+            color: '#fff',
+            backdropFilter: 'blur(8px)',
+            background: 'rgba(0, 0, 0, 0.4)'
+          }}
+        >
+          <Paper
+            elevation={6}
+            sx={{
+              p: 4,
+              width: '85%',
+              maxWidth: '400px',
+              borderRadius: '24px',
+              background: darkMode ? '#1a1d24' : '#eef2f7',
+              textAlign: 'center',
+              boxShadow: darkMode ? '0 20px 50px rgba(0,0,0,0.6)' : '0 20px 50px rgba(165,180,200,0.4)',
+            }}
+          >
+            {/* 顶部动态数字呼吸环 */}
+            <CircularProgress 
+              variant="determinate" 
+              value={syncProgress} 
+              size={50} 
+              thickness={4} 
+              sx={{ mb: 2, color: 'primary.main', transition: 'transform 0.3s' }} 
+            />
+            
+            {/* 状态动态描述文本 */}
+            <Typography variant="body1" sx={{ fontWeight: 800, mb: 2, color: 'text.primary' }}>
+              {syncStatusText}
+            </Typography>
+
+            {/* 精细的长条进度条 */}
+            <Box sx={{ width: '100%', px: 1 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={syncProgress} 
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  bgcolor: darkMode ? '#14161d' : '#e6ecf4',
+                  boxShadow: darkMode ? 'inset 1px 1px 3px #0a0b0e, inset -1px -1px 3px #1e212a' : 'inset 1px 1px 3px #b8b0c5, inset -1px -1px 3px #ffffff',
+                  '& .MuiLinearProgress-bar': {
+                    borderRadius: 5,
+                    background: 'linear-gradient(90deg, #00ff9d, #00b86e)',
+                    boxShadow: '0 0 10px #00ff9d'
+                  }
+                }}
+              />
+            </Box>
+
+            {/* 百分比显示 */}
+            <Typography variant="caption" sx={{ display: 'block', mt: 1.5, fontWeight: 700, opacity: 0.6 }}>
+              当前进度：{syncProgress}%
+            </Typography>
+          </Paper>
+        </Backdrop>
+        {/* ========================================================================= */}
+        
+      </Box> {/* 这是整个网页最外层的闭合大 Box */}
     </ThemeProvider>
   );
 }
