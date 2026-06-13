@@ -898,8 +898,9 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     }
   };
 
- const handleImportData = async () => {
-  if (!importFile) {
+ const handleImportData = async (file?: File) => {
+  const targetFile = file ?? importFile;  // 优先用传入的，没有就用 state 里的
+  if (!targetFile) {
     handleError('请选择要导入的文件');
     return;
   }
@@ -911,7 +912,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     setSyncStatusText('正在读取备份文件...');
 
     const fileReader = new FileReader();
-    fileReader.readAsText(importFile, 'UTF-8');
+    fileReader.readAsText(targetFile, 'UTF-8');
 
     fileReader.onload = async (e) => {
       try {
@@ -1498,7 +1499,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
             />
             {importError && <Alert severity="error">{importError}</Alert>}
             {importFile && (
-              <Alert severity="info">已选择文件: {importFile.name}</Alert>
+              <Alert severity="info">已选择文件: {importFiltargetFile.name}</Alert>
             )}
           </DialogContent>
           <DialogActions>
