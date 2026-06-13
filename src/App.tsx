@@ -822,48 +822,60 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
   };
 
   const handleExportData = async () => {
-    try {
-      setIsSyncing(true);
-      setSyncProgress(10);
-      setSyncStatusText('正在打包整理全站数据...');
+  try {
+    setIsSyncing(true);
+    setSyncProgress(10);
+    setSyncStatusText('正在整理数据...');
 
-      // 1. 模拟前半段进度
-      const timer1 = setTimeout(() => setSyncProgress(40), 300);
-      const timer2 = setTimeout(() => setSyncProgress(75), 600);
+    const allSites: Site[] = [];
+    groups.forEach((group) => {
+      if (group.sites && group.sites.length > 0) {
+        allSites.push(...group.sites);
+      }
+      // 子菜单站点也一起导出
+      group.sub_menus?.forEach(sub => {
+        if (sub.sites?.length) allSites.push(...sub.sites);
+      });
+    });
 
-      // 2. 真正向后端发起请求
-      const data = await api.exportData(); 
-      
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-      setSyncProgress(90);
-      setSyncStatusText('数据打包完成，正在准备下载文件...');
+    setSyncProgress(50);
+    setSyncStatusText('正在生成备份文件...');
 
-      // 3. 触发浏览器下载
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `webnav-backup-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    const exportData = {
+      groups: groups.map((group) => ({
+        id: group.id,
+        name: group.name,
+        order_num: group.order_num,
+      })),
+      sites: allSites,
+      configs: configs,
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+    };
 
-      // 4. 完美收尾
-      setSyncProgress(100);
-      setSyncStatusText('导出成功！备份文件已安全下载。');
-      setTimeout(() => {
-        setIsSyncing(false);
-        setSyncProgress(0);
-      }, 1000);
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileName = `导航站备份_${new Date().toISOString().slice(0, 10)}.json`;
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileName);
+    linkElement.click();
 
-    } catch (error) {
-      console.error('导出失败:', error);
-      handleError('导出失败: ' + (error instanceof Error ? error.message : '未知错误'));
+    setSyncProgress(100);
+    setSyncStatusText('导出成功！');
+    setTimeout(() => {
       setIsSyncing(false);
-    }
-  };
+      setSyncProgress(0);
+      setSyncStatusText('');
+    }, 1000);
+
+  } catch (error) {
+    console.error('导出数据失败:', error);
+    handleError('导出数据失败');
+    setIsSyncing(false);
+    setSyncProgress(0);
+  }
+};
 
   const handleOpenImport = () => {
     setImportFile(null);
@@ -886,54 +898,78 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     }
   };
 
-  const handleImportData = async (file: File) => {
-    if (!file) return;
-    
-    try {
-      setIsSyncing(true);
-      setSyncProgress(15);
-      setSyncStatusText('正在读取本地备份文件...');
-
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          const jsonText = e.target?.result as string;
-          const parsedData = JSON.parse(jsonText);
-          
-          setSyncProgress(50);
-          setSyncStatusText('正在深度校验数据完整性与安全性...');
-          
-          // 发送给 Cloudflare Worker 后端进行深度还原
-          await api.importData(parsedData);
-          
-          setSyncProgress(85);
-          setSyncStatusText('后端写入数据库成功，正在刷新本地视图...');
-          
-          // 重新拉取最新数据，确保卡片和Logo完美呈现
-          await fetchData();
-          
-          setSyncProgress(100);
-          setSyncStatusText('恢复成功！全站数据已刷新。');
-          handleError('数据导入恢复成功');
-          
-          setTimeout(() => {
-            setIsSyncing(false);
-            setSyncProgress(0);
-          }, 1200);
-          
-        } catch (err) {
-          handleError('解析或导入失败: ' + (err as Error).message);
-          setIsSyncing(false);
-        }
-      };
-
-      reader.readAsText(file);
-    } catch (error) {
-      handleError('读取文件失败');
-      setIsSyncing(false);
-    }
+ const handleImportData = async () => {
+  if (!importFile) {
+    handleError('请选择要导入的文件');
+    return;
   }
+  try {
+    setImportLoading(true);
+    setImportError(null);
+    setIsSyncing(true);
+    setSyncProgress(15);
+    setSyncStatusText('正在读取备份文件...');
+
+    const fileReader = new FileReader();
+    fileReader.readAsText(importFile, 'UTF-8');
+
+    fileReader.onload = async (e) => {
+      try {
+        if (!e.target?.result) throw new Error('读取文件失败');
+
+        setSyncProgress(40);
+        setSyncStatusText('正在解析数据...');
+
+        const importData = JSON.parse(e.target.result as string);
+
+        setSyncProgress(60);
+        setSyncStatusText('正在写入数据库...');
+
+        const result = await api.importData(importData);
+        if (!result.success) throw new Error(result.error || '导入失败');
+
+        setSyncProgress(85);
+        setSyncStatusText('正在刷新页面数据...');
+
+        await fetchData();
+        await fetchConfigs();
+
+        setSyncProgress(100);
+        setSyncStatusText('导入成功！');
+
+        handleCloseImport();
+        handleError('导入成功！');
+
+        setTimeout(() => {
+          setIsSyncing(false);
+          setSyncProgress(0);
+          setSyncStatusText('');
+        }, 1000);
+
+      } catch (error) {
+        console.error('解析导入数据失败:', error);
+        handleError('解析导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+        setIsSyncing(false);
+        setSyncProgress(0);
+      } finally {
+        setImportLoading(false);
+      }
+    };
+
+    fileReader.onerror = () => {
+      handleError('读取文件失败');
+      setImportLoading(false);
+      setIsSyncing(false);
+      setSyncProgress(0);
+    };
+
+  } catch (error) {
+    console.error('导入数据失败:', error);
+    handleError('导入数据失败: ' + (error as Error).message);
+    setIsSyncing(false);
+    setSyncProgress(0);
+  }
+};
 
     // ✨ 提取公用的站点卡片渲染函数
   const renderSiteCard = (site: Site) => {
@@ -1297,6 +1333,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
 
             </Paper>
           </Box>
+          
         </AppBar>
         {/* Header 占位符，防止内容被 fixed header 遮挡 */}
         <Box sx={{
