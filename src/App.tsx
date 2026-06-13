@@ -1479,7 +1479,7 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     }}
   />
   <label htmlFor="raised-button-file">
-    <Button variant="contained" component="span" startIcon={<UploadIcon />}>
+    <Button variant="contained" component="span" startIcon={<AddIcon />}>
       导入数据恢复
     </Button>
   </label>
