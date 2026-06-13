@@ -100,9 +100,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
 // ✨ 控制导入导出进度条的状态
-  const [syncProgress, setSyncProgress] = useState<number>(0);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [syncStatusText, setSyncStatusText] = useState<string>('');
+  
 const api =
   isDevEnvironment && !useRealApi
     ? new MockNavigationClient()
@@ -236,6 +234,9 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
 };
 
 function App() {
+  const [syncProgress, setSyncProgress] = useState<number>(0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncStatusText, setSyncStatusText] = useState<string>('');
   const [darkMode, setDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme) {
