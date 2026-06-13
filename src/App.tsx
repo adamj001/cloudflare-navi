@@ -1995,70 +1995,25 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
           </DialogActions>
         </Dialog>
 
-        {/* ========================================================================= */}
-        {/* ✨ 顶奢质感：导入导出专属新拟态悬浮进度条遮罩层（新安插在这里） */}
-        {/* ========================================================================= */}
-        <Backdrop
-          open={isSyncing}
-          sx={{ 
-            zIndex: (theme: any) => theme.zIndex.drawer + 100,
-            color: '#fff',
-            backdropFilter: 'blur(8px)',
-            background: 'rgba(0, 0, 0, 0.4)'
-          }}
-        >
-          <Paper
-            elevation={6}
-            sx={{
-              p: 4,
-              width: '85%',
-              maxWidth: '400px',
-              borderRadius: '24px',
-              background: darkMode ? '#1a1d24' : '#eef2f7',
-              textAlign: 'center',
-              boxShadow: darkMode ? '0 20px 50px rgba(0,0,0,0.6)' : '0 20px 50px rgba(165,180,200,0.4)',
-            }}
-          >
-            {/* 顶部动态数字呼吸环 */}
-            <CircularProgress 
-              variant="determinate" 
-              value={syncProgress} 
-              size={50} 
-              thickness={4} 
-              sx={{ mb: 2, color: 'primary.main', transition: 'transform 0.3s' }} 
-            />
-            
-            {/* 状态动态描述文本 */}
-            <Typography variant="body1" sx={{ fontWeight: 800, mb: 2, color: 'text.primary' }}>
-              {syncStatusText}
-            </Typography>
-
-            {/* 精细的长条进度条 */}
-            <Box sx={{ width: '100%', px: 1 }}>
-              <LinearProgress 
-                variant="determinate" 
-                value={syncProgress} 
-                sx={{
-                  height: 10,
-                  borderRadius: 5,
-                  bgcolor: darkMode ? '#14161d' : '#e6ecf4',
-                  boxShadow: darkMode ? 'inset 1px 1px 3px #0a0b0e, inset -1px -1px 3px #1e212a' : 'inset 1px 1px 3px #b8b0c5, inset -1px -1px 3px #ffffff',
-                  '& .MuiLinearProgress-bar': {
-                    borderRadius: 5,
-                    background: 'linear-gradient(90deg, #00ff9d, #00b86e)',
-                    boxShadow: '0 0 10px #00ff9d'
-                  }
-                }}
-              />
-            </Box>
-
-            {/* 百分比显示 */}
-            <Typography variant="caption" sx={{ display: 'block', mt: 1.5, fontWeight: 700, opacity: 0.6 }}>
-              当前进度：{syncProgress}%
-            </Typography>
-          </Paper>
-        </Backdrop>
-        {/* ========================================================================= */}
+       {/* 进度条覆盖层，isSyncing 时显示 */}
+{isSyncing && (
+  <Box sx={{
+    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+    bgcolor: 'rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center', height: '100vh',
+    gap: 2,
+  }}>
+    <Typography variant="h6" color="white">{syncStatusText}</Typography>
+    <Box sx={{ width: '40%', minWidth: 300 }}>
+      <LinearProgress
+        variant="determinate"
+        value={syncProgress}
+        sx={{ height: 10, borderRadius: 5 }}
+      />
+    </Box>
+    <Typography color="white">{syncProgress}%</Typography>
+  </Box>
+)}
         
       </Box> {/* 这是整个网页最外层的闭合大 Box */}
     </ThemeProvider>
