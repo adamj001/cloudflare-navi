@@ -1520,19 +1520,19 @@ const [exportResult, setExportResult] = useState<{
             </Paper>
           </Box>
           )}
-        </Container>
-
-        <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth
-        PaperProps={{ sx: neumorphicDialog }}
-        BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
-        >
-           <DialogTitle>导入数据</DialogTitle>
+        </Container>       
+        
+        <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth>
+          <DialogTitle>导入数据</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>请上传您之前导出的 JSON 备份文件。</DialogContentText>
             <input
               type="file"
               accept=".json"
-              onChange={handleFileSelect}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) setImportFile(file);
+              }}
               style={{ display: 'block', marginBottom: '16px' }}
             />
             {importError && <Alert severity="error">{importError}</Alert>}
@@ -1541,39 +1541,17 @@ const [exportResult, setExportResult] = useState<{
             )}
           </DialogContent>
           <DialogActions>
-            // 取消按钮
-<Button
-  onClick={handleCloseImport}
-  sx={{
-    ...neumorphicButton,
-    color: 'text.secondary',
-    background: darkMode ? '#1e1e1e' : '#f0f0f0',
-  }}
->
-  取消
-</Button>
-            <Box>
-  <input
-    accept=".json"
-    style={{ display: 'none' }}
-    id="raised-button-file"
-    type="file"
-    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        handleImportData(file); // 👈 此时这里传进去的才是真正的 File 对象，类型百分百对齐！
-      }
-    }}
-  />
-  <label htmlFor="raised-button-file">
-    <Button variant="contained" component="span" startIcon={<AddIcon />}>
-      导入数据恢复
-    </Button>
-  </label>
-</Box>
+            <Button onClick={handleCloseImport}>取消</Button>
+            <Button
+              variant="contained"
+              disabled={!importFile || importLoading}
+              onClick={() => importFile && handleImportData(importFile)}
+              startIcon={importLoading ? <CircularProgress size={16} color="inherit" /> : <AddIcon />}
+            >
+              {importLoading ? '导入中...' : '开始导入'}
+            </Button>
           </DialogActions>
         </Dialog>
-        
         <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}>
           <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
         </Dialog>
