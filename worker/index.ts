@@ -747,7 +747,25 @@ export default {
 
                     const result = await env.DB.prepare(query).bind(...params).all();
                     return createJsonResponse(result.results || [], request);
-                
+                / ✅ 在这里插入新增站点路由             
+                } else if (path === "sites" && method === "POST") {
+                    const data = (await validateRequestBody(request)) as SiteInput;
+
+                    // 验证站点数据
+                    const validation = validateSite(data);
+                    if (!validation.valid) {
+                    return createJsonResponse(
+                        {
+                            success: false,
+                            message: `验证失败: ${validation.errors?.join(", ")}`,
+                        },
+                     request,
+                        { status: 400 }
+                    );
+                }
+
+                const result = await api.createSite(validation.sanitizedData as Site);
+                return createJsonResponse(result, request);
                 } else if (path.startsWith("sites/") && method === "PUT") {
                     const idStr = path.split("/")[1];
                     if (!idStr) {
