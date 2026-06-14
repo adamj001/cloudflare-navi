@@ -1835,9 +1835,7 @@ const [exportResult, setExportResult] = useState<{
           onClose={() => setEditSiteOpen(false)} 
           maxWidth="sm" 
           fullWidth
-         PaperProps={{ sx: neumorphicDialog }}
-  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
->
+          PaperProps={{
             sx: {
               borderRadius: '24px',
               background: darkMode ? '#1a1d24' : '#eef2f7',
@@ -1846,6 +1844,7 @@ const [exportResult, setExportResult] = useState<{
             }
           }}
         >
+        
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             编辑站点设置
             <IconButton onClick={() => setEditSiteOpen(false)} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
