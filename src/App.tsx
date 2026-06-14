@@ -804,21 +804,25 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
   });
 };
 
-
-  const handleCreateSite = async () => {
-    try {
-      if (!newSite.name || !newSite.url) {
-        handleError('站点名称和URL不能为空');
-        return;
-      }
-      await api.createSite(newSite as Site);
-      await fetchData();
-      handleCloseAddSite();
-    } catch (error) {
-      console.error('创建站点失败:', error);
-      handleError('创建站点失败: ' + (error as Error).message);
+    const handleCreateSite = async () => {
+  try {
+    if (!newSite.name || !newSite.url) {
+      handleError('站点名称和URL不能为空');
+      return;
     }
-  };
+    // ✅ 新增校验
+    if (!newSite.group_id) {
+      handleError('请选择所属分组');
+      return;
+    }
+    await api.createSite(newSite as Site);
+    await fetchData();
+    handleCloseAddSite();
+  } catch (error) {
+    console.error('创建站点失败:', error);
+    handleError('创建站点失败: ' + (error as Error).message);
+  }
+};
 
   const handleOpenConfig = () => {
     setTempConfigs({ ...configs });
@@ -1774,14 +1778,17 @@ const [exportResult, setExportResult] = useState<{
                         value={currentMainGroupId || ''}
                         IconComponent={KeyboardArrowDownIcon}
                         onChange={(e) => {
-                          const newMainId = Number(e.target.value);
-                          const targetMainGroup = groups.find(g => g.id === newMainId);
-                          if (targetMainGroup?.sub_menus && targetMainGroup.sub_menus.length > 0) {
-                            setNewSite({ ...newSite, group_id: targetMainGroup.sub_menus[0].id });
-                          } else {
-                            setNewSite({ ...newSite, group_id: newMainId });
-                          }
-                        }}
+                    const newMainId = Number(e.target.value);
+                    const targetMainGroup = groups.find(g => g.id === newMainId);
+                    if (targetMainGroup?.sub_menus && targetMainGroup.sub_menus.length > 0) {
+                      const firstSubId = targetMainGroup.sub_menus[0].id;
+                      if (firstSubId) {
+                        setNewSite({ ...newSite, group_id: firstSubId });
+                      }
+                    } else {
+                    setNewSite({ ...newSite, group_id: newMainId });
+                  }
+                }}
                         sx={{
                           borderRadius: '16px',
                           bgcolor: darkMode ? '#252932' : '#ffffff',
