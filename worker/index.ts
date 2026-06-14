@@ -747,7 +747,7 @@ export default {
 
                     const result = await env.DB.prepare(query).bind(...params).all();
                     return createJsonResponse(result.results || [], request);
-                / ✅ 在这里插入新增站点路由             
+               // ✅ 在这里插入新增站点路由             
                 } else if (path === "sites" && method === "POST") {
                     const data = (await validateRequestBody(request)) as SiteInput;
 
