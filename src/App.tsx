@@ -1552,9 +1552,30 @@ const [exportResult, setExportResult] = useState<{
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}>
-          <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
-        </Dialog>
+        <Dialog
+            open={isAuthRequired && !isAuthenticated}
+            onClose={() => setIsAuthRequired(false)}
+            PaperProps={{
+              sx: {
+                background: darkMode
+                  ? 'rgba(30, 30, 30, 0.6)'
+                  : 'rgba(240, 24 0, 240, 0.6)',
+                backdropFilter: 'blur(16px)',
+                borderRadius: '20px',
+                boxShadow: darkMode
+                  ? '8px 8px 20px #0a0a0a, -8px -8px 20px #323232'
+                  : '8px 8px 20px #c8c8c8, -8px -8px 20px #ffffff',
+              }
+            }}
+            BackdropProps={{
+              sx: {
+                backdropFilter: 'blur(6px)',
+                background: 'rgba(0, 0, 0, 0.3)',
+              }
+            }}
+          >
+            <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
+          </Dialog>
 
                 {/* ================= 新增分组弹窗 ================= */}
        // 新增分组 Dialog
