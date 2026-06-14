@@ -1541,7 +1541,17 @@ const [exportResult, setExportResult] = useState<{
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseImport}>取消</Button>
+            // 取消按钮
+<Button
+  onClick={handleCloseImport}
+  sx={{
+    ...neumorphicButton,
+    color: 'text.secondary',
+    background: darkMode ? '#1e1e1e' : '#f0f0f0',
+  }}
+>
+  取消
+</Button>
             <Box>
   <input
     accept=".json"
@@ -1603,13 +1613,40 @@ const [exportResult, setExportResult] = useState<{
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseAddGroup}>取消</Button>
-            <Button variant="contained" onClick={handleCreateGroup}>创建</Button>
+            <Button onClick={handleCloseAddGroup}
+            sx={{
+                ...neumorphicButton,
+                color: 'text.secondary',
+                background: darkMode ? '#1e1e1e' : '#f0f0f0',
+              }}
+            >
+              取消
+          </Button>
+            <Button variant="contained" onClick={handleCreateGroup}
+            sx={{
+                ...neumorphicButton,
+                background: 'linear-gradient(135deg, #00ff9d 0%, #00cc7a 100%)',
+                color: '#000',
+                fontWeight: 600,
+                boxShadow: darkMode
+                  ? '4px 4px 10px #0a0a0a, -2px -2px 6px #00ff9d33'
+                  : '4px 4px 10px #a0d4b8, -2px -2px 6px #ffffff',
+              }}
+            >
+              创建
+              </Button>
           </DialogActions>
         </Dialog>
 
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
-        <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog 
+        open={editGroupOpen} 
+        onClose={() => setEditGroupOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{ sx: neumorphicDialog }}
+  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+        >
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           {editingGroup && (
             <DialogContent>
@@ -1652,7 +1689,15 @@ const [exportResult, setExportResult] = useState<{
             </DialogContent>
           )}
           <DialogActions>
-            <Button onClick={() => setEditGroupOpen(false)}>取消</Button>
+            <Button onClick={() => setEditGroupOpen(false)}
+              sx={{
+                ...neumorphicButton,
+                color: 'text.secondary',
+                background: darkMode ? '#1e1e1e' : '#f0f0f0',
+              }}
+              >
+              取消
+            </Button>
             <Button 
               variant="contained" 
               onClick={async () => {
@@ -2047,7 +2092,14 @@ const [exportResult, setExportResult] = useState<{
   </DialogActions>
 </Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
-        <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
+        <Dialog 
+        open={openConfig} 
+        onClose={handleCloseConfig} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{ sx: neumorphicDialog }}
+  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+        >
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2}>
@@ -2083,8 +2135,26 @@ const [exportResult, setExportResult] = useState<{
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseConfig}>取消</Button>
-            <Button variant="contained" onClick={handleSaveConfig}>保存</Button>
+            <Button onClick={handleCloseConfig}
+            sx={{
+            ...neumorphicButton,
+            color: 'text.secondary',
+            background: darkMode ? '#1e1e1e' : '#f0f0f0',
+          }}
+            >
+              取消
+              </Button>
+            <Button 
+            variant="contained" 
+            onClick={handleSaveConfig}
+            sx={{
+              ...neumorphicButton,
+              color: 'text.secondary',
+              background: darkMode ? '#1e1e1e' : '#f0f0f0',
+              }} 
+              >
+              保存
+              </Button>
           </DialogActions>
         </Dialog>
 
