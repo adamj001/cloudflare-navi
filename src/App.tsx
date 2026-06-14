@@ -95,7 +95,8 @@ import ViewModuleIcon from '@mui/icons-material/ViewModule';
 // 引入或直接使用我们之前在 http.ts 中导出的新树状接口
 import { Site, Group, GroupTreeNode } from './API/http'; 
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -269,7 +270,36 @@ function App() {
       }),
     [darkMode]
   );
+// 新拟态弹窗样式，根据明暗模式自动切换
+const neumorphicDialog = {
+  borderRadius: '20px',
+  border: 'none',
+  ...(darkMode ? {
+    background: '#1e1e1e',
+    boxShadow: '8px 8px 20px #0a0a0a, -8px -8px 20px #323232',
+  } : {
+    background: '#f0f0f0',
+    boxShadow: '8px 8px 20px #c8c8c8, -8px -8px 20px #ffffff',
+  }),
+};
 
+const neumorphicButton = {
+  borderRadius: '12px',
+  boxShadow: darkMode
+    ? '4px 4px 10px #0a0a0a, -4px -4px 10px #323232'
+    : '4px 4px 10px #c8c8c8, -4px -4px 10px #ffffff',
+  border: 'none',
+  '&:hover': {
+    boxShadow: darkMode
+      ? '2px 2px 6px #0a0a0a, -2px -2px 6px #323232'
+      : '2px 2px 6px #c8c8c8, -2px -2px 6px #ffffff',
+  },
+  '&:active': {
+    boxShadow: darkMode
+      ? 'inset 3px 3px 8px #0a0a0a, inset -3px -3px 8px #323232'
+      : 'inset 3px 3px 8px #c8c8c8, inset -3px -3px 8px #ffffff',
+  },
+};
  
 const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
@@ -820,26 +850,28 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
       handleError('保存配置失败: ' + (error as Error).message);
     }
   };
+const [openExportResult, setOpenExportResult] = useState(false);
+const [exportResult, setExportResult] = useState<{
+  success: boolean;
+  fileName?: string;
+  groupCount?: number;
+  siteCount?: number;
+  fileSize?: string;
+  error?: string;
+} | null>(null);
 
   const handleExportData = async () => {
   try {
     setIsSyncing(true);
-    setSyncProgress(10);
     setSyncStatusText('正在整理数据...');
 
     const allSites: Site[] = [];
     groups.forEach((group) => {
-      if (group.sites && group.sites.length > 0) {
-        allSites.push(...group.sites);
-      }
-      // 子菜单站点也一起导出
+      if (group.sites?.length) allSites.push(...group.sites);
       group.sub_menus?.forEach(sub => {
         if (sub.sites?.length) allSites.push(...sub.sites);
       });
     });
-
-    setSyncProgress(50);
-    setSyncStatusText('正在生成备份文件...');
 
     const exportData = {
       groups: groups.map((group) => ({
@@ -861,19 +893,22 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
     linkElement.setAttribute('download', exportFileName);
     linkElement.click();
 
-    setSyncProgress(100);
-    setSyncStatusText('导出成功！');
-    setTimeout(() => {
-      setIsSyncing(false);
-      setSyncProgress(0);
-      setSyncStatusText('');
-    }, 1000);
+    setIsSyncing(false);
+
+    // 显示成功 Dialog
+    setExportResult({
+      success: true,
+      fileName: exportFileName,
+      groupCount: groups.length,
+      siteCount: allSites.length,
+      fileSize: (new Blob([dataStr]).size / 1024).toFixed(1),
+    });
+    setOpenExportResult(true);
 
   } catch (error) {
-    console.error('导出数据失败:', error);
-    handleError('导出数据失败');
     setIsSyncing(false);
-    setSyncProgress(0);
+    setExportResult({ success: false, error: (error as Error).message });
+    setOpenExportResult(true);
   }
 };
 
@@ -1487,7 +1522,10 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
           )}
         </Container>
 
-        <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth>
+        <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth
+        PaperProps={{ sx: neumorphicDialog }}
+        BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+        >
            <DialogTitle>导入数据</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>请上传您之前导出的 JSON 备份文件。</DialogContentText>
@@ -1531,7 +1569,15 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
         </Dialog>
 
                 {/* ================= 新增分组弹窗 ================= */}
-        <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth>
+       // 新增分组 Dialog
+<Dialog
+  open={openAddGroup}
+  onClose={handleCloseAddGroup}
+  maxWidth="sm"
+  fullWidth
+  PaperProps={{ sx: neumorphicDialog }}
+  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+>
           <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -1789,7 +1835,9 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
           onClose={() => setEditSiteOpen(false)} 
           maxWidth="sm" 
           fullWidth
-          PaperProps={{
+         PaperProps={{ sx: neumorphicDialog }}
+  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+>
             sx: {
               borderRadius: '24px',
               background: darkMode ? '#1a1d24' : '#eef2f7',
@@ -1953,6 +2001,52 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
             <Button variant="contained" onClick={async () => { if (editingSite?.id) { await api.updateSite(editingSite.id, editingSite); await fetchData(); setEditSiteOpen(false); handleError('保存成功！'); } }} sx={{ borderRadius: '12px', px: 3, fontWeight: 700, textTransform: 'none', boxShadow: 'none' }}>保存修改</Button>
           </DialogActions>
         </Dialog>
+        // 导出结果 Dialog
+        <Dialog
+  open={openExportResult}
+  onClose={() => setOpenExportResult(false)}
+  maxWidth="xs"
+  fullWidth
+  PaperProps={{ sx: neumorphicDialog }}
+  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+>
+  <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    {exportResult?.success
+      ? <><CheckCircleOutlineIcon color="success" /> 导出成功</>
+      : <><ErrorOutlineIcon color="error" /> 导出失败</>
+    }
+  </DialogTitle>
+  <DialogContent>
+    {exportResult?.success ? (
+      <Stack spacing={1.5}>
+        <Alert severity="success">备份文件已下载到您的设备</Alert>
+        <Box sx={{ bgcolor: 'action.hover', borderRadius: 1, p: 1.5 }}>
+          <Typography variant="body2" color="text.secondary">文件名</Typography>
+          <Typography variant="body2" fontFamily="monospace">{exportResult.fileName}</Typography>
+        </Box>
+        <Stack direction="row" spacing={2}>
+          <Box sx={{ flex: 1, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1, p: 1 }}>
+            <Typography variant="h5" color="primary">{exportResult.groupCount}</Typography>
+            <Typography variant="caption" color="text.secondary">个分组</Typography>
+          </Box>
+          <Box sx={{ flex: 1, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1, p: 1 }}>
+            <Typography variant="h5" color="primary">{exportResult.siteCount}</Typography>
+            <Typography variant="caption" color="text.secondary">个站点</Typography>
+          </Box>
+          <Box sx={{ flex: 1, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1, p: 1 }}>
+            <Typography variant="h5" color="primary">{exportResult.fileSize}</Typography>
+            <Typography variant="caption" color="text.secondary">KB</Typography>
+          </Box>
+        </Stack>
+      </Stack>
+    ) : (
+      <Alert severity="error">导出失败：{exportResult?.error}</Alert>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setOpenExportResult(false)} variant="contained">确定</Button>
+  </DialogActions>
+</Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth>
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
