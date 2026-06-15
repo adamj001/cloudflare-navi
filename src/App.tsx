@@ -494,7 +494,7 @@ const handleCardAreaPointerMove = (event: React.PointerEvent<HTMLDivElement>) =>
   const deltaY = event.clientY - swipe.startY;
 
   // 水平位移超过 30px 且水平分量大于垂直分量就触发
-  const isHorizontalSwipe = Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2;
+  const isHorizontalSwipe = Math.abs(deltaX) >= 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5;
 
   if (isHorizontalSwipe) {
     swipe.didSwipe = true;
@@ -514,7 +514,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
   if (swipe.pointerId === event.pointerId && !swipe.didSwipe) {
     const deltaX = event.clientX - swipe.startX;
     const deltaY = event.clientY - swipe.startY;
-    if (Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2) {
+    if (Math.abs(deltaX) >= 50 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
       suppressCardClickRef.current = true;
       switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
       window.setTimeout(() => { suppressCardClickRef.current = false; }, 0);
