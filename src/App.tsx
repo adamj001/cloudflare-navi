@@ -208,7 +208,7 @@ const SortableSiteCard = ({ id, children, disabled, onLongPress }: {
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
       // ↓ 关键：阻止冒泡，防止触发外层网格的滑动切换逻辑
-      onPointerMove={(e) => { if (!disabled) e.stopPropagation(); }}
+      onPointerMove={(e) => { e.stopPropagation(); }}
       style={{ 
         height: '100%',
         userSelect: 'none',
@@ -494,7 +494,7 @@ const handleCardAreaPointerMove = (event: React.PointerEvent<HTMLDivElement>) =>
   const deltaY = event.clientY - swipe.startY;
 
   // 水平位移超过 30px 且水平分量大于垂直分量就触发
-  const isHorizontalSwipe = Math.abs(deltaX) >= 30 && Math.abs(deltaX) > Math.abs(deltaY);
+  const isHorizontalSwipe = Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2;
 
   if (isHorizontalSwipe) {
     swipe.didSwipe = true;
@@ -514,7 +514,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
   if (swipe.pointerId === event.pointerId && !swipe.didSwipe) {
     const deltaX = event.clientX - swipe.startX;
     const deltaY = event.clientY - swipe.startY;
-    if (Math.abs(deltaX) >= 20 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    if (Math.abs(deltaX) >= 60 && Math.abs(deltaX) > Math.abs(deltaY) * 2) {
       suppressCardClickRef.current = true;
       switchAdjacentGroup(deltaX < 0 ? 'next' : 'previous');
       window.setTimeout(() => { suppressCardClickRef.current = false; }, 0);
