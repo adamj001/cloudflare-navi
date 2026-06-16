@@ -1192,10 +1192,10 @@ const [exportResult, setExportResult] = useState<{
         {/* 顶部固定栏 */}
         <AppBar position="fixed" color="transparent" elevation={0} sx={{
           background: (t) => t.palette.mode === 'dark' ? 'rgba(18, 18, 18, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-          zIndex: 1200, pt: 1,
+          zIndex: 1200, pt: 0.5,
         }}>
    
-          <Container maxWidth="xl" sx={{ py: 1 }}>
+          <Container maxWidth="xl" sx={{ py: 0.5 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 {/* Logo 区域 */}
                 <Box sx={{ position: 'relative', height: '48px', width: 'auto', display: 'flex', alignItems: 'center' }}>
@@ -1249,7 +1249,7 @@ const [exportResult, setExportResult] = useState<{
           </Container>
           
           {/* 菜单大面板（包含主、子双层级菜单） */}
-          <Box sx={{ display: 'flex', py: 1, my: 1, mx: 'auto', width: { xs: '100%', md: 'fit-content' }, justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible' }}>
+          <Box sx={{ display: 'flex', py: 0.5, my: 0.5, mx: 'auto', width: { xs: '100%', md: 'fit-content' }, justifyContent: { xs: 'flex-start', md: 'center' }, overflow: 'visible' }}>
             <Paper elevation={4} sx={{ width: { xs: '100%', md: 'auto' }, backdropFilter: 'blur(16px)', background: (t) => t.palette.mode === 'dark' ? 'rgba(30,30,30,0.8)' : 'rgba(255,255,255,0.8)', borderRadius: 4, px: 2, py: 1, border: 'none' }}>
               
               {/* ================= 🟢 第一层：顶级主菜单 Tabs ================= */}
