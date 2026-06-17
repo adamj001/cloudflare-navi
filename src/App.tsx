@@ -1570,8 +1570,8 @@ const [exportResult, setExportResult] = useState<{
   PaperProps={{
     sx: {
       background: darkMode
-        ? 'rgba(20, 20, 20, 0.35)'
-        : 'rgba(255, 255, 255, 0.25)',
+        ? 'rgba(20, 20, 20, 0.15)'
+        : 'rgba(255, 255, 255, 0.12)',
       backdropFilter: 'blur(24px)',
       WebkitBackdropFilter: 'blur(24px)',
       borderRadius: '24px',
