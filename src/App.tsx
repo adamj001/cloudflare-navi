@@ -1565,27 +1565,32 @@ const [exportResult, setExportResult] = useState<{
           </DialogActions>
         </Dialog>
         <Dialog
-            open={isAuthRequired && !isAuthenticated}
-            onClose={() => setIsAuthRequired(false)}
-            PaperProps={{
-              sx: {
-                background: darkMode
-                  ? 'rgba(30, 30, 30, 0.6)'
-                  : 'rgba(240, 240, 240, 0.6)',
-                backdropFilter: 'blur(16px)',
-                borderRadius: '20px',
-                boxShadow: darkMode
-                  ? '8px 8px 20px #0a0a0a, -8px -8px 20px #323232'
-                  : '8px 8px 20px #c8c8c8, -8px -8px 20px #ffffff',
-              }
-            }}
-            BackdropProps={{
-              sx: {
-                backdropFilter: 'blur(6px)',
-                background: 'rgba(0, 0, 0, 0.3)',
-              }
-            }}
-          >
+  open={isAuthRequired && !isAuthenticated}
+  onClose={() => setIsAuthRequired(false)}
+  PaperProps={{
+    sx: {
+      background: darkMode
+        ? 'rgba(20, 20, 20, 0.35)'
+        : 'rgba(255, 255, 255, 0.25)',
+      backdropFilter: 'blur(24px)',
+      WebkitBackdropFilter: 'blur(24px)',
+      borderRadius: '24px',
+      border: darkMode
+        ? '1px solid rgba(255,255,255,0.08)'
+        : '1px solid rgba(255,255,255,0.6)',
+      boxShadow: darkMode
+        ? '0 8px 32px rgba(0,0,0,0.5)'
+        : '0 8px 32px rgba(0,0,0,0.15)',
+    }
+  }}
+  BackdropProps={{
+    sx: {
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      background: 'rgba(0,0,0,0.2)',
+    }
+  }}
+>
             <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
           </Dialog>
 
