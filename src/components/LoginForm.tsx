@@ -5,8 +5,7 @@ import {
   Typography,
   Box,
   CircularProgress,
-  Alert,
-  Paper,
+  Alert, 
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
@@ -39,22 +38,15 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading = false, error =
         p: { xs: 2, sm: 4 },
       }}
     >
-      <Paper
-        elevation={3}
-        sx={{
-          p: { xs: 3, sm: 4 },
-          borderRadius: 2,
-          width: '100%',
-          maxWidth: { xs: '90%', sm: 400 },
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'dark' ? 'rgba(33, 33, 33, 0.9)' : 'rgba(255, 255, 255, 0.9)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: (theme) =>
-            theme.palette.mode === 'dark'
-              ? '0 8px 32px rgba(0, 0, 0, 0.3)'
-              : '0 8px 32px rgba(0, 0, 0, 0.1)',
-        }}
-      >
+      <Box
+  sx={{
+    p: { xs: 3, sm: 4 },
+    borderRadius: 2,
+    width: '100%',
+    maxWidth: { xs: '90%', sm: 400 },
+    background: 'transparent',
+  }}
+></Box>
         <Box
           sx={{
             display: 'flex',
@@ -151,7 +143,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading = false, error =
             {loading ? <CircularProgress size={24} color='inherit' /> : '登录'}
           </Button>
         </Box>
-      </Paper>
+     </Box>
     </Box>
   );
 };
