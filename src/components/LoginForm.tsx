@@ -144,7 +144,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading = false, error =
           </Button>
         </Box>
      </Box>
-    </Box>
+    
   );
 };
 
