@@ -654,26 +654,24 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
         })).sort((a, b) => a.order_num - b.order_num)
       })).sort((a, b) => a.order_num - b.order_num);
 
-      setGroups(sortedGroups);
+                setGroups(sortedGroups);
 
       if (sortedGroups.length > 0) {
-        if (selectedTab === null) {
-          const firstGroup = sortedGroups[0];
-setSelectedTab(firstGroup.id);
-if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
-  setSelectedSubTab(firstGroup.sub_menus[0].id!);
-} else {
-  setSelectedSubTab(firstGroup.id);
-}
-        } else if (!sortedGroups.some(g => g.id === selectedTab)) {
-         const firstGroup = sortedGroups[0];
-setSelectedTab(firstGroup.id);
-if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
-  setSelectedSubTab(firstGroup.sub_menus[0].id!);
-} else {
-  setSelectedSubTab(firstGroup.id);
-}
-        }
+        setSelectedTab(prev => {
+          if (prev === null) return sortedGroups[0].id!;
+          if (!sortedGroups.some(g => g.id === prev)) return sortedGroups[0].id!;
+          return prev;
+        });
+        setSelectedSubTab(prev => {
+          if (prev === null) return sortedGroups[0].id!;
+          const allIds = new Set<number>();
+          sortedGroups.forEach(g => {
+            allIds.add(g.id!);
+            g.sub_menus?.forEach(sub => allIds.add(sub.id!));
+          });
+          if (!allIds.has(prev)) return sortedGroups[0].id!;
+          return prev;
+        });
       } else {
         setSelectedTab(null);
         setSelectedSubTab(null);
@@ -685,6 +683,8 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
       setLoading(false);
     }
   };
+
+
 
   const handleSiteDelete = async (siteId: number) => {
     if (confirm(`确定删除站点ID: ${siteId} 吗？`)) { 
@@ -815,7 +815,15 @@ if (firstGroup.sub_menus && firstGroup.sub_menus.length > 0) {
       handleError('请选择所属分组');
       return;
     }
-    await api.createSite(newSite as Site);
+    // ✅ 计算当前分组最大 order_num，新卡片放最后
+    const targetGroup = groups.find(g => g.id === newSite.group_id)
+      || groups.flatMap(g => g.sub_menus || []).find(sub => sub.id === newSite.group_id);
+    
+    const existingSites = targetGroup?.sites || [];
+    const maxOrder = existingSites.length > 0
+      ? Math.max(...existingSites.map(s => s.order_num))
+      : -1;
+    await api.createSite({ ...newSite, order_num: maxOrder + 1 } as Site);
     await fetchData();
     handleCloseAddSite();
   } catch (error) {
