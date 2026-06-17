@@ -1571,7 +1571,7 @@ const [exportResult, setExportResult] = useState<{
               sx: {
                 background: darkMode
                   ? 'rgba(30, 30, 30, 0.6)'
-                  : 'rgba(240, 24 0, 240, 0.6)',
+                  : 'rgba(240, 240, 240, 0.6)',
                 backdropFilter: 'blur(16px)',
                 borderRadius: '20px',
                 boxShadow: darkMode
