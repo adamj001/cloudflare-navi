@@ -1736,19 +1736,34 @@ BackdropProps={{
 
 
           {/* ================= ✨ 双级联动版：新增站点弹窗 ================= */}
-        <Dialog 
-          open={openAddSite} 
-          onClose={handleCloseAddSite} 
-          maxWidth="sm" 
-          fullWidth
-          PaperProps={{
-            sx: {
-              borderRadius: '24px',
-              background: darkMode ? '#1a1d24' : '#eef2f7',
-              boxShadow: darkMode ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(165,180,200,0.3)',
-              p: 1
-            }
-          }}
+       <Dialog
+  open={openAddSite}
+  onClose={handleCloseAddSite}
+  maxWidth="sm"
+  fullWidth
+  PaperProps={{
+    sx: {
+      borderRadius: '24px',
+
+      // ✅ 关键：改成玻璃，而不是纯色
+      background: darkMode
+        ? 'rgba(26, 29, 36, 0.65)'
+        : 'rgba(238, 242, 247, 0.75)',
+
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+
+      border: darkMode
+        ? '1px solid rgba(255,255,255,0.06)'
+        : '1px solid rgba(255,255,255,0.35)',
+
+      boxShadow: darkMode
+        ? '0 20px 60px rgba(0,0,0,0.6)'
+        : '0 20px 60px rgba(165,180,200,0.25)',
+
+      p: 1,
+    }
+  }}
         >
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             新增站点
@@ -1900,13 +1915,28 @@ BackdropProps={{
           maxWidth="sm" 
           fullWidth
           PaperProps={{
-            sx: {
-              borderRadius: '24px',
-              background: darkMode ? '#1a1d24' : '#eef2f7',
-              boxShadow: darkMode ? '0 20px 50px rgba(0,0,0,0.5)' : '0 20px 50px rgba(165,180,200,0.3)',
-              p: 1
-            }
-          }}
+    sx: {
+      borderRadius: '24px',
+
+      // ✅ 关键：改成玻璃，而不是纯色
+      background: darkMode
+        ? 'rgba(26, 29, 36, 0.65)'
+        : 'rgba(238, 242, 247, 0.75)',
+
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+
+      border: darkMode
+        ? '1px solid rgba(255,255,255,0.06)'
+        : '1px solid rgba(255,255,255,0.35)',
+
+      boxShadow: darkMode
+        ? '0 20px 60px rgba(0,0,0,0.6)'
+        : '0 20px 60px rgba(165,180,200,0.25)',
+
+      p: 1,
+    }
+  }}
         >
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2116,8 +2146,29 @@ BackdropProps={{
         onClose={handleCloseConfig} 
         maxWidth="sm" 
         fullWidth
-        PaperProps={{ sx: neumorphicDialog }}
-  BackdropProps={{ sx: { backdropFilter: 'blur(6px)', background: 'rgba(0,0,0,0.3)' } }}
+        PaperProps={{
+    sx: {
+      borderRadius: '24px',
+
+      // ✅ 关键：改成玻璃，而不是纯色
+      background: darkMode
+        ? 'rgba(26, 29, 36, 0.65)'
+        : 'rgba(238, 242, 247, 0.75)',
+
+      backdropFilter: 'blur(18px)',
+      WebkitBackdropFilter: 'blur(18px)',
+
+      border: darkMode
+        ? '1px solid rgba(255,255,255,0.06)'
+        : '1px solid rgba(255,255,255,0.35)',
+
+      boxShadow: darkMode
+        ? '0 20px 60px rgba(0,0,0,0.6)'
+        : '0 20px 60px rgba(165,180,200,0.25)',
+
+      p: 1,
+    }
+  }}
         >
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
