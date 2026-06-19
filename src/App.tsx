@@ -282,7 +282,30 @@ const neumorphicDialog = {
     boxShadow: '8px 8px 20px #c8c8c8, -8px -8px 20px #ffffff',
   }),
 };
+// 玻璃态弹窗样式（所有弹窗统一用这个）
+const glassDialog = {
+  borderRadius: '24px',
+  background: darkMode
+    ? 'rgba(26, 29, 36, 0.65)'
+    : 'rgba(238, 242, 247, 0.75)',
+  backdropFilter: 'blur(18px)',
+  WebkitBackdropFilter: 'blur(18px)',
+  border: darkMode
+    ? '1px solid rgba(255,255,255,0.06)'
+    : '1px solid rgba(255,255,255,0.35)',
+  boxShadow: darkMode
+    ? '0 20px 60px rgba(0,0,0,0.6)'
+    : '0 20px 60px rgba(165,180,200,0.25)',
+  p: 1,
+};
 
+const glassBackdrop = {
+  sx: {
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    background: 'rgba(0,0,0,0.2)',
+  }
+};
 const neumorphicButton = {
   borderRadius: '12px',
   boxShadow: darkMode
@@ -1534,7 +1557,9 @@ const [exportResult, setExportResult] = useState<{
           )}
         </Container>       
         
-        <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth>
+        {/* 导入数据 */}
+<Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth
+  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
           <DialogTitle>导入数据</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>请上传您之前导出的 JSON 备份文件。</DialogContentText>
@@ -1564,67 +1589,18 @@ const [exportResult, setExportResult] = useState<{
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog
-  open={isAuthRequired && !isAuthenticated}
-  onClose={() => setIsAuthRequired(false)}
-  PaperProps={{
-  sx: {
-    background: darkMode
-      ? 'rgba(20, 20, 20, 0.12)'
-      : 'rgba(255, 255, 255, 0.10)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    borderRadius: '24px',
-    border: darkMode
-      ? '1px solid rgba(255,255,255,0.06)'
-      : '1px solid rgba(255,255,255,0.35)',
-    boxShadow: darkMode
-      ? '0 8px 32px rgba(0,0,0,0.4)'
-      : '0 8px 32px rgba(0,0,0,0.10)',
-  }
-}}
-BackdropProps={{
-  sx: {
-    backdropFilter: 'blur(4px)',
-    WebkitBackdropFilter: 'blur(4px)',
-    background: 'rgba(0,0,0,0.03)',
-  }
-}}
->
-            <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
-          </Dialog>
+        {/* 登录 */}
+<Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}
+  PaperProps={{ sx: { ...glassDialog, background: darkMode ? 'rgba(20,20,20,0.12)' : 'rgba(255,255,255,0.10)' } }}
+  BackdropProps={glassBackdrop}>
+  <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
+</Dialog>
 
                 {/* ================= 新增分组弹窗 ================= */}
-       // 新增分组 Dialog
-<Dialog
-  open={openAddGroup}
-  onClose={handleCloseAddGroup}
-  maxWidth="sm"
-  fullWidth
-  PaperProps={{
-    sx: {
-      borderRadius: '24px',
-
-      // ✅ 关键：改成玻璃，而不是纯色
-      background: darkMode
-        ? 'rgba(26, 29, 36, 0.65)'
-        : 'rgba(238, 242, 247, 0.75)',
-
-      backdropFilter: 'blur(18px)',
-      WebkitBackdropFilter: 'blur(18px)',
-
-      border: darkMode
-        ? '1px solid rgba(255,255,255,0.06)'
-        : '1px solid rgba(255,255,255,0.35)',
-
-      boxShadow: darkMode
-        ? '0 20px 60px rgba(0,0,0,0.6)'
-        : '0 20px 60px rgba(165,180,200,0.25)',
-
-      p: 1,
-    }
-  }}
->
+       
+              {/* 新增分组 */}
+                <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth
+                 PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
           <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -1676,35 +1652,9 @@ BackdropProps={{
         </Dialog>
 
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
-        <Dialog 
-        open={editGroupOpen} 
-        onClose={() => setEditGroupOpen(false)} 
-        maxWidth="sm" 
-        fullWidth
-        PaperProps={{
-    sx: {
-      borderRadius: '24px',
-
-      // ✅ 关键：改成玻璃，而不是纯色
-      background: darkMode
-        ? 'rgba(26, 29, 36, 0.65)'
-        : 'rgba(238, 242, 247, 0.75)',
-
-      backdropFilter: 'blur(18px)',
-      WebkitBackdropFilter: 'blur(18px)',
-
-      border: darkMode
-        ? '1px solid rgba(255,255,255,0.06)'
-        : '1px solid rgba(255,255,255,0.35)',
-
-      boxShadow: darkMode
-        ? '0 20px 60px rgba(0,0,0,0.6)'
-        : '0 20px 60px rgba(165,180,200,0.25)',
-
-      p: 1,
-    }
-  }}
-        >
+        {/* 编辑分组 */}
+<Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
+  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           {editingGroup && (
             <DialogContent>
@@ -1778,35 +1728,8 @@ BackdropProps={{
 
 
           {/* ================= ✨ 双级联动版：新增站点弹窗 ================= */}
-       <Dialog
-  open={openAddSite}
-  onClose={handleCloseAddSite}
-  maxWidth="sm"
-  fullWidth
-  PaperProps={{
-    sx: {
-      borderRadius: '24px',
-
-      // ✅ 关键：改成玻璃，而不是纯色
-      background: darkMode
-        ? 'rgba(26, 29, 36, 0.65)'
-        : 'rgba(238, 242, 247, 0.75)',
-
-      backdropFilter: 'blur(18px)',
-      WebkitBackdropFilter: 'blur(18px)',
-
-      border: darkMode
-        ? '1px solid rgba(255,255,255,0.06)'
-        : '1px solid rgba(255,255,255,0.35)',
-
-      boxShadow: darkMode
-        ? '0 20px 60px rgba(0,0,0,0.6)'
-        : '0 20px 60px rgba(165,180,200,0.25)',
-
-      p: 1,
-    }
-  }}
-        >
+       <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth
+  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             新增站点
             <IconButton onClick={handleCloseAddSite} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
@@ -1951,35 +1874,8 @@ BackdropProps={{
         </Dialog>
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
-        <Dialog 
-          open={editSiteOpen} 
-          onClose={() => setEditSiteOpen(false)} 
-          maxWidth="sm" 
-          fullWidth
-          PaperProps={{
-    sx: {
-      borderRadius: '24px',
-
-      // ✅ 关键：改成玻璃，而不是纯色
-      background: darkMode
-        ? 'rgba(26, 29, 36, 0.65)'
-        : 'rgba(238, 242, 247, 0.75)',
-
-      backdropFilter: 'blur(18px)',
-      WebkitBackdropFilter: 'blur(18px)',
-
-      border: darkMode
-        ? '1px solid rgba(255,255,255,0.06)'
-        : '1px solid rgba(255,255,255,0.35)',
-
-      boxShadow: darkMode
-        ? '0 20px 60px rgba(0,0,0,0.6)'
-        : '0 20px 60px rgba(165,180,200,0.25)',
-
-      p: 1,
-    }
-  }}
-        >
+        <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
+  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             编辑站点设置
@@ -2136,36 +2032,9 @@ BackdropProps={{
             <Button variant="contained" onClick={async () => { if (editingSite?.id) { await api.updateSite(editingSite.id, editingSite); await fetchData(); setEditSiteOpen(false); handleError('保存成功！'); } }} sx={{ borderRadius: '12px', px: 3, fontWeight: 700, textTransform: 'none', boxShadow: 'none' }}>保存修改</Button>
           </DialogActions>
         </Dialog>
-        // 导出结果 Dialog
-        <Dialog
-  open={openExportResult}
-  onClose={() => setOpenExportResult(false)}
-  maxWidth="xs"
-  fullWidth
- PaperProps={{
-    sx: {
-      borderRadius: '24px',
-
-      // ✅ 关键：改成玻璃，而不是纯色
-      background: darkMode
-        ? 'rgba(26, 29, 36, 0.65)'
-        : 'rgba(238, 242, 247, 0.75)',
-
-      backdropFilter: 'blur(18px)',
-      WebkitBackdropFilter: 'blur(18px)',
-
-      border: darkMode
-        ? '1px solid rgba(255,255,255,0.06)'
-        : '1px solid rgba(255,255,255,0.35)',
-
-      boxShadow: darkMode
-        ? '0 20px 60px rgba(0,0,0,0.6)'
-        : '0 20px 60px rgba(165,180,200,0.25)',
-
-      p: 1,
-    }
-  }}
->
+       {/* 导出结果 */}
+<Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth
+  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
   <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     {exportResult?.success
       ? <><CheckCircleOutlineIcon color="success" /> 导出成功</>
@@ -2204,35 +2073,8 @@ BackdropProps={{
   </DialogActions>
 </Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
-        <Dialog 
-        open={openConfig} 
-        onClose={handleCloseConfig} 
-        maxWidth="sm" 
-        fullWidth
-        PaperProps={{
-    sx: {
-      borderRadius: '24px',
-
-      // ✅ 关键：改成玻璃，而不是纯色
-      background: darkMode
-        ? 'rgba(26, 29, 36, 0.65)'
-        : 'rgba(238, 242, 247, 0.75)',
-
-      backdropFilter: 'blur(18px)',
-      WebkitBackdropFilter: 'blur(18px)',
-
-      border: darkMode
-        ? '1px solid rgba(255,255,255,0.06)'
-        : '1px solid rgba(255,255,255,0.35)',
-
-      boxShadow: darkMode
-        ? '0 20px 60px rgba(0,0,0,0.6)'
-        : '0 20px 60px rgba(165,180,200,0.25)',
-
-      p: 1,
-    }
-  }}
-        >
+        <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth
+  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2}>
