@@ -97,6 +97,7 @@ import { Site, Group, GroupTreeNode } from './API/http';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import ThemeToggle from './components/ThemeToggle';
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -1556,11 +1557,21 @@ const [exportResult, setExportResult] = useState<{
           </Box>
           )}
         </Container>       
-        
+export default function App() {
+  return (
+    <>
+      <LoginForm />
+      <SearchBox />
+      <SearchResultPanel />
+      <ThemeToggle />
+      <WeatherWidget />
+    </>
+  );
+}
         {/* 导入数据 */}
-<Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
-          <DialogTitle>导入数据</DialogTitle>
+<Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth>
+
+<DialogTitle>导入数据</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>请上传您之前导出的 JSON 备份文件。</DialogContentText>
             <input
@@ -1590,17 +1601,16 @@ const [exportResult, setExportResult] = useState<{
           </DialogActions>
         </Dialog>
         {/* 登录 */}
-<Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}
-  PaperProps={{ sx: { ...glassDialog, background: darkMode ? 'rgba(20,20,20,0.12)' : 'rgba(255,255,255,0.10)' } }}
-  BackdropProps={glassBackdrop}>
+<Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}>
+  
   <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
 </Dialog>
 
                 {/* ================= 新增分组弹窗 ================= */}
        
               {/* 新增分组 */}
-                <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth
-                 PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+                <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth>
+                
           <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -1653,8 +1663,8 @@ const [exportResult, setExportResult] = useState<{
 
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
         {/* 编辑分组 */}
-<Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+<Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth>
+ 
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           {editingGroup && (
             <DialogContent>
@@ -1728,8 +1738,8 @@ const [exportResult, setExportResult] = useState<{
 
 
           {/* ================= ✨ 双级联动版：新增站点弹窗 ================= */}
-       <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+       <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth>
+ 
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             新增站点
             <IconButton onClick={handleCloseAddSite} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
@@ -1874,8 +1884,8 @@ const [exportResult, setExportResult] = useState<{
         </Dialog>
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
-        <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+        <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth>
+ 
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             编辑站点设置
@@ -2033,8 +2043,8 @@ const [exportResult, setExportResult] = useState<{
           </DialogActions>
         </Dialog>
        {/* 导出结果 */}
-<Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+<Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth>
+
   <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     {exportResult?.success
       ? <><CheckCircleOutlineIcon color="success" /> 导出成功</>
@@ -2070,12 +2080,11 @@ const [exportResult, setExportResult] = useState<{
   </DialogContent>
   <DialogActions>
     <Button onClick={() => setOpenExportResult(false)} variant="contained">确定</Button>
-  </DialogActions>
+  </DialogActions>sx
 </Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
-        <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
-          <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
+        <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth></Dialog>
+ {{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2}>
               <TextField label="网站标题" value={tempConfigs['site.title']} onChange={handleConfigInputChange} name="site.title" fullWidth />
