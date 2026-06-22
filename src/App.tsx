@@ -286,26 +286,27 @@ const neumorphicDialog = {
 const glassDialog = {
   borderRadius: '24px',
   background: darkMode
-    ? 'rgba(26, 29, 36, 0.65)'
-    : 'rgba(238, 242, 247, 0.75)',
-  backdropFilter: 'blur(18px)',
-  WebkitBackdropFilter: 'blur(18px)',
+    ? 'rgba(20, 25, 45, 0.35)'     // 带蓝紫色调，不是纯灰
+    : 'rgba(238, 242, 247, 0.35)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
   border: darkMode
-    ? '1px solid rgba(255,255,255,0.06)'
-    : '1px solid rgba(255,255,255,0.35)',
+    ? '1px solid rgba(100,120,255,0.15)'  // 带色边框
+    : '1px solid rgba(255,255,255,0.5)',
   boxShadow: darkMode
-    ? '0 20px 60px rgba(0,0,0,0.6)'
+    ? '0 8px 32px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)'
     : '0 20px 60px rgba(165,180,200,0.25)',
   p: 1,
 };
 
 const glassBackdrop = {
   sx: {
-    backdropFilter: 'blur(6px)',
-    WebkitBackdropFilter: 'blur(6px)',
-    background: 'rgba(0,0,0,0.2)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    background: darkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.2)',  // 暗色加深
   }
 };
+
 const neumorphicButton = {
   borderRadius: '12px',
   boxShadow: darkMode
@@ -323,7 +324,7 @@ const neumorphicButton = {
       : 'inset 3px 3px 8px #c8c8c8, inset -3px -3px 8px #ffffff',
   },
 };
- 
+
 const [groups, setGroups] = useState<GroupTreeNode[]>([]);
 
   const [loading, setLoading] = useState(true);
@@ -1201,7 +1202,17 @@ const [exportResult, setExportResult] = useState<{
         </Alert>
       </Snackbar>
 
-      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary', position: 'relative', overflow: 'hidden' }}>
+      <Box sx={{ 
+  minHeight: '100vh', 
+  bgcolor: 'background.default', 
+  color: 'text.primary', 
+  position: 'relative', 
+  overflow: 'hidden',
+  // 暗色模式加渐变背景，让玻璃效果可见
+  background: darkMode 
+    ? 'linear-gradient(135deg, #0d1117 0%, #1a1f2e 30%, #0f1923 60%, #1a1025 100%)'
+    : undefined,
+}}>
         {configs['site.backgroundImage'] && isSecureUrl(configs['site.backgroundImage']) && (
           <>
             <Box
@@ -1559,7 +1570,7 @@ const [exportResult, setExportResult] = useState<{
         
         {/* 导入数据 */}
 <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+  >
           <DialogTitle>导入数据</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>请上传您之前导出的 JSON 备份文件。</DialogContentText>
@@ -1591,8 +1602,8 @@ const [exportResult, setExportResult] = useState<{
         </Dialog>
         {/* 登录 */}
 <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}
-  PaperProps={{ sx: { ...glassDialog, background: darkMode ? 'rgba(20,20,20,0.12)' : 'rgba(255,255,255,0.10)' } }}
-  BackdropProps={glassBackdrop}>
+ PaperProps={{ sx: glassDialog }}
+BackdropProps={glassBackdrop}>
   <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
 </Dialog>
 
@@ -1654,10 +1665,11 @@ const [exportResult, setExportResult] = useState<{
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
         {/* 编辑分组 */}
 <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+ >
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           {editingGroup && (
-            <DialogContent>
+            <DialogContent>PaperProps={{ sx: glassDialog }}
+BackdropProps={glassBackdrop}
               <Stack spacing={2} sx={{ mt: 2 }}>
                 <TextField 
                   autoFocus 
@@ -1729,7 +1741,8 @@ const [exportResult, setExportResult] = useState<{
 
           {/* ================= ✨ 双级联动版：新增站点弹窗 ================= */}
        <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+ PaperProps={{ sx: glassDialog }}
+BackdropProps={glassBackdrop}>
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             新增站点
             <IconButton onClick={handleCloseAddSite} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
@@ -1875,7 +1888,8 @@ const [exportResult, setExportResult] = useState<{
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
         <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+ PaperProps={{ sx: glassDialog }}
+BackdropProps={glassBackdrop}>
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             编辑站点设置
@@ -2034,7 +2048,8 @@ const [exportResult, setExportResult] = useState<{
         </Dialog>
        {/* 导出结果 */}
 <Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+ PaperProps={{ sx: glassDialog }}
+BackdropProps={glassBackdrop}>
   <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     {exportResult?.success
       ? <><CheckCircleOutlineIcon color="success" /> 导出成功</>
@@ -2074,7 +2089,8 @@ const [exportResult, setExportResult] = useState<{
 </Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth
-  PaperProps={{ sx: glassDialog }} BackdropProps={glassBackdrop}>
+ PaperProps={{ sx: glassDialog }}
+BackdropProps={glassBackdrop}>
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2}>
