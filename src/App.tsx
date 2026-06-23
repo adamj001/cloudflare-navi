@@ -1663,11 +1663,12 @@ BackdropProps={{ sx: glassBackdrop }}>
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
         {/* 编辑分组 */}
 <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
+ PaperProps={{ sx: glassDialog }}
+            BackdropProps={{ sx: glassBackdrop }}>
  >
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
-          {editingGroup && (
-            <DialogContent>PaperProps={{ sx: glassDialog }}
-BackdropProps={{ sx: glassBackdrop }}
+             {editingGroup && (          
+            <DialogContent>
               <Stack spacing={2} sx={{ mt: 2 }}>
                 <TextField 
                   autoFocus 
