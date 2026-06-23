@@ -286,24 +286,27 @@ const neumorphicDialog = {
 const glassDialog = {
   borderRadius: '24px',
   background: darkMode
-    ? 'rgba(20, 25, 45, 0.35)'     // 带蓝紫色调，不是纯灰
-    : 'rgba(238, 242, 247, 0.35)',
-  backdropFilter: 'blur(24px)',
-  WebkitBackdropFilter: 'blur(24px)',
+    ? 'rgba(255, 255, 255, 0.05)'   // 暗色：几乎全透明，只有一丝白色调
+    : 'rgba(255, 255, 255, 0.25)',   // 亮色：保持原来效果
+  backdropFilter: 'blur(20px)',       // 模糊弹窗后面的页面内容
+  WebkitBackdropFilter: 'blur(20px)',
   border: darkMode
-    ? '1px solid rgba(100,120,255,0.15)'  // 带色边框
+    ? '1px solid rgba(255,255,255,0.10)'
     : '1px solid rgba(255,255,255,0.5)',
   boxShadow: darkMode
-    ? '0 8px 32px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08)'
+    ? '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)'
     : '0 20px 60px rgba(165,180,200,0.25)',
   p: 1,
 };
 
 const glassBackdrop = {
-  backdropFilter: 'blur(8px)',
-  WebkitBackdropFilter: 'blur(8px)',
-  background: darkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.2)',
+  backdropFilter: 'blur(6px)',        // 遮罩层也模糊，让整个背景虚化
+  WebkitBackdropFilter: 'blur(6px)',
+  background: darkMode
+    ? 'rgba(0, 0, 0, 0.3)'           // 暗色遮罩轻一点，保留背景颜色
+    : 'rgba(0, 0, 0, 0.15)',
 };
+
 
 const neumorphicButton = {
   borderRadius: '12px',
