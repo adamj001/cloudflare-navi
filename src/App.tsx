@@ -1665,7 +1665,7 @@ BackdropProps={{ sx: glassBackdrop }}>
 <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
  PaperProps={{ sx: glassDialog }}
             BackdropProps={{ sx: glassBackdrop }}>
- >
+
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
              {editingGroup && (          
             <DialogContent>
