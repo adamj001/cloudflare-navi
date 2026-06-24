@@ -256,17 +256,11 @@ function App() {
   () => createAppTheme(darkMode ? 'dark' : 'light'),
   [darkMode]
 );
-// 新拟态弹窗样式，根据明暗模式自动切换
-const neumorphicDialog = {
+
+// Dialog 的玻璃材质统一由 theme.ts 的 MuiDialog.paper 管理。
+// 这里只保留当前项目中“单个弹窗独有”的尺寸/圆角。
+const dialogLayout = {
   borderRadius: '20px',
-  border: 'none',
-  ...(darkMode ? {
-    background: '#1e1e1e',
-    boxShadow: '8px 8px 20px #0a0a0a, -8px -8px 20px #323232',
-  } : {
-    background: '#f0f0f0',
-    boxShadow: '8px 8px 20px #c8c8c8, -8px -8px 20px #ffffff',
-  }),
 };
 // 玻璃态弹窗样式（所有弹窗统一用这个）
 
