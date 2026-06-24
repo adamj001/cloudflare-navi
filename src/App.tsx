@@ -45,8 +45,7 @@ import {
   CircularProgress,
   Alert,
   Stack,
-  Paper,
-  createTheme,
+  Paper, 
   ThemeProvider,
   CssBaseline,
   TextField,
@@ -97,6 +96,8 @@ import { Site, Group, GroupTreeNode } from './API/http';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import { createAppTheme } from './theme/theme';
+
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -252,24 +253,9 @@ function App() {
   };
 
   const theme = useMemo(
-    () =>
-      createTheme({
-        palette: {
-          mode: darkMode ? 'dark' : 'light',
-          background: {
-            default: darkMode ? '#121212' : '#f0f0f0',
-            paper: darkMode ? '#1e1e1e' : '#ffffff',
-          },
-          primary: {
-            main: '#00ff9d',
-          },
-        },
-        typography: {
-          fontFamily: 'Roboto, Arial, sans-serif',
-        }
-      }),
-    [darkMode]
-  );
+  () => createAppTheme(darkMode ? 'dark' : 'light'),
+  [darkMode]
+);
 // 新拟态弹窗样式，根据明暗模式自动切换
 const neumorphicDialog = {
   borderRadius: '20px',
@@ -283,29 +269,6 @@ const neumorphicDialog = {
   }),
 };
 // 玻璃态弹窗样式（所有弹窗统一用这个）
-const glassDialog = {
-  borderRadius: '24px',
-  background: darkMode
-    ? 'rgba(255, 255, 255, 0.05)'   // 暗色：几乎全透明，只有一丝白色调
-    : 'rgba(255, 255, 255, 0.25)',   // 亮色：保持原来效果
-  backdropFilter: 'blur(20px)',       // 模糊弹窗后面的页面内容
-  WebkitBackdropFilter: 'blur(20px)',
-  border: darkMode
-    ? '1px solid rgba(255,255,255,0.10)'
-    : '1px solid rgba(255,255,255,0.5)',
-  boxShadow: darkMode
-    ? '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)'
-    : '0 20px 60px rgba(165,180,200,0.25)',
-  p: 1,
-};
-
-const glassBackdrop = {
-  backdropFilter: 'blur(6px)',        // 遮罩层也模糊，让整个背景虚化
-  WebkitBackdropFilter: 'blur(6px)',
-  background: darkMode
-    ? 'rgba(0, 0, 0, 0.3)'           // 暗色遮罩轻一点，保留背景颜色
-    : 'rgba(0, 0, 0, 0.15)',
-};
 
 
 const neumorphicButton = {
@@ -1603,8 +1566,7 @@ const [exportResult, setExportResult] = useState<{
         </Dialog>
         {/* 登录 */}
 <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}
- PaperProps={{ sx: glassDialog }}
-BackdropProps={{ sx: glassBackdrop }}>
+PaperProps={{ sx: { p: 1 } }}>
   <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
 </Dialog>
 
@@ -1612,7 +1574,7 @@ BackdropProps={{ sx: glassBackdrop }}>
        
               {/* 新增分组 */}
                 <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth
-                 PaperProps={{ sx: glassDialog }} BackdropProps={{ sx: glassBackdrop }}>
+                PaperProps={{ sx: { p: 1 } }}>
           <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -1666,8 +1628,8 @@ BackdropProps={{ sx: glassBackdrop }}>
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
         {/* 编辑分组 */}
 <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
- PaperProps={{ sx: glassDialog }}
-            BackdropProps={{ sx: glassBackdrop }}>
+PaperProps={{ sx: { p: 1 } }}
+>
 
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
              {editingGroup && (          
@@ -1743,8 +1705,8 @@ BackdropProps={{ sx: glassBackdrop }}>
 
           {/* ================= ✨ 双级联动版：新增站点弹窗 ================= */}
        <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth
- PaperProps={{ sx: glassDialog }}
-BackdropProps={{ sx: glassBackdrop }}>
+ PaperProps={{ sx: { p: 1 } }}
+>
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             新增站点
             <IconButton onClick={handleCloseAddSite} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
@@ -1890,8 +1852,8 @@ BackdropProps={{ sx: glassBackdrop }}>
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
         <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
- PaperProps={{ sx: glassDialog }}
-BackdropProps={{ sx: glassBackdrop }}>
+PaperProps={{ sx: { p: 1 } }}
+>
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             编辑站点设置
@@ -2050,8 +2012,8 @@ BackdropProps={{ sx: glassBackdrop }}>
         </Dialog>
        {/* 导出结果 */}
 <Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth
- PaperProps={{ sx: glassDialog }}
-BackdropProps={{ sx: glassBackdrop }}>
+PaperProps={{ sx: { p: 1 } }}
+>
   <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     {exportResult?.success
       ? <><CheckCircleOutlineIcon color="success" /> 导出成功</>
@@ -2091,8 +2053,8 @@ BackdropProps={{ sx: glassBackdrop }}>
 </Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth
- PaperProps={{ sx: glassDialog }}
-BackdropProps={{ sx: glassBackdrop }}>
+PaperProps={{ sx: { p: 1 } }}
+>
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2}>
