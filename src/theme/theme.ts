@@ -10,12 +10,16 @@ const glassTokens = {
     inputBorder: 'rgba(255, 255, 255, 0.42)',
   },
   dark: {
-    dialog: 'rgba(18, 20, 26, 0.68)',
-    dialogBorder: 'rgba(255, 255, 255, 0.10)',
-    backdrop: 'rgba(0, 0, 0, 0.20)',
-    input: 'rgba(10, 12, 17, 0.58)',
-    inputBorder: 'rgba(255, 255, 255, 0.28)',
-  },
+  // 0.68 太实，背景颜色几乎无法透进 Dialog
+  dialog: 'rgba(13, 16, 22, 0.42)',
+  // 图片中的外边缘是柔和灰白，不需要太亮
+  dialogBorder: 'rgba(255, 255, 255, 0.12)',
+  // 重点：让背景保留颜色，只做失焦，不要压得太黑
+  backdrop: 'rgba(0, 0, 0, 0.08)',
+  // 输入框保持比 Dialog 深一点，才有层级
+  input: 'rgba(8, 10, 15, 0.44)',
+  inputBorder: 'rgba(255, 255, 255, 0.34)',
+},
 };
 
 // 👈 给 mode 加上了 : PaletteMode 类型约束，防止 TS 报错
@@ -37,17 +41,18 @@ export const createAppTheme = (mode: PaletteMode) => {
           paper: {
             borderRadius: 28,
             background: glass.dialog,
-            backdropFilter: 'blur(24px) saturate(135%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(135%)',
-            border: `1px solid ${glass.dialogBorder}`,
-            boxShadow:
-              mode === 'dark'
-                ? `
-                  0 28px 80px rgba(0, 0, 0, 0.68),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.07),
-                  inset 0 -1px 0 rgba(0, 0, 0, 0.30)
-                `
-                : '0 20px 60px rgba(165, 180, 200, 0.25)',
+           backdropFilter: 'blur(12px) saturate(155%)',
+WebkitBackdropFilter: 'blur(12px) saturate(155%)',
+border: `1px solid ${glass.dialogBorder}`,
+boxShadow:
+  mode === 'dark'
+    ? `
+      0 20px 60px rgba(0, 0, 0, 0.48),
+      0 0 0 1px rgba(255, 255, 255, 0.03),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.18)
+    `
+    : '0 20px 60px rgba(165, 180, 200, 0.25)',
             
             '&::-webkit-scrollbar': {
               width: '4px',
@@ -73,8 +78,8 @@ export const createAppTheme = (mode: PaletteMode) => {
         styleOverrides: {
           root: {
             backgroundColor: glass.backdrop,
-            backdropFilter: 'blur(20px) saturate(85%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(85%)',
+backdropFilter: 'blur(28px) saturate(125%) brightness(0.82)',
+WebkitBackdropFilter: 'blur(28px) saturate(125%) brightness(0.82)',
           },
         },
       },
