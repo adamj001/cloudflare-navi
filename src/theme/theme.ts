@@ -1,3 +1,4 @@
+import { PaletteMode } from '@mui/material'; // 👈 引入 MUI 的模式类型
 import { createTheme } from '@mui/material/styles';
 
 const glassTokens = {
@@ -17,7 +18,8 @@ const glassTokens = {
   },
 };
 
-export const createAppTheme = (mode) => {
+// 👈 给 mode 加上了 : PaletteMode 类型约束，防止 TS 报错
+export const createAppTheme = (mode: PaletteMode) => {
   const glass = glassTokens[mode];
   return createTheme({
     palette: {
@@ -25,7 +27,7 @@ export const createAppTheme = (mode) => {
       primary: {
         main: '#00ff9d',
       },
-    }, // 👈 1. 这里之前多了一个大括号导致语法报错
+    },
     typography: {
       fontFamily: 'Roboto, Arial, sans-serif',
     },
@@ -47,7 +49,6 @@ export const createAppTheme = (mode) => {
                 `
                 : '0 20px 60px rgba(165, 180, 200, 0.25)',
             
-            // 👈 2. 滚动条样式已正确移入 paper 内部，确保应用到弹窗容器上
             '&::-webkit-scrollbar': {
               width: '4px',
             },
