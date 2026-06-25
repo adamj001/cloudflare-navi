@@ -35,12 +35,12 @@ background: linear-gradient(to bottom, #121212, #1e1e1e);
 color: #ffffff;
 }
 /* 确保深色模式下 MUI 组件背景也变化 (仅在有 .dark-mode 类时生效) */
-body.dark-mode .MuiPaper-root {
+/* body.dark-mode .MuiPaper-root {
 background-color: #1e1e1e !important;
-}
-body.dark-mode .MuiCard-root {
+} */
+/* body.dark-mode .MuiCard-root {
 background-color: #262626 !important;
-}
+} */
 /* 顶部菜单磨砂玻璃 (保留，但 App.tsx 中已使用 sx 覆盖) */
 .top-bar {
 background: rgba(18, 18, 18, 0.5);
