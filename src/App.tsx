@@ -1295,7 +1295,7 @@ const [exportResult, setExportResult] = useState<{
           onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }}
           sx={{
             position: 'absolute', top: -18, left: -10, zIndex: 10,
-            p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
+            p: 0.2, boxShadow: 1,
             color: 'primary.main',
             '&:hover': { bgcolor: 'primary.main', color: 'black' },
             className: 'tab-action-btn'
@@ -1358,10 +1358,10 @@ const [exportResult, setExportResult] = useState<{
                       </Button>
                       {isAuthenticated && (
                         <>
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(subMenu); setEditGroupOpen(true); }} sx={{ position: 'absolute', top: -6, left: -4, zIndex: 10, p: 0.1, bgcolor: 'background.paper', boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' } }}>
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); setEditingGroup(subMenu); setEditGroupOpen(true); }} sx={{ position: 'absolute', top: -6, left: -4, zIndex: 10, p: 0.1, boxShadow: 1, color: 'primary.main', '&:hover': { bgcolor: 'primary.main', color: 'black' } }}>
                             <EditIcon sx={{ fontSize: '0.65rem' }} />
                           </IconButton>
-                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(subMenu.id!); }} sx={{ position: 'absolute', top: -6, right: -4, zIndex: 10, p: 0.1, bgcolor: 'background.paper', boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' } }}>
+                          <IconButton size="small" onClick={(e) => { e.stopPropagation(); handleGroupDelete(subMenu.id!); }} sx={{ position: 'absolute', top: -6, right: -4, zIndex: 10, p: 0.1, boxShadow: 1, color: 'error.main', '&:hover': { bgcolor: 'error.main', color: 'white' } }}>
                             <DeleteIcon sx={{ fontSize: '0.65rem' }} />
                           </IconButton>
                         </>
@@ -1726,11 +1726,11 @@ const [exportResult, setExportResult] = useState<{
                 <Stack spacing={3} sx={{ mt: 1 }}>
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>站点名称</Typography>
-                    <TextField fullWidth name="name" value={newSite.name || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                    <TextField fullWidth name="name" value={newSite.name || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px' } }} />
                   </Box>
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>网站跳转 URL</Typography>
-                    <TextField fullWidth name="url" value={newSite.url || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                    <TextField fullWidth name="url" value={newSite.url || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px' } }} />
                   </Box>
                   {/* 第一级：选择主菜单 */}
                   <Box>
@@ -1832,7 +1832,7 @@ const [exportResult, setExportResult] = useState<{
                   
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>描述（可选）</Typography>
-                    <TextField fullWidth multiline rows={2} placeholder="简短描述..." name="description" value={newSite.description || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                    <TextField fullWidth multiline rows={2} placeholder="简短描述..." name="description" value={newSite.description || ''} onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '14px' } }} />
                   </Box>
                 </Stack>
               </DialogContent>
@@ -1878,11 +1878,11 @@ const [exportResult, setExportResult] = useState<{
                 <Stack spacing={3} sx={{ mt: 1 }}>
                  <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>站点名称</Typography>
-                    <TextField fullWidth value={editingSite.name || ''} onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                    <TextField fullWidth value={editingSite.name || ''} onChange={(e) => setEditingSite({ ...editingSite, name: e.target.value })} InputProps={{ sx: { borderRadius: '14px' } }} />
                   </Box>
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>网站跳转 URL</Typography>
-                    <TextField fullWidth value={editingSite.url || ''} onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                    <TextField fullWidth value={editingSite.url || ''} onChange={(e) => setEditingSite({ ...editingSite, url: e.target.value })} InputProps={{ sx: { borderRadius: '14px' } }} />
                   </Box> 
                   {/* 1️⃣ 第一级下拉框：永久出现的“所属主菜单” */}
                   <Box>
@@ -1991,7 +1991,7 @@ const [exportResult, setExportResult] = useState<{
                   
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1, opacity: 0.8 }}>描述（可选）</Typography>
-                    <TextField fullWidth multiline rows={2} placeholder="简短描述..." value={editingSite.description || ''} onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })} InputProps={{ sx: { borderRadius: '14px', bgcolor: 'background.paper' } }} />
+                    <TextField fullWidth multiline rows={2} placeholder="简短描述..." value={editingSite.description || ''} onChange={(e) => setEditingSite({ ...editingSite, description: e.target.value })} InputProps={{ sx: { borderRadius: '14px' } }} />
                   </Box>
                   <FormControlLabel control={<Switch checked={editingSite.is_public === 1} onChange={e => setEditingSite({ ...editingSite, is_public: e.target.checked ? 1 : 0 })} />} label="公开可见" sx={{ ml: 0.5, fontWeight: 'bold' }} />
                 </Stack>
