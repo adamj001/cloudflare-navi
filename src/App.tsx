@@ -1560,7 +1560,7 @@ const [exportResult, setExportResult] = useState<{
         </Dialog>
         {/* 登录 */}
 <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}
-}>
+>
   <LoginForm onLogin={handleLogin} loading={loginLoading} error={loginError} />
 </Dialog>
 
@@ -1568,7 +1568,7 @@ const [exportResult, setExportResult] = useState<{
        
               {/* 新增分组 */}
                 <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth
-                }>
+                >
           <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
@@ -1622,7 +1622,7 @@ const [exportResult, setExportResult] = useState<{
         {/* ================= ✨ 新增：编辑分组弹窗 ================= */}
         {/* 编辑分组 */}
 <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
-}
+
 >
 
           <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
@@ -1699,7 +1699,7 @@ const [exportResult, setExportResult] = useState<{
 
           {/* ================= ✨ 双级联动版：新增站点弹窗 ================= */}
        <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth
- }
+ 
 >
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             新增站点
@@ -1846,7 +1846,7 @@ const [exportResult, setExportResult] = useState<{
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
         <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
-}
+
 >
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2006,7 +2006,7 @@ const [exportResult, setExportResult] = useState<{
         </Dialog>
        {/* 导出结果 */}
 <Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth
-}
+
 >
   <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
     {exportResult?.success
@@ -2047,7 +2047,7 @@ const [exportResult, setExportResult] = useState<{
 </Dialog>
         {/* ⚙️ 网站设置弹窗（原本就在这里的代码） */}
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth
-}
+
 >
           <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
           <DialogContent>
