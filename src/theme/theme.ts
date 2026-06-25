@@ -45,7 +45,7 @@ export const createAppTheme = (mode: PaletteMode) => {
       // =========================
       backgroundColor:
         mode === 'dark'
-          ? 'rgba(13, 16, 22, 0.34)'
+          ? 'rgba(13, 16, 22, 0.20)'
           : 'rgba(255, 255, 255, 0.32)',
       // 必须加：防止 MUI dark mode 默认背景叠加
       backgroundImage: 'none',
@@ -108,15 +108,18 @@ export const createAppTheme = (mode: PaletteMode) => {
     },
   },
 },
-      MuiBackdrop: {
-        styleOverrides: {
-          root: {
-            backgroundColor: glass.backdrop,
-backdropFilter: 'blur(28px) saturate(125%) brightness(0.82)',
-WebkitBackdropFilter: 'blur(28px) saturate(125%) brightness(0.82)',
-          },
-        },
-      },
+     MuiBackdrop: {
+  styleOverrides: {
+    root: {
+      backgroundColor: 
+        mode === 'dark' 
+          ? 'rgba(0, 0, 0, 0.15)'   // 轻薄遮罩，不压背景颜色
+          : 'rgba(15, 23, 42, 0.12)',
+      backdropFilter: 'blur(12px) saturate(140%)',  // 去掉 brightness
+      WebkitBackdropFilter: 'blur(12px) saturate(140%)',
+    },
+  },
+},
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
