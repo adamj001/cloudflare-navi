@@ -1,30 +1,27 @@
-import { PaletteMode } from '@mui/material'; // 👈 引入 MUI 的模式类型
+import { PaletteMode } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
 
 const glassTokens = {
   light: {
-    dialog: 'rgba(255, 255, 255, 0.32)',
-    dialogBorder: 'rgba(255, 255, 255, 0.52)',
-    backdrop: 'rgba(15, 23, 42, 0.12)',
-    input: 'rgba(15, 18, 24, 0.34)',
-    inputBorder: 'rgba(255, 255, 255, 0.42)',
+    dialog: 'rgba(255, 255, 255, 0.28)',
+    dialogBorder: 'rgba(255, 255, 255, 0.55)',
+    backdrop: 'rgba(15, 23, 42, 0.10)',
+    input: 'rgba(15, 18, 24, 0.06)',
+    inputBorder: 'rgba(180, 200, 220, 0.55)',
   },
   dark: {
-  // 0.68 太实，背景颜色几乎无法透进 Dialog
-  dialog: 'rgba(13, 16, 22, 0.42)',
-  // 图片中的外边缘是柔和灰白，不需要太亮
-  dialogBorder: 'rgba(255, 255, 255, 0.12)',
-  // 重点：让背景保留颜色，只做失焦，不要压得太黑
-  backdrop: 'rgba(0, 0, 0, 0.08)',
-  // 输入框保持比 Dialog 深一点，才有层级
-  input: 'rgba(8, 10, 15, 0.44)',
-  inputBorder: 'rgba(255, 255, 255, 0.34)',
-},
+    dialog: 'rgba(255, 255, 255, 0.06)',
+    dialogBorder: 'rgba(255, 255, 255, 0.12)',
+    backdrop: 'rgba(0, 0, 0, 0.28)',
+    input: 'rgba(255, 255, 255, 0.05)',
+    inputBorder: 'rgba(255, 255, 255, 0.14)',
+  },
 };
 
-// 👈 给 mode 加上了 : PaletteMode 类型约束，防止 TS 报错
 export const createAppTheme = (mode: PaletteMode) => {
   const glass = glassTokens[mode];
+  const isDark = mode === 'dark';
+
   return createTheme({
     palette: {
       mode,
@@ -36,119 +33,95 @@ export const createAppTheme = (mode: PaletteMode) => {
       fontFamily: 'Roboto, Arial, sans-serif',
     },
     components: {
-     MuiDialog: {
-  styleOverrides: {
-    paper: {
-      borderRadius: 28,
-      // =========================
-      // 1. 核心：玻璃背景
-      // =========================
-      backgroundColor:
-        mode === 'dark'
-          ? 'rgba(13, 16, 22, 0.20)'
-          : 'rgba(255, 255, 255, 0.32)',
-      // 必须加：防止 MUI dark mode 默认背景叠加
-      backgroundImage: 'none',
-      // =========================
-      // 2. 玻璃模糊核心
-      // =========================
-      backdropFilter: 'blur(14px) saturate(155%)',
-      WebkitBackdropFilter: 'blur(14px) saturate(155%)',
-      // =========================
-      // 3. 边框（玻璃关键层次）
-      // =========================
-      border:
-        mode === 'dark'
-          ? '1px solid rgba(255,255,255,0.10)'
-          : '1px solid rgba(255,255,255,0.45)',
-      // =========================
-      // 4. 阴影（避免“黑盒子感”）
-      // =========================
-      boxShadow:
-        mode === 'dark'
-          ? `
-            0 22px 70px rgba(0, 0, 0, 0.45),
-            0 0 0 1px rgba(255, 255, 255, 0.03),
-            inset 0 1px 0 rgba(255, 255, 255, 0.08)
-          `
-          : `
-            0 20px 60px rgba(165, 180, 200, 0.25)
-          `,
-      // =========================
-      // 5. 滚动行为（关键）
-      // =========================
-      overflowY: 'auto',
-      // =========================
-      // 6. 滚动条（细 + 悬浮出现）
-      // =========================
-      scrollbarWidth: 'thin',
-      '&::-webkit-scrollbar': {
-        width: '4px',
+      MuiDialog: {
+        styleOverrides: {
+          // 针对 Dialog 遮罩单独控制，不影响其他组件
+          root: {
+            '& .MuiBackdrop-root': {
+              backgroundColor: isDark
+                ? 'rgba(0, 0, 0, 0.28)'
+                : 'rgba(15, 23, 42, 0.10)',
+              backdropFilter: 'blur(16px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(16px) saturate(140%)',
+            },
+          },
+          paper: {
+            borderRadius: 28,
+            // 核心：极低透明度，让背景透出来
+            backgroundColor: glass.dialog,
+            backgroundImage: 'none',
+            // 玻璃模糊
+            backdropFilter: 'blur(20px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+            // 玻璃边框
+            border: isDark
+              ? `1px solid ${glass.dialogBorder}`
+              : `1px solid ${glass.dialogBorder}`,
+            // 阴影
+            boxShadow: isDark
+              ? `
+                0 22px 70px rgba(0, 0, 0, 0.50),
+                0 0 0 1px rgba(255, 255, 255, 0.03),
+                inset 0 1px 0 rgba(255, 255, 255, 0.10)
+              `
+              : `
+                0 20px 60px rgba(165, 180, 200, 0.30),
+                inset 0 1px 0 rgba(255, 255, 255, 0.80)
+              `,
+            // 滚动条
+            overflowY: 'auto',
+            scrollbarWidth: 'thin',
+            '&::-webkit-scrollbar': {
+              width: '4px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+              margin: '10px 0',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'transparent',
+              borderRadius: '999px',
+            },
+            '&:hover::-webkit-scrollbar-thumb': {
+              background: isDark
+                ? 'rgba(255,255,255,0.18)'
+                : 'rgba(80,100,130,0.22)',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: isDark
+                ? 'rgba(255,255,255,0.28)'
+                : 'rgba(80,100,130,0.32)',
+            },
+          },
+        },
       },
-      '&::-webkit-scrollbar-track': {
-        background: 'transparent',
-        margin: '10px 0',
-      },
-      '&::-webkit-scrollbar-thumb': {
-        background: 'transparent',
-        borderRadius: '999px',
-      },
-      '&:hover::-webkit-scrollbar-thumb': {
-        background:
-          mode === 'dark'
-            ? 'rgba(255,255,255,0.18)'
-            : 'rgba(80,100,130,0.22)',
-      },
-      '&::-webkit-scrollbar-thumb:hover': {
-        background:
-          mode === 'dark'
-            ? 'rgba(255,255,255,0.28)'
-            : 'rgba(80,100,130,0.32)',
-      },
-    },
-  },
-},
-     MuiBackdrop: {
-  styleOverrides: {
-    root: {
-      backgroundColor: 
-        mode === 'dark' 
-          ? 'rgba(0, 0, 0, 0.15)'   // 轻薄遮罩，不压背景颜色
-          : 'rgba(15, 23, 42, 0.12)',
-      backdropFilter: 'blur(12px) saturate(140%)',  // 去掉 brightness
-      WebkitBackdropFilter: 'blur(12px) saturate(140%)',
-    },
-  },
-},
+
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
             borderRadius: 16,
             background: glass.input,
-            backdropFilter: 'blur(14px)',
-            WebkitBackdropFilter: 'blur(14px)',
-            boxShadow:
-              mode === 'dark'
-                ? `
-                  inset 0 1px 8px rgba(0, 0, 0, 0.48),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.10),
-                  0 0 0 1px rgba(255, 255, 255, 0.05)
-                `
-                : 'inset 0 1px 5px rgba(100, 120, 150, 0.10)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            boxShadow: isDark
+              ? `
+                inset 0 1px 8px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                0 0 0 1px rgba(255, 255, 255, 0.04)
+              `
+              : 'inset 0 1px 5px rgba(100, 120, 150, 0.08)',
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor:
-                mode === 'dark'
-                  ? 'rgba(255,255,255,0.42)'
-                  : 'rgba(255,255,255,0.70)',
+              borderColor: isDark
+                ? 'rgba(255,255,255,0.35)'
+                : 'rgba(100,150,255,0.60)',
             },
             '&.Mui-focused': {
-              boxShadow:
-                mode === 'dark'
-                  ? `
-                    inset 0 1px 8px rgba(0, 0, 0, 0.48),
-                    0 0 0 3px rgba(0, 255, 157, 0.13)
-                  `
-                  : '0 0 0 3px rgba(0, 150, 255, 0.12)',
+              boxShadow: isDark
+                ? `
+                  inset 0 1px 8px rgba(0, 0, 0, 0.35),
+                  0 0 0 3px rgba(0, 255, 157, 0.15)
+                `
+                : '0 0 0 3px rgba(0, 150, 255, 0.12)',
             },
           },
           notchedOutline: {
@@ -156,11 +129,20 @@ export const createAppTheme = (mode: PaletteMode) => {
           },
         },
       },
+
       MuiButton: {
         styleOverrides: {
           root: {
             borderRadius: 14,
             textTransform: 'none',
+          },
+        },
+      },
+
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
           },
         },
       },
