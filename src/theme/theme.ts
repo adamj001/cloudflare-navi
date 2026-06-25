@@ -100,9 +100,11 @@ export const createAppTheme = (mode: PaletteMode) => {
         styleOverrides: {
           root: {
             borderRadius: 16,
-            background: glass.input,
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+           background: isDark
+        ? 'rgba(255, 255, 255, 0.05)'   // 改前 glass.input 有颜色 → 极低透明
+        : 'rgba(255, 255, 255, 0.20)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
             boxShadow: isDark
               ? `
                 inset 0 1px 8px rgba(0, 0, 0, 0.35),
