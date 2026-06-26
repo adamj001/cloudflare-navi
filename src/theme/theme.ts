@@ -132,6 +132,35 @@ export const createAppTheme = (mode: PaletteMode) => {
         },
       },
 
+      MuiDialogContent: {
+  styleOverrides: {
+    root: {
+      scrollbarWidth: 'thin',
+      scrollbarColor: isDark
+        ? 'rgba(255,255,255,0.15) transparent'
+        : 'rgba(80,100,130,0.20) transparent',
+      '&::-webkit-scrollbar': {
+        width: '3px',
+      },
+      '&::-webkit-scrollbar-track': {
+        background: 'transparent',
+        margin: '8px 0',
+      },
+      '&::-webkit-scrollbar-thumb': {
+        background: isDark
+          ? 'rgba(255,255,255,0.15)'
+          : 'rgba(80,100,130,0.20)',
+        borderRadius: '999px',
+      },
+      '&::-webkit-scrollbar-thumb:hover': {
+        background: isDark
+          ? 'rgba(255,255,255,0.28)'
+          : 'rgba(80,100,130,0.35)',
+      },
+    },
+  },
+},
+
       MuiButton: {
         styleOverrides: {
           root: {
