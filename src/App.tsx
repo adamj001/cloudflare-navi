@@ -1295,7 +1295,7 @@ const [exportResult, setExportResult] = useState<{
           onClick={(e) => { e.stopPropagation(); setEditingGroup(g); setEditGroupOpen(true); }}
           sx={{
             position: 'absolute', top: -18, left: -10, zIndex: 10,
-            p: 0.2, boxShadow: 1,
+            p: 0.2, bgcolor: 'background.paper', boxShadow: 1,
             color: 'primary.main',
             '&:hover': { bgcolor: 'primary.main', color: 'black' },
             className: 'tab-action-btn'
@@ -1754,12 +1754,14 @@ const [exportResult, setExportResult] = useState<{
                   }
                 }}
                         sx={{
-                          borderRadius: '16px',
-                          bgcolor: darkMode ? '#252932' : '#ffffff',
-                          boxShadow: darkMode ? '3px 3px 6px #0a0b0e, -3px -3px 6px #2d333f' : '3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff',
+                          bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.35)',
+                          backdropFilter: 'blur(8px)',
+                          border: darkMode ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(255,255,255,0.50)',
                           '& fieldset': { border: 'none' },
-                          fontWeight: 700, '.MuiSelect-select': { py: 1.8 }
-                        }}
+                          fontWeight: 700,
+                          borderRadius: '16px',
+                          '.MuiSelect-select': { py: 1.8 }
+                      }}
                       >
                         {groups.filter(g => !g.parent_id).map((mainGroup) => (
                           <MenuItem key={mainGroup.id} value={mainGroup.id}>📁 {mainGroup.name}</MenuItem>
@@ -1780,12 +1782,14 @@ const [exportResult, setExportResult] = useState<{
                           IconComponent={KeyboardArrowDownIcon}
                           onChange={(e) => setNewSite({ ...newSite, group_id: Number(e.target.value) })}
                           sx={{
-                            borderRadius: '16px',
-                            bgcolor: darkMode ? '#1f232b' : '#f4f7fa',
-                            boxShadow: darkMode ? 'inset 2px 2px 5px #0a0b0e, inset -2px -2px 5px #2d333f' : 'inset 2px 2px 5px #c8d0dc, inset -2px -2px 5px #ffffff',
-                            '& fieldset': { border: 'none' },
-                            fontWeight: 700, '.MuiSelect-select': { py: 1.5 }
-                          }}
+                          borderRadius: '16px',
+                          bgcolor: darkMode ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.20)',
+                          backdropFilter: 'blur(8px)',
+                          border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.40)',
+                          '& fieldset': { border: 'none' },
+                          fontWeight: 700,
+                          '.MuiSelect-select': { py: 1.5 }
+                        }}
                         >
                           {mainGroupObj?.sub_menus.map((sub) => (
                             <MenuItem key={sub.id} value={sub.id}>📄 {sub.name}</MenuItem>
@@ -1799,31 +1803,63 @@ const [exportResult, setExportResult] = useState<{
                   <Box>
                     <Typography variant="body2" sx={{ fontWeight: 700, mb: 1.5, opacity: 0.8, fontSize: '0.95rem' }}>Logo 图片链接（可选）</Typography>
                     <Box sx={{ display: 'flex', gap: 1.5, mb: 2, overflowX: 'auto', pb: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
-                      {['Google', 'DDG', 'Horse', 'Direct'].map((name) => (
-                        <Button key={name} variant="contained" size="small"
-                          onClick={() => {
-                            if (!newSite.url) { handleError('请先输入网站跳转 URL'); return; }
-                            const domain = extractDomain(newSite.url);
-                            if (domain) {
-                              const protocol = newSite.url.startsWith('https') ? 'https' : 'http';
-                              const templates: Record<string, string> = {
-                                Google: 'https://www.google.com/s2/favicons?domain={domain}&sz=256',
-                                DDG: 'https://icons.duckduckgo.com/ip3/{domain}.ico',
-                                Horse: 'https://icon.horse/icon/{domain}',
-                                Direct: '{protocol}://{domain}/favicon.ico'
-                              };
-                              setNewSite({ ...newSite, icon: templates[name].replace('{domain}', domain).replace('{protocol}', protocol) });
-                            }
-                          }}
-                          sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 2, py: 0.8, bgcolor: darkMode ? '#252932' : '#ffffff', color: darkMode ? '#ffffff' : '#4a5568', boxShadow: darkMode ? '3px 3px 6px #111318, -3px -3px 6px #2f3542' : '3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff', '&:hover': { bgcolor: 'primary.main', color: 'black', boxShadow: 'none' } }}
-                        >
-                          {name}
-                        </Button>
-                      ))}
+                      {[
+  { name: 'Google', icon: 'https://www.google.com/s2/favicons?domain={domain}&sz=256', preview: `https://www.google.com/s2/favicons?domain=${extractDomain(newSite?.url || 'google.com')}&sz=64` },
+  { name: 'DDG', icon: 'https://icons.duckduckgo.com/ip3/{domain}.ico', preview: `https://icons.duckduckgo.com/ip3/${extractDomain(newSite?.url || 'google.com')}.ico` },
+  { name: 'Horse', icon: 'https://icon.horse/icon/{domain}', preview: `https://icon.horse/icon/${extractDomain(newSite?.url || 'google.com')}` },
+  { name: 'Direct', icon: '{protocol}://{domain}/favicon.ico', preview: `${newSite?.url?.startsWith('https') ? 'https' : 'http'}://${extractDomain(newSite?.url || 'google.com')}/favicon.ico` },
+].map((apiItem) => (
+  <Button key={apiItem.name} variant="contained" size="small"
+    onClick={() => {
+      if (!newSite.url) { handleError('请先输入网站跳转 URL'); return; }
+      const domain = extractDomain(newSite.url);
+      if (domain) {
+        const protocol = newSite.url.startsWith('https') ? 'https' : 'http';
+        setNewSite({ ...newSite, icon: apiItem.icon.replace('{domain}', domain).replace('{protocol}', protocol) });
+      }
+    }}
+    sx={{
+      borderRadius: '12px', textTransform: 'none', fontWeight: 700,
+      px: 1.5, py: 0.8,
+      display: 'flex', alignItems: 'center', gap: 1,
+      bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.50)',
+      backdropFilter: 'blur(8px)',
+      border: darkMode ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(255,255,255,0.60)',
+      color: darkMode ? 'rgba(255,255,255,0.85)' : '#4a5568',
+      boxShadow: 'none',
+      '&:hover': { bgcolor: 'primary.main', color: 'black', border: 'none' }
+    }}
+  >
+    <img
+      src={apiItem.preview}
+      style={{ width: 16, height: 16, objectFit: 'contain', borderRadius: 3 }}
+      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+    />
+    {apiItem.name}
+  </Button>
+))}
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <TextField fullWidth placeholder="或留空自动获取..." value={newSite.icon || ''} name="icon" onChange={handleSiteInputChange} InputProps={{ sx: { borderRadius: '16px', bgcolor: darkMode ? '#14161d' : '#e6ecf4', boxShadow: darkMode ? 'inset 2px 2px 5px #0a0b0e, inset -2px -2px 5px #1e212a' : 'inset 2px 2px 5px #b8b0c5, inset -2px -2px 5px #ffffff', '& fieldset': { border: 'none' }, fontWeight: 600, color: 'text.primary' } }} />
-                      <Box sx={{ width: 56, height: 56, minWidth: 56, borderRadius: '16px', display: 'grid', placeItems: 'center', p: 1, bgcolor: darkMode ? '#252932' : '#ffffff', boxShadow: darkMode ? '4px 4px 10px #0a0b0e, -4px -4px 10px #242932' : '4px 4px 10px #c8d0dc, -4px -4px 10px #ffffff' }}>
+                      <TextField fullWidth placeholder="或留空自动获取..." value={newSite.icon || ''} name="icon" onChange={handleSiteInputChange}
+                      InputProps={{ sx: {
+  borderRadius: '16px',
+  bgcolor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.30)',
+  backdropFilter: 'blur(8px)',
+  '& fieldset': { border: 'none' },
+  border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.50)',
+  fontWeight: 600,
+}}}
+ />
+                      <Box 
+                      sx={{
+                      width: 56, height: 56, minWidth: 56,
+                      borderRadius: '16px',
+                      display: 'grid', placeItems: 'center', p: 1,
+                      bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.40)',
+                      backdropFilter: 'blur(8px)',
+                      border: darkMode ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(255,255,255,0.60)',
+                    }}
+                    >
                         <img src={newSite.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(newSite.url || 'github.com')}&sz=256`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.src = "/logo-transp.svg"; }} />
                       </Box>
                     </Box>
@@ -1908,10 +1944,12 @@ const [exportResult, setExportResult] = useState<{
                         }}
                         sx={{
                           borderRadius: '16px',
-                          bgcolor: darkMode ? '#252932' : '#ffffff',
-                          boxShadow: darkMode ? '3px 3px 6px #0a0b0e, -3px -3px 6px #2d333f' : '3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff',
+                          bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.35)',
+                          backdropFilter: 'blur(8px)',
+                          border: darkMode ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(255,255,255,0.50)',
                           '& fieldset': { border: 'none' },
-                          fontWeight: 700, '.MuiSelect-select': { py: 1.8 }
+                          fontWeight: 700,
+                          '.MuiSelect-select': { py: 1.8 }
                         }}
                       >
                         {/* 这里只纯粹列出顶级主菜单 */}
@@ -1937,10 +1975,12 @@ const [exportResult, setExportResult] = useState<{
                           onChange={(e) => setEditingSite({ ...editingSite, group_id: Number(e.target.value) })}
                           sx={{
                             borderRadius: '16px',
-                            bgcolor: darkMode ? '#1f232b' : '#f4f7fa',
-                            boxShadow: darkMode ? 'inset 2px 2px 5px #0a0b0e, inset -2px -2px 5px #2d333f' : 'inset 2px 2px 5px #c8d0dc, inset -2px -2px 5px #ffffff',
+                            bgcolor: darkMode ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.20)',
+                            backdropFilter: 'blur(8px)',
+                            border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.40)',
                             '& fieldset': { border: 'none' },
-                            fontWeight: 700, '.MuiSelect-select': { py: 1.5 }
+                            fontWeight: 700,
+                            '.MuiSelect-select': { py: 1.5 }
                           }}
                         >
                           {mainGroupObj?.sub_menus.map((sub) => (
@@ -1959,30 +1999,63 @@ const [exportResult, setExportResult] = useState<{
                       Logo 图片链接（可选）
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1.5, mb: 2, overflowX: 'auto', pb: 0.5, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
-                      {[
-                        { name: 'Google', icon: 'https://www.google.com/s2/favicons?domain={domain}&sz=256' },
-                        { name: 'DDG', icon: 'https://icons.duckduckgo.com/ip3/{domain}.ico' },
-                        { name: 'Horse', icon: 'https://icon.horse/icon/{domain}' },
-                        { name: 'Direct', icon: '{protocol}://{domain}/favicon.ico' }
-                      ].map((apiItem) => (
+                     {[
+                       { name: 'Google', icon: 'https://www.google.com/s2/favicons?domain={domain}&sz=256', preview: `https://www.google.com/s2/favicons?domain=${extractDomain(editingSite?.url || 'google.com')}&sz=64` },
+                       { name: 'DDG', icon: 'https://icons.duckduckgo.com/ip3/{domain}.ico', preview: `https://icons.duckduckgo.com/ip3/${extractDomain(editingSite?.url || 'google.com')}.ico` },
+                       { name: 'Horse', icon: 'https://icon.horse/icon/{domain}', preview: `https://icon.horse/icon/${extractDomain(editingSite?.url || 'google.com')}` },
+                       { name: 'Direct', icon: '{protocol}://{domain}/favicon.ico', preview: `${editingSite?.url?.startsWith('https') ? 'https' : 'http'}://${extractDomain(editingSite?.url || 'google.com')}/favicon.ico` },
+                        ].map((apiItem) => (
                         <Button key={apiItem.name} variant="contained" size="small"
                           onClick={() => {
                             if (!editingSite.url) { handleError('请先输入网站跳转 URL'); return; }
-                            const domain = extractDomain(editingSite.url);
-                            if (domain) {
-                              const protocol = editingSite.url.startsWith('https') ? 'https' : 'http';
-                              setEditingSite({ ...editingSite, icon: apiItem.icon.replace('{domain}', domain).replace('{protocol}', protocol) });
-                            }
-                          }}
-                          sx={{ borderRadius: '12px', textTransform: 'none', fontWeight: 700, px: 2, py: 0.8, bgcolor: darkMode ? '#252932' : '#ffffff', color: darkMode ? '#ffffff' : '#4a5568', boxShadow: darkMode ? '3px 3px 6px #111318, -3px -3px 6px #2f3542' : '3px 3px 6px #d1d9e6, -3px -3px 6px #ffffff', '&:hover': { bgcolor: 'primary.main', color: 'black', boxShadow: 'none' } }}
-                        >
-                          {apiItem.name}
-                        </Button>
-                      ))}
+                          const domain = extractDomain(editingSite.url);
+                          if (domain) {
+                            const protocol = editingSite.url.startsWith('https') ? 'https' : 'http';
+                            setEditingSite({ ...editingSite, icon: apiItem.icon.replace('{domain}', domain).replace('{protocol}', protocol) });
+                          }
+                        }}
+                        sx={{
+                        borderRadius: '12px', textTransform: 'none', fontWeight: 700,
+                          px: 1.5, py: 0.8,
+                          display: 'flex', alignItems: 'center', gap: 1,
+                          bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.50)',
+                          backdropFilter: 'blur(8px)',
+                        border: darkMode ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(255,255,255,0.60)',
+                        color: darkMode ? 'rgba(255,255,255,0.85)' : '#4a5568',
+                        boxShadow: 'none',
+                        '&:hover': { bgcolor: 'primary.main', color: 'black', border: 'none' }
+                      }}
+                    >
+                      <img
+                        src={apiItem.preview}
+                        style={{ width: 16, height: 16, objectFit: 'contain', borderRadius: 3 }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      {apiItem.name}
+                      </Button>
+                   ))}
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <TextField fullWidth placeholder="或留空自动获取..." value={editingSite.icon || ''} onChange={(e) => setEditingSite({ ...editingSite, icon: e.target.value })} InputProps={{ sx: { borderRadius: '16px', bgcolor: darkMode ? '#14161d' : '#e6ecf4', boxShadow: darkMode ? 'inset 2px 2px 5px #0a0b0e, inset -2px -2px 5px #1e212a' : 'inset 2px 2px 5px #b8b0c5, inset -2px -2px 5px #ffffff', '& fieldset': { border: 'none' }, fontWeight: 600, color: 'text.primary' } }} />
-                      <Box sx={{ width: 56, height: 56, minWidth: 56, borderRadius: '16px', display: 'grid', placeItems: 'center', p: 1, bgcolor: darkMode ? '#252932' : '#ffffff', boxShadow: darkMode ? '4px 4px 10px #0a0b0e, -4px -4px 10px #242932' : '4px 4px 10px #c8d0dc, -4px -4px 10px #ffffff' }}>
+                      <TextField fullWidth placeholder="或留空自动获取..." value={editingSite.icon || ''} onChange={(e) => setEditingSite({ ...editingSite, icon: e.target.value })} 
+                      InputProps={{ sx: {
+  borderRadius: '16px',
+  bgcolor: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.30)',
+  backdropFilter: 'blur(8px)',
+  '& fieldset': { border: 'none' },
+  border: darkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.50)',
+  fontWeight: 600,
+}}}
+ />
+                      <Box 
+                      sx={{
+                        width: 56, height: 56, minWidth: 56,
+                        borderRadius: '16px',
+                        display: 'grid', placeItems: 'center', p: 1,
+                        bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.40)',
+                        backdropFilter: 'blur(8px)',
+                        border: darkMode ? '1px solid rgba(255,255,255,0.10)' : '1px solid rgba(255,255,255,0.60)',
+                      }}
+                      >
                         <img src={editingSite.icon || `https://www.google.com/s2/favicons?domain=${extractDomain(editingSite.url || 'github.com')}&sz=256`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} onError={(e) => { e.currentTarget.src = "/logo-transp.svg"; }} />
                       </Box>
                     </Box>
