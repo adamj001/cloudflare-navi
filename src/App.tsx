@@ -4,6 +4,7 @@ import { MockNavigationClient } from './API/mock';
 import { GroupWithSites } from './types';
 // import ThemeToggle from './components/ThemeToggle'; // 不再需要
 import LoginForm from './components/LoginForm';
+import ConfirmDialog from './components/ConfirmDialog';
 import SearchBox from './components/SearchBox';
 import WeatherWidget from './components/WeatherWidget';
 import EditGroupDialog from './components/EditGroupDialog';
@@ -328,7 +329,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
     group_id: 0,
     is_public: 1,
   });
-
+  
+  
   const [menuAnchorEl, setMenuAnchorEl] = useState<null | HTMLElement>(null);
   const openMenu = Boolean(menuAnchorEl);
 
@@ -344,6 +346,13 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const [editingSite, setEditingSite] = useState<Site | null>(null);
   const [editGroupOpen, setEditGroupOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<Group | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+  open: boolean;
+  title: string;
+  message: string;
+  confirmColor?: 'error' | 'primary' | 'warning' | 'success';
+  onConfirm: () => void;
+}>({ open: false, title: '', message: '', onConfirm: () => {} });
 
   // 💡 dnd-kit 新增：设置拖拽传感器
  const sensors = useSensors(
@@ -561,14 +570,23 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     }
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+  setConfirmDialog({
+    open: true,
+    title: '退出登录',
+    message: '确认退出管理员登录？',
+    confirmColor: 'error',
+    onConfirm: async () => {
     await api.logout();
     setIsAuthenticated(false);
     setViewMode('readonly');
     setSortMode(SortMode.None);
     await fetchData();
     handleError('已退出登录');
-  };
+    setConfirmDialog(prev => ({ ...prev, open: false }));
+  },
+  });
+};
 
   const fetchConfigs = async () => {
     try {
@@ -669,29 +687,52 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
 
 
   const handleSiteDelete = async (siteId: number) => {
-    if (confirm(`确定删除站点ID: ${siteId} 吗？`)) { 
-        try {
-          await api.deleteSite(siteId);
-          await fetchData();
-        } catch (error) {
-          console.error('删除站点失败:', error);
-          handleError('删除站点失败: ' + (error as Error).message);
-        }
-    }
-  };
+  const site = groups
+    .flatMap(g => [...(g.sites || []), ...(g.sub_menus?.flatMap(s => s.sites || []) || [])])
+    .find(s => s.id === siteId);
 
-  const handleGroupDelete = async (groupId: number) => {
-    if (confirm('警告：删除分组会同时删除该分组下的所有站点！确定删除吗？')) {
-        try {
-            await api.deleteGroup(groupId);
-            await fetchData();
-            handleError('分组已删除');
-        } catch (error) {
-            console.error('删除分组失败:', error);
-            handleError('删除分组失败: ' + (error as Error).message);
-        }
-    }
-  };
+  setConfirmDialog({
+    open: true,
+    title: '删除站点',
+    message: `确认删除「${site?.name || siteId}」？此操作无法撤销。`,
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await api.deleteSite(siteId);
+        await fetchData();
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+      } catch (error) {
+        console.error('删除站点失败:', error);
+        handleError('删除站点失败: ' + (error as Error).message);
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+      }
+    },
+  });
+};
+
+const handleGroupDelete = async (groupId: number) => {
+  const group = groups.find(g => g.id === groupId)
+    ?? groups.flatMap(g => g.sub_menus ?? []).find(s => s.id === groupId);
+
+  setConfirmDialog({
+    open: true,
+    title: '删除分组',
+    message: `确认删除分组「${group?.name}」？该分组下所有站点将一并删除，此操作无法撤销。`,
+    confirmColor: 'error',
+    onConfirm: async () => {
+      try {
+        await api.deleteGroup(groupId);
+        await fetchData();
+        handleError('分组已删除');
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+      } catch (error) {
+        console.error('删除分组失败:', error);
+        handleError('删除分组失败: ' + (error as Error).message);
+        setConfirmDialog(prev => ({ ...prev, open: false }));
+      }
+    },
+  });
+};
 
   const startSiteSort = () => {
     if (!currentGroup || currentGroup.sites.length === 0) {
@@ -1882,8 +1923,7 @@ const [exportResult, setExportResult] = useState<{
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
         <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
-
->
+          >
         
           <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             编辑站点设置
@@ -2179,7 +2219,15 @@ const [exportResult, setExportResult] = useState<{
               </Button>
           </DialogActions>
         </Dialog>
-
+        {/* 确认弹窗 */}
+        <ConfirmDialog
+          open={confirmDialog.open}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmColor={confirmDialog.confirmColor}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
+        />
        {/* 进度条覆盖层，isSyncing 时显示 */}
 {isSyncing && (
   <Box sx={{
