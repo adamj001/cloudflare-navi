@@ -37,6 +37,12 @@ import { UserCog, LogOut, Sun, Moon } from 'lucide-react';
 
 // 引入用于拖拽手柄的图标
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
+import EditNoteIcon from '@mui/icons-material/EditNote';
+import AddLinkIcon from '@mui/icons-material/AddLink';
+import TuneIcon from '@mui/icons-material/Tune';
+import FileUploadIcon from '@mui/icons-material/FileUpload';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 import {
   Container,
@@ -84,8 +90,6 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import SettingsIcon from '@mui/icons-material/Settings';
-import FileUploadIcon from '@mui/icons-material/FileUpload';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import MenuIcon from '@mui/icons-material/Menu';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
@@ -351,6 +355,7 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   title: string;
   message: string;
   confirmColor?: 'error' | 'primary' | 'warning' | 'success';
+  iconType?: 'delete' | 'warning' | 'logout' | 'info';
   onConfirm: () => void;
 }>({ open: false, title: '', message: '', onConfirm: () => {} });
 
@@ -576,6 +581,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     title: '退出登录',
     message: '确认退出管理员登录？',
     confirmColor: 'error',
+    iconType: 'logout',
     onConfirm: async () => {
     await api.logout();
     setIsAuthenticated(false);
@@ -696,6 +702,7 @@ const handleCardAreaPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
     title: '删除站点',
     message: `确认删除「${site?.name || siteId}」？此操作无法撤销。`,
     confirmColor: 'error',
+    iconType: 'delete',
     onConfirm: async () => {
       try {
         await api.deleteSite(siteId);
@@ -719,6 +726,7 @@ const handleGroupDelete = async (groupId: number) => {
     title: '删除分组',
     message: `确认删除分组「${group?.name}」？该分组下所有站点将一并删除，此操作无法撤销。`,
     confirmColor: 'error',
+    iconType: 'delete',
     onConfirm: async () => {
       try {
         await api.deleteGroup(groupId);
@@ -1570,7 +1578,12 @@ const [exportResult, setExportResult] = useState<{
         {/* 导入数据 */}
 <Dialog open={openImport} onClose={handleCloseImport} maxWidth="sm" fullWidth
   >
-          <DialogTitle>导入数据</DialogTitle>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2, position: 'relative', gap: 1.5, pb: 0.5 }}>
+  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'info.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <FileUploadIcon sx={{ fontSize: 20, color: '#fff' }} />
+  </Box>
+  <Typography fontWeight={700} fontSize="1.1rem">导入数据</Typography>
+</DialogTitle>
           <DialogContent>
             <DialogContentText sx={{ mb: 2 }}>请上传您之前导出的 JSON 备份文件。</DialogContentText>
             <input
@@ -1610,9 +1623,16 @@ const [exportResult, setExportResult] = useState<{
               {/* 新增分组 */}
                 <Dialog open={openAddGroup} onClose={handleCloseAddGroup} maxWidth="sm" fullWidth
                 >
-          <DialogTitle>新增分组 <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
-          <DialogContent>
+                  <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 1.5, mt: 1.5, position: 'relative' }}>
+                    <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AddLinkIcon sx={{ fontSize: 20, color: '#000' }} />
+            </Box>
+            <Typography fontWeight={700} fontSize="1.1rem">新增分组</Typography>
+                    <IconButton onClick={handleCloseAddGroup} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton>
+                  </DialogTitle>
+                   <DialogContent>
             <Stack spacing={2} sx={{ mt: 2 }}>
+              
               <TextField autoFocus fullWidth label="分组名称" value={newGroup.name || ''} name="name" onChange={handleGroupInputChange} />
               
               {/* ✨ 新增：选择父级菜单，使其变身为子菜单 */}
@@ -1665,8 +1685,12 @@ const [exportResult, setExportResult] = useState<{
 <Dialog open={editGroupOpen} onClose={() => setEditGroupOpen(false)} maxWidth="sm" fullWidth
 
 >
-
-          <DialogTitle>编辑分组 <IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, pb: 0.5, mb: 3, mt: 1.5, position: 'relative' }}>
+  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'warning.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <TuneIcon sx={{ fontSize: 20, color: '#000' }} />
+  </Box>
+  <Typography fontWeight={700} fontSize="1.1rem">编辑分组</Typography><IconButton onClick={() => setEditGroupOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton>
+         </DialogTitle>
              {editingGroup && (          
             <DialogContent>
               <Stack spacing={2} sx={{ mt: 2 }}>
@@ -1742,12 +1766,15 @@ const [exportResult, setExportResult] = useState<{
        <Dialog open={openAddSite} onClose={handleCloseAddSite} maxWidth="sm" fullWidth
  
 >
-          <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            新增站点
-            <IconButton onClick={handleCloseAddSite} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
+         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 0.5, justifyContent: 'center', mb: 1.5, mt: 1.5,position: 'relative' }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <AddLinkIcon sx={{ fontSize: 20, color: '#000' }} />
+            </Box>
+            <Typography fontWeight={700} fontSize="1.1rem">新增站点</Typography>
+            <IconButton onClick={handleCloseAddSite} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton>
           </DialogTitle>
           
-          {(() => {
+          {(() => { 
   let selectedGroup = groups.find(g => g.id === newSite.group_id);
   let currentMainGroupId: number;
 
@@ -1923,12 +1950,14 @@ const [exportResult, setExportResult] = useState<{
         
           {/* ================= ✨ 双级联动版：编辑站点弹窗 ================= */}
         <Dialog open={editSiteOpen} onClose={() => setEditSiteOpen(false)} maxWidth="sm" fullWidth
-          >
-        
-          <DialogTitle sx={{ fontWeight: 800, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            编辑站点设置
-            <IconButton onClick={() => setEditSiteOpen(false)} sx={{ bgcolor: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)' }}><CloseIcon /></IconButton>
-          </DialogTitle>
+          >        
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 1.5, mt: 1.5, position: 'relative' }}>
+  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'warning.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <TuneIcon sx={{ fontSize: 20, color: '#000' }} />
+  </Box>
+  <Typography fontWeight={700} fontSize="1.1rem">编辑站点</Typography>
+  <IconButton onClick={() => setEditSiteOpen(false)} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton>
+</DialogTitle>
 
           {editingSite && (() => {
   // 先在顶级菜单里找
@@ -2162,7 +2191,13 @@ const [exportResult, setExportResult] = useState<{
         <Dialog open={openConfig} onClose={handleCloseConfig} maxWidth="sm" fullWidth
 
 >
-          <DialogTitle>网站设置 <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton></DialogTitle>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 0.5 }}>
+  <Box sx={{ width: 36, height: 36, borderRadius: '10px', bgcolor: 'secondary.main', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <SettingsIcon sx={{ fontSize: 20, color: '#fff' }} />
+  </Box>
+  <Typography fontWeight={700} fontSize="1.1rem">网站设置</Typography>
+  <IconButton onClick={handleCloseConfig} sx={{ position: 'absolute', right: 8, top: 8 }}><CloseIcon /></IconButton>
+</DialogTitle>
           <DialogContent>
             <Stack spacing={2}>
               <TextField label="网站标题" value={tempConfigs['site.title']} onChange={handleConfigInputChange} name="site.title" fullWidth />
@@ -2225,6 +2260,7 @@ const [exportResult, setExportResult] = useState<{
           title={confirmDialog.title}
           message={confirmDialog.message}
           confirmColor={confirmDialog.confirmColor}
+          iconType={confirmDialog.iconType}
           onConfirm={confirmDialog.onConfirm}
           onCancel={() => setConfirmDialog(prev => ({ ...prev, open: false }))}
         />
