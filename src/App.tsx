@@ -908,23 +908,44 @@ const [exportResult, setExportResult] = useState<{
     setIsSyncing(true);
     setSyncStatusText('正在整理数据...');
 
-    const allSites: Site[] = [];
-    groups.forEach((group) => {
-      if (group.sites?.length) allSites.push(...group.sites);
-      group.sub_menus?.forEach(sub => {
-        if (sub.sites?.length) allSites.push(...sub.sites);
-      });
-    });
-
     const exportData = {
+      // 顶层菜单，带上完整的 sub_menus 结构
       groups: groups.map((group) => ({
         id: group.id,
         name: group.name,
         order_num: group.order_num,
+        sites: (group.sites || []).map(site => ({
+          id: site.id,
+          group_id: group.id,
+          sub_menu_id: null, // 顶层菜单直属站点
+          name: site.name,
+          url: site.url,
+          icon: site.icon,
+          description: site.description,
+          notes: site.notes,
+          order_num: site.order_num,
+          is_public: site.is_public,
+        })),
+        sub_menus: (group.sub_menus || []).map(sub => ({
+          id: sub.id,
+          name: sub.name,
+          order_num: sub.order_num,
+          sites: (sub.sites || []).map(site => ({
+            id: site.id,
+            group_id: group.id,
+            sub_menu_id: sub.id, // 明确标记属于哪个子菜单
+            name: site.name,
+            url: site.url,
+            icon: site.icon,
+            description: site.description,
+            notes: site.notes,
+            order_num: site.order_num,
+            is_public: site.is_public,
+          })),
+        })),
       })),
-      sites: allSites,
       configs: configs,
-      version: '1.0',
+      version: '2.0', // 建议升级版本号，标记这是带子菜单的新格式
       exportDate: new Date().toISOString(),
     };
 
@@ -938,16 +959,21 @@ const [exportResult, setExportResult] = useState<{
 
     setIsSyncing(false);
 
-    // 显示成功 Dialog
+    const allSiteCount = exportData.groups.reduce((sum, g) => 
+      sum + g.sites.length + g.sub_menus.reduce((s, sub) => s + sub.sites.length, 0), 0
+    );
+    const subMenuCount = exportData.groups.reduce((sum, g) => sum + g.sub_menus.length, 0);
+
     setExportResult({
       success: true,
       fileName: exportFileName,
       groupCount: groups.length,
-      siteCount: allSites.length,
+      subMenuCount: subMenuCount,
+      siteCount: allSiteCount,
       fileSize: (new Blob([dataStr]).size / 1024).toFixed(1),
     });
     setOpenExportResult(true);
-
+  
   } catch (error) {
     setIsSyncing(false);
     setExportResult({ success: false, error: (error as Error).message });
