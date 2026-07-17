@@ -898,6 +898,7 @@ const [exportResult, setExportResult] = useState<{
   success: boolean;
   fileName?: string;
   groupCount?: number;
+  subMenuCount?: number;  // ← 加这一行
   siteCount?: number;
   fileSize?: string;
   error?: string;
@@ -908,8 +909,7 @@ const [exportResult, setExportResult] = useState<{
     setIsSyncing(true);
     setSyncStatusText('正在整理数据...');
 
-    // 1. 保留原来的平铺 sites（旧系统导入用这个）
-    const allSites = [];
+    const allSites: Site[] = [];  // ← 显式标注类型
     groups.forEach((group) => {
       if (group.sites?.length) {
         allSites.push(...group.sites.map(site => ({
@@ -923,18 +923,17 @@ const [exportResult, setExportResult] = useState<{
           allSites.push(...sub.sites.map(site => ({
             ...site,
             group_id: group.id,
-            sub_menu_id: sub.id, // 新增字段，标记子菜单归属；旧系统会忽略这个多余字段，不影响它
+            sub_menu_id: sub.id,
           })));
         }
       });
     });
 
-    // 2. 额外附上完整的子菜单结构（新系统导入用这个，旧系统会忽略）
     const subMenusData = groups
       .filter(g => g.sub_menus?.length)
       .map(g => ({
         group_id: g.id,
-        sub_menus: g.sub_menus.map(sub => ({
+        sub_menus: g.sub_menus!.map(sub => ({
           id: sub.id,
           name: sub.name,
           order_num: sub.order_num,
@@ -947,10 +946,10 @@ const [exportResult, setExportResult] = useState<{
         name: group.name,
         order_num: group.order_num,
       })),
-      sites: allSites,           // 旧系统 & 新系统都能读：平铺结构 + sub_menu_id 字段
-      subMenusData: subMenusData, // 新增字段，仅新系统用来重建子菜单
+      sites: allSites,
+      subMenusData: subMenusData,
       configs: configs,
-      version: '1.1', // 小版本升级，标记带了 sub_menu_id
+      version: '1.1',
       exportDate: new Date().toISOString(),
     };
 
