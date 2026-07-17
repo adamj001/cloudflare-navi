@@ -968,7 +968,7 @@ const [exportResult, setExportResult] = useState<{
       success: true,
       fileName: exportFileName,
       groupCount: groups.length,
-      subMenuCount: subMenuCount,
+       // subMenuCount: subMenuCount,
       siteCount: allSiteCount,
       fileSize: (new Blob([dataStr]).size / 1024).toFixed(1),
     });
