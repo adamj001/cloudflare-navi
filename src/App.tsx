@@ -908,44 +908,49 @@ const [exportResult, setExportResult] = useState<{
     setIsSyncing(true);
     setSyncStatusText('正在整理数据...');
 
+    // 1. 保留原来的平铺 sites（旧系统导入用这个）
+    const allSites = [];
+    groups.forEach((group) => {
+      if (group.sites?.length) {
+        allSites.push(...group.sites.map(site => ({
+          ...site,
+          group_id: group.id,
+          sub_menu_id: null,
+        })));
+      }
+      group.sub_menus?.forEach(sub => {
+        if (sub.sites?.length) {
+          allSites.push(...sub.sites.map(site => ({
+            ...site,
+            group_id: group.id,
+            sub_menu_id: sub.id, // 新增字段，标记子菜单归属；旧系统会忽略这个多余字段，不影响它
+          })));
+        }
+      });
+    });
+
+    // 2. 额外附上完整的子菜单结构（新系统导入用这个，旧系统会忽略）
+    const subMenusData = groups
+      .filter(g => g.sub_menus?.length)
+      .map(g => ({
+        group_id: g.id,
+        sub_menus: g.sub_menus.map(sub => ({
+          id: sub.id,
+          name: sub.name,
+          order_num: sub.order_num,
+        })),
+      }));
+
     const exportData = {
-      // 顶层菜单，带上完整的 sub_menus 结构
       groups: groups.map((group) => ({
         id: group.id,
         name: group.name,
         order_num: group.order_num,
-        sites: (group.sites || []).map(site => ({
-          id: site.id,
-          group_id: group.id,
-          sub_menu_id: null, // 顶层菜单直属站点
-          name: site.name,
-          url: site.url,
-          icon: site.icon,
-          description: site.description,
-          notes: site.notes,
-          order_num: site.order_num,
-          is_public: site.is_public,
-        })),
-        sub_menus: (group.sub_menus || []).map(sub => ({
-          id: sub.id,
-          name: sub.name,
-          order_num: sub.order_num,
-          sites: (sub.sites || []).map(site => ({
-            id: site.id,
-            group_id: group.id,
-            sub_menu_id: sub.id, // 明确标记属于哪个子菜单
-            name: site.name,
-            url: site.url,
-            icon: site.icon,
-            description: site.description,
-            notes: site.notes,
-            order_num: site.order_num,
-            is_public: site.is_public,
-          })),
-        })),
       })),
+      sites: allSites,           // 旧系统 & 新系统都能读：平铺结构 + sub_menu_id 字段
+      subMenusData: subMenusData, // 新增字段，仅新系统用来重建子菜单
       configs: configs,
-      version: '2.0', // 建议升级版本号，标记这是带子菜单的新格式
+      version: '1.1', // 小版本升级，标记带了 sub_menu_id
       exportDate: new Date().toISOString(),
     };
 
@@ -959,17 +964,14 @@ const [exportResult, setExportResult] = useState<{
 
     setIsSyncing(false);
 
-    const allSiteCount = exportData.groups.reduce((sum, g) => 
-      sum + g.sites.length + g.sub_menus.reduce((s, sub) => s + sub.sites.length, 0), 0
-    );
-    const subMenuCount = exportData.groups.reduce((sum, g) => sum + g.sub_menus.length, 0);
+    const subMenuCount = groups.reduce((sum, g) => sum + (g.sub_menus?.length || 0), 0);
 
     setExportResult({
       success: true,
       fileName: exportFileName,
       groupCount: groups.length,
-       // subMenuCount: subMenuCount,
-      siteCount: allSiteCount,
+      subMenuCount,
+      siteCount: allSites.length,
       fileSize: (new Blob([dataStr]).size / 1024).toFixed(1),
     });
     setOpenExportResult(true);
