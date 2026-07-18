@@ -909,47 +909,44 @@ const [exportResult, setExportResult] = useState<{
     setIsSyncing(true);
     setSyncStatusText('正在整理数据...');
 
-    const allSites: Site[] = [];  // ← 显式标注类型
+    const allGroups: Group[] = [];
+    const allSites: Site[] = [];
+
     groups.forEach((group) => {
+      // 顶级菜单本身
+      allGroups.push({
+        id: group.id,
+        name: group.name,
+        order_num: group.order_num,
+        parent_id: null,
+        is_public: group.is_public,
+      });
+
       if (group.sites?.length) {
-        allSites.push(...group.sites.map(site => ({
-          ...site,
-          group_id: group.id,
-          sub_menu_id: null,
-        })));
+        allSites.push(...group.sites); // ✨ 站点自带正确的 group_id，不用改
       }
-      group.sub_menus?.forEach(sub => {
+
+      group.sub_menus?.forEach((sub) => {
+        // 子菜单本身也作为一条 group 记录导出，带上 parent_id
+        allGroups.push({
+          id: sub.id,
+          name: sub.name,
+          order_num: sub.order_num,
+          parent_id: group.id,
+          is_public: sub.is_public,
+        });
+
         if (sub.sites?.length) {
-          allSites.push(...sub.sites.map(site => ({
-            ...site,
-            group_id: group.id,
-            sub_menu_id: sub.id,
-          })));
+          allSites.push(...sub.sites); // ✨ 同样不用改 group_id，它本来就是对的
         }
       });
     });
 
-    const subMenusData = groups
-      .filter(g => g.sub_menus?.length)
-      .map(g => ({
-        group_id: g.id,
-        sub_menus: g.sub_menus!.map(sub => ({
-          id: sub.id,
-          name: sub.name,
-          order_num: sub.order_num,
-        })),
-      }));
-
-    const exportData = {
-      groups: groups.map((group) => ({
-        id: group.id,
-        name: group.name,
-        order_num: group.order_num,
-      })),
+    const exportData: ExportData = {
+      groups: allGroups,
       sites: allSites,
-      subMenusData: subMenusData,
-      configs: configs,
-      version: '1.1',
+      configs,
+      version: '1.0', // 建议改回 '1.0'，跟后端一致，避免以后有代码去判断 version 号
       exportDate: new Date().toISOString(),
     };
 
@@ -974,7 +971,6 @@ const [exportResult, setExportResult] = useState<{
       fileSize: (new Blob([dataStr]).size / 1024).toFixed(1),
     });
     setOpenExportResult(true);
-  
   } catch (error) {
     setIsSyncing(false);
     setExportResult({ success: false, error: (error as Error).message });
@@ -1041,7 +1037,8 @@ const [exportResult, setExportResult] = useState<{
         await fetchConfigs();
 
         setSyncProgress(100);
-        setSyncStatusText('导入成功！');
+        setSyncStatusText(`导入成功！分组: 新建 ${result.stats?.groups.created} / 合并 ${result.stats?.groups.merged}，站点: 新建 ${result.stats?.sites.created} / 更新 ${result.stats?.sites.updated} / 跳过 ${result.stats?.sites.skipped}`
+        );
 
         handleCloseImport();
         handleError('导入成功！');

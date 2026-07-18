@@ -932,30 +932,37 @@ export class NavigationAPI {
       };
 
       // 导入分组数据
-      for (const group of data.groups) {
-        const existingGroup = await this.getGroupByName(group.name);
+     // 导入分组数据 —— ✨ 先处理主菜单(parent_id为空)，再处理子菜单，保证父级先入库
+const sortedGroups = [...data.groups].sort((a, b) => {
+  const aIsRoot = a.parent_id === null || a.parent_id === undefined ? 0 : 1;
+  const bIsRoot = b.parent_id === null || b.parent_id === undefined ? 0 : 1;
+  return aIsRoot - bIsRoot;
+});
 
-        if (existingGroup) {
-          if (group.id) {
-            groupMap.set(group.id, existingGroup.id as number);
-          }
-          stats.groups.merged++;
-        } else {
-          // ✨ 导入时映射 parent_id
-          const newGroupId = group.parent_id ? groupMap.get(group.parent_id) : null;
-          const newGroup = await this.createGroup({
-            name: group.name,
-            order_num: group.order_num,
-            parent_id: newGroupId, // 设置映射后的新父级 ID
-            is_public: group.is_public ?? 1,
-          });
+for (const group of sortedGroups) {
+  const existingGroup = await this.getGroupByName(group.name);
 
-          if (group.id && newGroup.id) {
-            groupMap.set(group.id, newGroup.id);
-          }
-          stats.groups.created++;
-        }
-      }
+  if (existingGroup) {
+    if (group.id) {
+      groupMap.set(group.id, existingGroup.id as number);
+    }
+    stats.groups.merged++;
+  } else {
+    // parent_id 存在但映射不到（父级导入失败/缺失）时，明确降级为顶级菜单，而不是留 undefined
+    const newGroupId = group.parent_id ? (groupMap.get(group.parent_id) ?? null) : null;
+    const newGroup = await this.createGroup({
+      name: group.name,
+      order_num: group.order_num,
+      parent_id: newGroupId,
+      is_public: group.is_public ?? 1,
+    });
+
+    if (group.id && newGroup.id) {
+      groupMap.set(group.id, newGroup.id);
+    }
+    stats.groups.created++;
+  }
+}
 
       // 导入站点数据
       for (const site of data.sites) {

@@ -1,4 +1,4 @@
-import { Group, Site, LoginResponse, ExportData, ImportResult, GroupWithSites } from './http';
+import { Group, Site, LoginResponse, ExportData, ImportResult, GroupTreeNode } from './http';
 
 export class NavigationClient {
   private baseUrl: string;
@@ -134,7 +134,7 @@ export class NavigationClient {
   }
 
   // 获取所有分组及其站点 (使用 JOIN 优化,避免 N+1 查询)
-  async getGroupsWithSites(): Promise<GroupWithSites[]> {
+  async getGroupsWithSites(): Promise<GroupTreeNode[]> {
     return this.request('groups-with-sites');
   }
 

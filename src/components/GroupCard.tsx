@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Site, Group } from '../API/http';
 import SiteCard from './SiteCard';
-import { GroupWithSites } from '../types';
+import { GroupTreeNode } from '../API/http';
 import EditGroupDialog from './EditGroupDialog';
 import {
   DndContext,
@@ -39,7 +39,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 // 更新组件属性接口
 interface GroupCardProps {
-  group: GroupWithSites;
+  group: GroupTreeNode;
   index?: number; // 用于Draggable的索引，仅在分组排序模式下需要
   sortMode: 'None' | 'GroupSort' | 'SiteSort';
   currentSortingGroupId: number | null;
@@ -429,9 +429,54 @@ const GroupCard: React.FC<GroupCardProps> = ({
 
       {/* 使用 Collapse 组件包装站点卡片区域 */}
       <Collapse in={!isCollapsed} timeout='auto'>
-        {renderSites()}
-      </Collapse>
+  {renderSites()}
+  {renderSubMenus()}
+</Collapse>
+      // 渲染子菜单区域（每个子菜单是一个小标题 + 站点网格）
+const renderSubMenus = () => {
+  if (!group.sub_menus || group.sub_menus.length === 0) return null;
 
+  return (
+    <Box sx={{ mt: 3 }}>
+      {group.sub_menus.map((subMenu) => (
+        <Box key={subMenu.id} sx={{ mb: 3 }}>
+          <Typography
+            variant='subtitle1'
+            fontWeight='600'
+            color='text.secondary'
+            sx={{ mb: 1, pl: 1, borderLeft: 3, borderColor: 'primary.main' }}
+          >
+            {subMenu.name}
+            <Typography component='span' variant='body2' color='text.secondary' sx={{ ml: 1 }}>
+              ({subMenu.sites.length})
+            </Typography>
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', margin: -1 }}>
+            {subMenu.sites.map((site) => (
+              <Box
+                key={site.id}
+                sx={{
+                  width: { xs: '100%', sm: '50%', md: '33.33%', lg: '25%', xl: '20%' },
+                  padding: 1,
+                  boxSizing: 'border-box',
+                }}
+              >
+                <SiteCard
+                  site={site}
+                  onUpdate={onUpdate}
+                  onDelete={onDelete}
+                  isEditMode={false}
+                  viewMode={viewMode}
+                  iconApi={configs?.['site.iconApi']}
+                />
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      ))}
+    </Box>
+  );
+};
       {/* 编辑分组弹窗 */}
       {onUpdateGroup && onDeleteGroup && (
         <EditGroupDialog

@@ -4,7 +4,7 @@ import {
   LoginResponse,
   ExportData,
   ImportResult,
-  GroupWithSites,
+  GroupTreeNode,
   normalizeImportData,
 } from './http';
 
@@ -14,7 +14,8 @@ const mockGroups: Group[] = [
     id: 1,
     name: '常用工具',
     order_num: 1,
-    is_public: 1, // 公开分组
+    parent_id: null, // 顶级菜单
+    is_public: 1,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
@@ -22,7 +23,8 @@ const mockGroups: Group[] = [
     id: 2,
     name: '开发资源',
     order_num: 2,
-    is_public: 1, // 公开分组
+    parent_id: null, // 顶级菜单
+    is_public: 1,
     created_at: '2024-01-01T20:00:00Z',
     updated_at: '2024-01-01T30:00:00Z',
   },
@@ -30,9 +32,19 @@ const mockGroups: Group[] = [
     id: 3,
     name: '私密分组',
     order_num: 3,
-    is_public: 0, // 私密分组（仅管理员可见）
+    parent_id: null,
+    is_public: 0,
     created_at: '2024-01-01T40:00:00Z',
     updated_at: '2024-01-01T50:00:00Z',
+  },
+  {
+    id: 4,
+    name: '前端框架', // ✨ 新增示例子菜单
+    order_num: 1,
+    parent_id: 2, // 挂在"开发资源"下面
+    is_public: 1,
+    created_at: '2024-01-01T20:00:00Z',
+    updated_at: '2024-01-01T30:00:00Z',
   },
 ];
 
@@ -99,6 +111,19 @@ const mockSites: Site[] = [
     notes: '',
     order_num: 1,
     is_public: 1, // 公开站点（但属于私密分组）
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: 1,
+    group_id: 4,
+    name: 'Git',
+    url: 'https://github.com',
+    icon: 'https://img.zhengmi.org/file/1742480539412_微信图片_20240707011628.jpg',
+    description: '代码托管平台',
+    notes: '',
+    order_num: 1,
+    is_public: 1, // 公开站点
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
   },
@@ -199,15 +224,13 @@ export class MockNavigationClient {
   }
 
   // 获取所有分组及其站点 (使用 JOIN 优化,避免 N+1 查询)
-  async getGroupsWithSites(): Promise<GroupWithSites[]> {
+ async getGroupsWithSites(): Promise<GroupTreeNode[]> {
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     let groups = [...mockGroups];
     let sites = [...mockSites];
 
-    // 根据认证状态过滤
     if (!this.isAuthenticated) {
-      // 访客只能看到公开分组下的公开站点
       groups = groups.filter((g) => g.is_public === 1);
       const publicGroupIds = groups.map((g) => g.id!);
       sites = sites.filter(
@@ -215,12 +238,32 @@ export class MockNavigationClient {
       );
     }
 
-    // 组合分组和站点
-    return groups.map((group) => ({
-      ...group,
-      id: group.id!, // 确保 id 存在
-      sites: sites.filter((site) => site.group_id === group.id),
-    }));
+    const allNodesMap = new Map<number, GroupTreeNode>();
+    const rootNodes: GroupTreeNode[] = [];
+
+    for (const group of groups) {
+      allNodesMap.set(group.id!, {
+        ...group,
+        id: group.id!,
+        sites: sites.filter((s) => s.group_id === group.id),
+        sub_menus: [],
+      });
+    }
+
+    for (const node of allNodesMap.values()) {
+      if (node.parent_id === null || node.parent_id === undefined) {
+        rootNodes.push(node);
+      } else {
+        const parentNode = allNodesMap.get(node.parent_id);
+        if (parentNode) {
+          parentNode.sub_menus.push(node);
+        } else {
+          rootNodes.push(node);
+        }
+      }
+    }
+
+    return rootNodes;
   }
 
   async getGroup(id: number): Promise<Group | null> {
@@ -425,36 +468,41 @@ export class MockNavigationClient {
       const groupMap = new Map<number, number>();
 
       // 处理分组
-      for (const importGroup of data.groups) {
-        // 检查是否存在同名分组
-        const existingGroupIndex = mockGroups.findIndex((g) => g.name === importGroup.name);
+      // 处理分组 —— ✨ 同样先处理顶级菜单
+const sortedGroups = [...data.groups].sort((a, b) => {
+  const aIsRoot = a.parent_id === null || a.parent_id === undefined ? 0 : 1;
+  const bIsRoot = b.parent_id === null || b.parent_id === undefined ? 0 : 1;
+  return aIsRoot - bIsRoot;
+});
 
-        if (existingGroupIndex >= 0) {
-          // 已存在同名分组，添加到映射
-          const existingGroup = mockGroups[existingGroupIndex];
-          if (importGroup.id && existingGroup && existingGroup.id) {
-            groupMap.set(importGroup.id, existingGroup.id);
-          }
-          stats.groups.merged++;
-        } else {
-          // 创建新分组
-          const newId = Math.max(0, ...mockGroups.map((g) => g.id || 0)) + 1;
-          const newGroup = {
-            ...importGroup,
-            id: newId,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
+for (const importGroup of sortedGroups) {
+  const existingGroupIndex = mockGroups.findIndex((g) => g.name === importGroup.name);
 
-          mockGroups.push(newGroup);
+  if (existingGroupIndex >= 0) {
+    const existingGroup = mockGroups[existingGroupIndex];
+    if (importGroup.id && existingGroup && existingGroup.id) {
+      groupMap.set(importGroup.id, existingGroup.id);
+    }
+    stats.groups.merged++;
+  } else {
+    const newId = Math.max(0, ...mockGroups.map((g) => g.id || 0)) + 1;
+    const newGroup = {
+      ...importGroup,
+      id: newId,
+      // ✨ 修正：parent_id 要映射成新 ID，而不是直接沿用旧 ID
+      parent_id: importGroup.parent_id ? (groupMap.get(importGroup.parent_id) ?? null) : null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
 
-          // 添加到映射
-          if (importGroup.id) {
-            groupMap.set(importGroup.id, newId);
-          }
-          stats.groups.created++;
-        }
-      }
+    mockGroups.push(newGroup);
+
+    if (importGroup.id) {
+      groupMap.set(importGroup.id, newId);
+    }
+    stats.groups.created++;
+  }
+}
 
       // 处理站点
       for (const importSite of data.sites) {
