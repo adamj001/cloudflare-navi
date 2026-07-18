@@ -433,7 +433,7 @@ const GroupCard: React.FC<GroupCardProps> = ({
   {renderSubMenus()}
 </Collapse>
       // 渲染子菜单区域（每个子菜单是一个小标题 + 站点网格）
-const renderSubMenus = () => {
+const renderSubMenus = () = {
   if (!group.sub_menus || group.sub_menus.length === 0) return null;
 
   return (
