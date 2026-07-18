@@ -942,7 +942,7 @@ const [exportResult, setExportResult] = useState<{
       });
     });
 
-    const exportData: ExportData = {
+    const exportData = {
       groups: allGroups,
       sites: allSites,
       configs,
