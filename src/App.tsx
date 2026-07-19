@@ -102,7 +102,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { createAppTheme } from './theme/theme';
-
+import ImportResultDialog, { ImportResultData } from './components/ImportResultDialog';
 
 const isDevEnvironment = import.meta.env.DEV;
 const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -342,7 +342,8 @@ const [groups, setGroups] = useState<GroupTreeNode[]>([]);
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [importLoading, setImportLoading] = useState(false);
-
+const [importResult, setImportResult] = useState<ImportResultData | null>(null);
+const [openImportResult, setOpenImportResult] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
 
@@ -1000,7 +1001,7 @@ const [exportResult, setExportResult] = useState<{
   };
 
  const handleImportData = async (file?: File) => {
-  const targetFile = file ?? importFile;  // 优先用传入的，没有就用 state 里的
+  const targetFile = file ?? importFile;
   if (!targetFile) {
     handleError('请选择要导入的文件');
     return;
@@ -1037,21 +1038,28 @@ const [exportResult, setExportResult] = useState<{
         await fetchConfigs();
 
         setSyncProgress(100);
-        setSyncStatusText(`导入成功！分组: 新建 ${result.stats?.groups.created} / 合并 ${result.stats?.groups.merged}，站点: 新建 ${result.stats?.sites.created} / 更新 ${result.stats?.sites.updated} / 跳过 ${result.stats?.sites.skipped}`
-        );
+        setSyncStatusText('导入成功！');
 
         handleCloseImport();
-        handleError('导入成功！');
+
+        // ✨ 关键：把结果存进 state，打开结果弹窗
+        setImportResult({ success: true, stats: result.stats });
+        setOpenImportResult(true);
 
         setTimeout(() => {
-          setIsSyncing(false);
+          setIsSyncing(false); // 只关闭进度遮罩，不影响 openImportResult
           setSyncProgress(0);
           setSyncStatusText('');
         }, 1000);
 
       } catch (error) {
         console.error('解析导入数据失败:', error);
-        handleError('解析导入数据失败: ' + (error instanceof Error ? error.message : '未知错误'));
+        // ✨ 失败也走结果弹窗
+        setImportResult({
+          success: false,
+          error: error instanceof Error ? error.message : '未知错误',
+        });
+        setOpenImportResult(true);
         setIsSyncing(false);
         setSyncProgress(0);
       } finally {
@@ -1068,7 +1076,8 @@ const [exportResult, setExportResult] = useState<{
 
   } catch (error) {
     console.error('导入数据失败:', error);
-    handleError('导入数据失败: ' + (error as Error).message);
+    setImportResult({ success: false, error: (error as Error).message });
+    setOpenImportResult(true);
     setIsSyncing(false);
     setSyncProgress(0);
   }
@@ -1636,6 +1645,13 @@ const [exportResult, setExportResult] = useState<{
             </Button>
           </DialogActions>
         </Dialog>
+        {/* 导入结果 */}
+        <ImportResultDialog
+  open={openImportResult}
+  result={importResult}
+  onClose={() => setOpenImportResult(false)}
+/>
+
         {/* 登录 */}
 <Dialog open={isAuthRequired && !isAuthenticated} onClose={() => setIsAuthRequired(false)}
 >
@@ -2170,6 +2186,7 @@ const [exportResult, setExportResult] = useState<{
             <Button variant="contained" onClick={async () => { if (editingSite?.id) { await api.updateSite(editingSite.id, editingSite); await fetchData(); setEditSiteOpen(false); handleError('保存成功！'); } }} sx={{ borderRadius: '12px', px: 3, fontWeight: 700, textTransform: 'none', boxShadow: 'none' }}>保存修改</Button>
           </DialogActions>
         </Dialog>
+        
        {/* 导出结果 */}
 <Dialog open={openExportResult} onClose={() => setOpenExportResult(false)} maxWidth="xs" fullWidth
 
